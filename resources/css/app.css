@@ -1,0 +1,149 @@
+@import "tailwindcss";
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans:
+        "Instrument Sans", ui-sans-serif, system-ui, sans-serif,
+        "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+        "Noto Color Emoji";
+}
+
+/* Login Page Styles */
+.login-split {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+}
+
+.login-left {
+    flex: 1.2;
+    background-image: url("https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1500&q=80");
+    background-size: cover;
+    background-position: center;
+    color: #fff;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 48px;
+}
+
+.login-left::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        180deg,
+        rgba(22, 33, 18, 0.6),
+        rgba(255, 255, 255, 0.03)
+    );
+    mix-blend-mode: multiply;
+}
+
+.left-content {
+    position: relative;
+    max-width: 420px;
+    z-index: 2;
+}
+
+.brand {
+    font-weight: 700;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+.brand .dot {
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    display: inline-block;
+}
+
+.headline {
+    font-size: 42px;
+    line-height: 1.05;
+    margin: 0 0 16px 0;
+}
+
+.subtitle {
+    opacity: 0.9;
+    color: #e6f0e6;
+}
+
+.login-right {
+    flex: 0.8;
+    background: #f7faf6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 28px;
+}
+
+.card {
+    width: 100%;
+    max-width: 420px;
+    background: white;
+    border-radius: 8px;
+    padding: 32px;
+    box-shadow: 0 6px 30px rgba(16, 24, 16, 0.08);
+}
+
+.card h2 {
+    margin: 0 0 12px 0;
+}
+
+.form-group {
+    margin-bottom: 14px;
+}
+
+.form-input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #e6ece3;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 14px;
+}
+
+.form-actions {
+    margin-top: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.btn-primary {
+    background: #365b40;
+    color: #fff;
+    padding: 10px 22px;
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+}
+
+.muted {
+    color: #8b9a88;
+    font-size: 13px;
+}
+
+.small {
+    font-size: 13px;
+}
+
+@media (max-width: 900px) {
+    .login-left {
+        display: none;
+    }
+    .login-right {
+        flex: 1;
+    }
+}
