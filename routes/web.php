@@ -9,7 +9,9 @@ use App\Http\Controllers\LaporanController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [LoginController::class, 'create'])->name('login');
+Route::post('/login', [LoginController::class, 'store'])->name('login.store');
 Route::get('/signup', [RegisterController::class, 'create'])->name('register');
+Route::post('/signup', [RegisterController::class, 'store'])->name('register.store');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
