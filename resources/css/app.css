@@ -10,6 +10,11 @@
         "Instrument Sans", ui-sans-serif, system-ui, sans-serif,
         "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
         "Noto Color Emoji";
+
+    --color-dark-matcha: #365E3F;
+    --color-soft-matcha: #86A789;
+    --color-warning-bold: #BA1A1A;
+    --color-warning-soft: #FFDAD6;
 }
 
 /* Login Page Styles */
@@ -21,8 +26,8 @@
 }
 
 .login-left {
-    flex: 1.2;
-    background-image: url("https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1500&q=80");
+    flex: 1.6;
+    background-image: url("D:\coding\MatchaBoy (TA)\matchaBoy\public\images\asst_loginpg.jpg");
     background-size: cover;
     background-position: center;
     color: #fff;
