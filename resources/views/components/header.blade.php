@@ -14,11 +14,16 @@
             <x-icon name="user-circle" size="md" class="w-6 h-6 stroke-current text-dark-matcha" />
         </div>
         <div>
-            <p class="font-semibold text-sm">Bu Tini</p>
-            <p class="text-xs opacity-90">Admin</p>
+            <p class="font-semibold text-sm">{{ Auth::user()->name ?? 'Guest' }}</p>
+            <p class="text-xs opacity-90">{{ Auth::user()->role ?? 'Admin' }}</p>
         </div>
 
-        <button class="ml-2 text-lg hover:scale-110 transition-transform" title="Logout">➡️</button>
+        <form method="POST" action="{{ route('logout') }}" class="ml-2 m-0 p-0 flex items-center">
+            @csrf
+            <button type="submit" class="text-lg hover:scale-110 transition-transform cursor-pointer" title="Logout">
+                ➡️
+            </button>
+        </form>
     </div>
 
 </div>

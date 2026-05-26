@@ -11,7 +11,13 @@
                         <div class="absolute inset-0 bg-dark-matcha opacity-20 blur-md rounded-xl"></div>
                         <div
                             class="relative flex items-center justify-center w-full h-full bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 shadow-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-leaf-icon lucide-leaf"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="lucide lucide-leaf-icon lucide-leaf">
+                                <path
+                                    d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+                                <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+                            </svg>
                         </div>
                     </div>
                 </div>
@@ -25,7 +31,20 @@
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                 <div class="flex items-center justify-between mb-4">
                     <span class="text-sm font-semibold text-gray-500">Full Cream</span>
-                    <span class="text-xl">🥛</span>
+                    <div class="relative flex items-center justify-center w-10 h-10">
+                        <div class="absolute inset-0 bg-dark-matcha opacity-20 blur-md rounded-xl"></div>
+                        <div
+                            class="relative flex items-center justify-center w-full h-full bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="lucide lucide-milk-icon lucide-milk">
+                                <path d="M8 2h8" />
+                                <path
+                                    d="M9 2v2.789a4 4 0 0 1-.672 2.219l-.656.984A4 4 0 0 0 7 10.212V20a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-9.789a4 4 0 0 0-.672-2.219l-.656-.984A4 4 0 0 1 15 4.788V2" />
+                                <path d="M7 15a6.472 6.472 0 0 1 5 0 6.47 6.47 0 0 0 5 0" />
+                            </svg>
+                        </div>
+                    </div>
                 </div>
                 <p class="text-3xl font-bold text-yellow-500">15 L</p>
                 <p class="text-xs text-gray-400 mt-2">Stock Supplier</p>
@@ -36,8 +55,22 @@
 
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                 <div class="flex items-center justify-between mb-4">
-                    <span class="text-sm font-semibold text-gray-500">Sirup Strawberry</span>
-                    <span class="text-xl">🍓</span>
+                    <span class="text-sm font-semibold text-gray-500">Selai Strawberry</span>
+                    <div class="relative flex items-center justify-center w-10 h-10">
+                        <div class="relative flex items-center justify-center w-10 h-10">
+                            <div class="absolute inset-0 bg-dark-matcha opacity-20 blur-md rounded-xl"></div>
+                            <div
+                                class="relative flex items-center justify-center w-full h-full bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 shadow-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="lucide lucide-vegan-icon lucide-vegan">
+                                    <path d="M16 8q6 0 6-6-6 0-6 6" />
+                                    <path d="M17.41 3.59a10 10 0 1 0 3 3" />
+                                    <path d="M2 2a26.6 26.6 0 0 1 10 20c.9-6.82 1.5-9.5 4-14" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <p class="text-3xl font-bold text-pink-400">15 L</p>
                 <p class="text-xs text-gray-400 mt-2">Tersedia</p>
@@ -49,7 +82,24 @@
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                 <div class="flex items-center justify-between mb-4">
                     <span class="text-sm font-semibold text-gray-500">Oats</span>
-                    <span class="text-xl">🌾</span>
+                    <div class="relative flex items-center justify-center w-10 h-10">
+                        <div class="relative flex items-center justify-center w-10 h-10">
+                            <div class="absolute inset-0 bg-dark-matcha opacity-20 blur-md rounded-xl"></div>
+                            <div
+                                class="relative flex items-center justify-center w-full h-full bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 shadow-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="lucide lucide-cookie-icon lucide-cookie">
+                                    <path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5" />
+                                    <path d="M8.5 8.5v.01" />
+                                    <path d="M16 15.5v.01" />
+                                    <path d="M12 12v.01" />
+                                    <path d="M11 17v.01" />
+                                    <path d="M7 14v.01" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <p class="text-3xl font-bold text-green-500">5.2 kg</p>
                 <p class="text-xs text-gray-400 mt-2">In Stock</p>

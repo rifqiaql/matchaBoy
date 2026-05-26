@@ -8,24 +8,32 @@ use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\LaporanController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [LoginController::class, 'create'])->name('login');
-Route::post('/login', [LoginController::class, 'store'])->name('login.store');
-Route::get('/signup', [RegisterController::class, 'create'])->name('register');
-Route::post('/signup', [RegisterController::class, 'store'])->name('register.store');
-
-Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
-Route::prefix('keranjang')->name('keranjang.')->group(function () {
-    Route::get('/', [CartController::class, 'index'])->name('index');
-    Route::get('/add', [CartController::class, 'create'])->name('create');
-    Route::post('/', [CartController::class, 'store'])->name('store');
-    Route::delete('/{cart}', [CartController::class, 'destroy'])->name('destroy');
+Route::middleware('guest')->group(function () {
+    Route::get('/', [LoginController::class, 'create'])->name('login');
+    Route::post('/login', [LoginController::class, 'store'])->name('login.store');
+    Route::get('/signup', [RegisterController::class, 'create'])->name('register');
+    Route::post('/signup', [RegisterController::class, 'store'])->name('register.store');
 });
 
-Route::prefix('inventory')->name('inventory.')->group(function () {
-    Route::get('/', [InventoryController::class, 'index'])->name('index');
-    Route::get('/add', [InventoryController::class, 'create'])->name('create');
-    Route::post('/', [InventoryController::class, 'store'])->name('store');
-});
+Route::middleware('auth')->group(function () {
 
-Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
+    Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
+
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    Route::prefix('keranjang')->name('keranjang.')->group(function () {
+        Route::get('/', [CartController::class, 'index'])->name('index');
+        Route::get('/add', [CartController::class, 'create'])->name('create');
+        Route::post('/', [CartController::class, 'store'])->name('store');
+        Route::delete('/{cart}', [CartController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('inventory')->name('inventory.')->group(function () {
+        Route::get('/', [InventoryController::class, 'index'])->name('index');
+        Route::get('/add', [InventoryController::class, 'create'])->name('create');
+        Route::post('/', [InventoryController::class, 'store'])->name('store');
+    });
+
+    Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
+
+});
