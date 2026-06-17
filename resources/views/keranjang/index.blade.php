@@ -26,7 +26,9 @@
                                 <button class="px-3 py-1 bg-white border rounded text-sm">Strawberry</button>
                             </div>
                             <div>
-                                <button class="btn-icon primary" title="Tambah Produk Baru">
+                                <x-modal-add-product/>
+                                <button class="btn-icon primary" title="Tambah Produk Baru"
+                                    @click="$dispatch('open-add-product-modal')">
                                     <x-icon name="plus" size="md" class="w-4 h-4 stroke-current" />
                                     <span class="text-sm font-medium">Tambah Produk Baru</span>
                                 </button>
