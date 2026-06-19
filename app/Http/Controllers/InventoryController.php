@@ -37,14 +37,49 @@ class InventoryController extends Controller
         $validated = $request->validate([
             // UBAH 'unique:bahan_bakus' menjadi 'unique:bahan_baku'
             'nama_bahan' => 'required|string|max:255|unique:bahan_baku',
+            'kategori' => 'required|string|max:100',
             'satuan' => 'required|string|max:100',
             'stok_awal' => 'required|integer|min:0',
             'stok_saat_ini' => 'required|integer|min:0',
+            'stok_minimum' => 'required|integer|min:0',
         ]);
 
         BahanBaku::create($validated);
 
         return redirect()->route('inventory.index')
                        ->with('success', 'Bahan baku berhasil ditambahkan!');
+    }
+
+    /**
+     * Remove the specified bahan baku from storage.
+     */
+    public function update(Request $request, $id): RedirectResponse
+    {
+        $validated = $request->validate([
+            'nama_bahan' => 'required|string|max:255',
+            'kategori' => 'required|string|max:100',
+            'satuan' => 'required|string|max:100',
+            'stok_awal' => 'required|integer|min:0',
+            'stok_saat_ini' => 'required|integer|min:0',
+            'stok_minimum' => 'required|integer|min:0',
+        ]);
+
+        $bahanBaku = BahanBaku::findOrFail($id);
+        $bahanBaku->update($validated);
+
+        return redirect()->route('inventory.index')
+                         ->with('success', 'Bahan baku berhasil diperbarui!');
+    }
+
+    /**
+     * Remove the specified bahan baku from storage.
+     */
+    public function destroy($id): RedirectResponse
+    {
+        $bahanBaku = BahanBaku::findOrFail($id);
+        $bahanBaku->delete();
+
+        return redirect()->route('inventory.index')
+                         ->with('success', 'Bahan baku berhasil dihapus!');
     }
 }

@@ -79,11 +79,8 @@
                         <p class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Total Bahan</p>
                         <p class="text-3xl font-bold text-gray-900 mt-2">{{ $bahanBaku->count() }}</p>
                     </div>
-                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M20 7l-8-4-8 4m0 0l8-4m0 0l8 4m-8 4l-8-4v4a8 8 0 0016 0v-4"></path>
-                        </svg>
+                    <div class="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
+                        <x-icons.box class="w-6 h-6 text-white" />
                     </div>
                 </div>
                 <p class="text-xs text-gray-600"><span class="text-green-600 font-semibold">+2</span> last month</p>
@@ -103,14 +100,13 @@
                 <div class="flex items-center justify-between mb-4">
                     <div>
                         <p class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Low Stock</p>
-                        <p class="text-3xl font-bold {{ $hasLowStock ? 'text-red-600' : 'text-gray-900' }} mt-2">
-                            {{ $lowStockCount }}</p>
+                        <p class="text-3xl font-bold {{ $hasLowStock ? 'text-black' : 'text-gray-900' }} mt-2">
+                            {{ $lowStockCount }}
+                        </p>
                     </div>
-                    <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                        <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 9v2m0 4v2m0 4v2m0-8a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
+
+                    <div class="w-12 h-12 shrink-0 bg-green-500 rounded-lg flex items-center justify-center">
+                        <x-icons.warning class="w-6 h-6 text-white" />
                     </div>
                 </div>
                 <p class="text-xs {{ $hasLowStock ? 'text-red-600 font-semibold' : 'text-green-600 font-semibold' }}">
@@ -182,7 +178,7 @@
                                         <p class="font-medium text-gray-800">{{ $item->nama_bahan }}</p>
                                     </td>
                                     <td class="px-6 py-4">
-                                        <span class="text-sm text-gray-600">Bahan Pokok</span>
+                                        <span class="text-sm text-gray-600">{{ $item->kategori ?? '-' }}</span>
                                     </td>
                                     <td class="px-6 py-4 text-center">
                                         <div class="flex flex-col items-start gap-1">
@@ -207,14 +203,34 @@
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 text-center">
-                                        <button
-                                            class="p-1 hover:bg-gray-100 rounded transition-colors text-gray-400 hover:text-gray-600">
-                                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                                <path
-                                                    d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z">
-                                                </path>
-                                            </svg>
-                                        </button>
+                                        <div class="inline-flex items-center gap-2">
+                                            <button type="button"
+                                                onclick="openEditModal({{ $item->id }}, '{{ addslashes($item->nama_bahan) }}', '{{ addslashes($item->kategori) }}', '{{ addslashes($item->satuan) }}', {{ $item->stok_awal }}, {{ $item->stok_saat_ini }}, {{ $item->stok_minimum ?? 0 }})"
+                                                class="p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M15.232 5.232l3.536 3.536M9 11l6-6 3 3-6 6H9v-3z"></path>
+                                                </svg>
+                                            </button>
+
+                                            <form action="{{ route('inventory.destroy', $item->id) }}" method="POST"
+                                                class="inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit"
+                                                    onclick="return confirm('Yakin ingin menghapus bahan baku ini?')"
+                                                    class="p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-red-600 transition-colors">
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor"
+                                                        viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3m4 0H5">
+                                                        </path>
+                                                    </svg>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach
@@ -243,4 +259,46 @@
         </div>
     </div>
     @include('inventory.modal_create')
+    @include('inventory.modal_edit')
+
+    <script>
+        function openEditModal(id, nama_bahan, kategori, satuan, stok_awal, stok_saat_ini, stok_minimum) {
+            const modal = document.getElementById('editModal');
+            const modalContent = document.getElementById('editModalContent');
+            const form = document.getElementById('editForm');
+
+            if (!modal || !modalContent || !form) {
+                return;
+            }
+
+            form.action = form.action.replace(/\/\d+$/, '/' + id);
+            document.getElementById('edit_nama_bahan').value = nama_bahan;
+            document.getElementById('edit_kategori').value = kategori || '';
+            document.getElementById('edit_satuan').value = satuan;
+            document.getElementById('edit_stok_awal').value = stok_awal;
+            document.getElementById('edit_stok_saat_ini').value = stok_saat_ini;
+            document.getElementById('edit_stok_minimum').value = stok_minimum;
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modalContent.classList.remove('scale-95', 'opacity-0');
+                modalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeEditModal() {
+            const modal = document.getElementById('editModal');
+            const modalContent = document.getElementById('editModalContent');
+
+            if (!modal || !modalContent) {
+                return;
+            }
+
+            modalContent.classList.remove('scale-100', 'opacity-100');
+            modalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200);
+        }
+    </script>
 @endsection

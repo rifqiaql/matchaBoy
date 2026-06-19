@@ -19,9 +19,11 @@ class BahanBaku extends Model
      */
     protected $fillable = [
         'nama_bahan',
+        'kategori',
         'satuan',
         'stok_awal',
         'stok_saat_ini',
+        'stok_minimum',
     ];
 
     /**

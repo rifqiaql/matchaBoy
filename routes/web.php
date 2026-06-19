@@ -32,6 +32,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [InventoryController::class, 'index'])->name('index');
         Route::get('/add', [InventoryController::class, 'create'])->name('create');
         Route::post('/', [InventoryController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [InventoryController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [InventoryController::class, 'update'])->name('update');
+        Route::delete('/{id}', [InventoryController::class, 'destroy'])->name('destroy');
     });
 
     Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
