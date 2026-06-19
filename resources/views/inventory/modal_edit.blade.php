@@ -61,9 +61,29 @@
 
                     <div>
                         <label for="edit_satuan" class="block text-sm font-semibold text-gray-700 mb-1.5">Satuan</label>
-                        <input type="text" name="satuan" id="edit_satuan" value="{{ old('satuan') }}"
-                            class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#365E3F] focus:border-[#365E3F] outline-none transition-all placeholder-gray-400"
-                            placeholder="Contoh: Gram, Kg, Liter, Pcs" required>
+                        <div class="relative">
+                            <select name="satuan" id="edit_satuan"
+                                class="w-full px-4 py-2.5 text-sm border border-gray-200 bg-white text-gray-800 rounded-lg focus:ring-2 focus:ring-[#365E3F] outline-none transition-all appearance-none cursor-pointer"
+                                required>
+                                <option value="" disabled {{ old('satuan') ? '' : 'selected' }}>Pilih Satuan...
+                                </option>
+                                <option value="Gram" {{ old('satuan') == 'Gram' ? 'selected' : '' }}>Gram (g)</option>
+                                <option value="Kg" {{ old('satuan') == 'Kg' ? 'selected' : '' }}>Kilogram (Kg)
+                                </option>
+                                <option value="Mililiter" {{ old('satuan') == 'Mililiter' ? 'selected' : '' }}>Mililiter
+                                    (ml)</option>
+                                <option value="Liter" {{ old('satuan') == 'Liter' ? 'selected' : '' }}>Liter (L)
+                                </option>
+                                <option value="Pcs" {{ old('satuan') == 'Pcs' ? 'selected' : '' }}>Pieces (Pcs)
+                                </option>
+                                <option value="Pack" {{ old('satuan') == 'Pack' ? 'selected' : '' }}>Pack</option>
+                            </select>
+                            <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none"
+                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
                         @error('satuan')
                             <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                         @enderror
@@ -110,7 +130,8 @@
                             value="{{ old('stok_minimum') }}" min="0"
                             class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#365E3F] focus:border-[#365E3F] outline-none transition-all placeholder-gray-400"
                             placeholder="Contoh: 20" required>
-                        <p class="text-xs text-gray-500 mt-2">Sistem akan memberikan peringatan jika stok mencapai batas
+                        <p class="text-xs text-gray-500 mt-2">Sistem akan memberikan peringatan jika stok mencapai
+                            batas
                             ini.</p>
                         @error('stok_minimum')
                             <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
