@@ -121,11 +121,8 @@
                         <p class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Monthly Restock</p>
                         <p class="text-3xl font-bold text-gray-900 mt-2">12</p>
                     </div>
-                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
+                    <div class="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center">
+                        <x-icons.dropbox class="w-6 h-6 text-white" />
                     </div>
                 </div>
                 <p class="text-xs text-gray-600">Status: <span class="text-[#365E3F] font-semibold">On schedule</span></p>
