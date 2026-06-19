@@ -6,18 +6,68 @@ use App\Models\BahanBaku;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class InventoryController extends Controller
 {
     /**
      * Display a listing of the bahan baku.
      */
-    public function index(): View
+    public function index(Request $request): View
     {
-        $bahanBaku = BahanBaku::all();
+        $query = BahanBaku::query();
+
+        if ($request->filled('search')) {
+            $query->where('nama_bahan', 'like', '%' . $request->search . '%');
+        }
+
+        if ($request->filled('kategori')) {
+            $query->where('kategori', $request->kategori);
+        }
+
+        $bahanBaku = $query->get();
 
         return view('inventory.index', [
-        'bahanBaku' => $bahanBaku,
+            'bahanBaku' => $bahanBaku,
+        ]);
+    }
+
+    /**
+     * Export filtered inventory to CSV.
+     */
+    public function export(Request $request): StreamedResponse
+    {
+        $query = BahanBaku::query();
+
+        if ($request->filled('search')) {
+            $query->where('nama_bahan', 'like', '%' . $request->search . '%');
+        }
+
+        if ($request->filled('kategori')) {
+            $query->where('kategori', $request->kategori);
+        }
+
+        $bahanBaku = $query->get();
+        $filename = 'inventory-export-' . now()->format('YmdHis') . '.csv';
+
+        return response()->streamDownload(function () use ($bahanBaku) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, ['Nama Bahan', 'Kategori', 'Stok Saat Ini', 'Satuan', 'Batas Limit']);
+
+            foreach ($bahanBaku as $item) {
+                fputcsv($handle, [
+                    $item->nama_bahan,
+                    $item->kategori,
+                    $item->stok_saat_ini,
+                    $item->satuan,
+                    $item->stok_minimum,
+                ]);
+            }
+
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ]);
     }
 

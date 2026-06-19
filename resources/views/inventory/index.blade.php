@@ -6,7 +6,7 @@
         <div class="flex items-center justify-between mb-8">
             <div>
                 <h1 class="text-2xl font-semibold text-gray-800">Gudang Inventory</h1>
-                <p class="text-sm text-gray-500 mt-1">Kelola stok bahan baku tea house</p>
+                <p class="text-sm text-gray-500 mt-1">Kelola stok bahan baku MatchaBoy</p>
             </div>
         </div>
 
@@ -19,31 +19,28 @@
 
         <!-- Top Action Bar -->
         <div class="flex items-center justify-between gap-4 mb-8">
-            <div class="flex items-center gap-3 flex-1">
-                <!-- Search Input -->
+            <form method="GET" action="{{ route('inventory.index') }}" class="flex items-center gap-3 flex-1">
                 <div class="flex-1 relative">
                     <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none"
                         stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
-                    <input type="text" placeholder="Cari bahan baku..."
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari bahan baku..."
                         class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#365E3F] focus:border-transparent transition-all bg-white text-gray-900 placeholder-gray-500">
                 </div>
 
-                <!-- Category Dropdown -->
-                <select
+                <select name="kategori" onchange="this.form.submit()"
                     class="px-4 py-2.5 rounded-lg border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors bg-white focus:outline-none focus:ring-2 focus:ring-[#365E3F] focus:border-transparent">
                     <option value="">Kategori</option>
-                    <option value="bahan-pokok">Bahan Pokok</option>
-                    <option value="bumbu">Bumbu</option>
-                    <option value="topping">Topping</option>
-                    <option value="packaging">Packaging</option>
+                    <option value="bahan-pokok" {{ request('kategori') == 'bahan-pokok' ? 'selected' : '' }}>Bahan Pokok
+                    </option>
+                    <option value="Cair" {{ request('kategori') == 'Cair' ? 'selected' : '' }}>Cair</option>
+                    <option value="Syrup" {{ request('kategori') == 'Syrup' ? 'selected' : '' }}>Syrup</option>
+                    <option value="Toping" {{ request('kategori') == 'Toping' ? 'selected' : '' }}>Toping</option>
                 </select>
-            </div>
 
-            <div class="flex items-center gap-3">
-                <button
+                <button type="submit"
                     class="px-4 py-2.5 rounded-lg border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -52,14 +49,17 @@
                     </svg>
                     <span class="text-sm">Filter</span>
                 </button>
-                <button
+            </form>
+
+            <div class="flex items-center gap-3">
+                <a href="{{ route('inventory.export', request()->query()) }}"
                     class="px-4 py-2.5 rounded-lg border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
                     </svg>
                     <span class="text-sm">Export</span>
-                </button>
+                </a>
                 <button type="button" onclick="openModal()"
                     class="btn-icon primary bg-[#365E3F] text-white px-4 py-2.5 rounded-lg flex items-center gap-2 hover:bg-[#2a4a31] transition-colors shadow-sm">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

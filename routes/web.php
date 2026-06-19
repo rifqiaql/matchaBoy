@@ -35,6 +35,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/{id}/edit', [InventoryController::class, 'edit'])->name('edit');
         Route::put('/{id}', [InventoryController::class, 'update'])->name('update');
         Route::delete('/{id}', [InventoryController::class, 'destroy'])->name('destroy');
+        Route::get('/export', [InventoryController::class, 'export'])->name('export');
     });
 
     Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
