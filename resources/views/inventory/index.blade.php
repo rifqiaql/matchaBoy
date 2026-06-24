@@ -79,7 +79,7 @@
                         <p class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Total Bahan</p>
                         <p class="text-3xl font-bold text-gray-900 mt-2">{{ $bahanBaku->count() }}</p>
                     </div>
-                    <div class="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
+                    <div class="w-12 h-12 bg-dark-matcha rounded-lg flex items-center justify-center">
                         <x-icons.box class="w-6 h-6 text-white" />
                     </div>
                 </div>

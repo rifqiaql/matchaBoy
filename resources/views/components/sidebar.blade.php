@@ -1,4 +1,4 @@
-<div class="w-32 bg-white h-screen shadow-md flex flex-col items-center pt-8 flex-shrink-0">
+<div class="w-32 bg-white shadow-md flex flex-col items-center pt-8 flex-shrink-0 min-h-0">
 
 
     <nav class="flex flex-col gap-6">

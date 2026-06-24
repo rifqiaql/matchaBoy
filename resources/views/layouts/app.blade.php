@@ -9,10 +9,10 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 
-<body class="bg-gray-100 font-sans antialiased text-gray-800">
+<body class="bg-gray-100 font-sans antialiased text-gray-800 h-screen flex flex-col overflow-hidden">
 
     <header
-        class="bg-dark-matcha text-white px-8 py-4 flex items-center justify-between shadow rounded-b-xl w-full z-40 relative">
+        class="bg-dark-matcha text-white px-8 py-4 flex items-center justify-between shadow rounded-b-xl flex-shrink-0 z-40 relative">
         <div class="flex items-center gap-10">
             <img src="{{ asset('images/logo.png') }}" alt="Logo MatchaBoy" class="h-20 w-auto">
             <div class="flex items-center gap-4">
@@ -39,10 +39,10 @@
         </div>
     </header>
 
-    <div class="flex h-[calc(100vh-100px)] overflow-hidden">
+    <div class="flex flex-1 overflow-hidden min-h-0">
         <x-sidebar />
 
-        <main class="flex-1 overflow-y-auto p-8">
+        <main class="flex-1 min-h-0 overflow-y-auto p-8">
             @yield('content')
         </main>
     </div>
