@@ -1,7 +1,5 @@
 <div class="w-32 bg-white h-screen shadow-md flex flex-col items-center pt-8 flex-shrink-0">
 
-    <div class="mb-35">
-    </div>
 
     <nav class="flex flex-col gap-6">
 
