@@ -10,13 +10,13 @@
 </head>
 
 <body class="bg-grey-100 font-sans antialiased text-gray-800">
-    <div class="flex h-screen overflow-hidden">
+    <div class="flex flex-col h-screen overflow-hidden">
 
-        <x-sidebar />
+        <x-header />
 
-        <div class="flex-1 flex flex-col overflow-hidden">
+        <div class="flex flex-1 overflow-hidden">
 
-            <x-header />
+            <x-sidebar />
 
             <main class="flex-1 overflow-y-auto bg-gray-50">
                 @yield('content')
