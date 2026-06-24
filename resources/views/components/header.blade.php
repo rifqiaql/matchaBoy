@@ -1,4 +1,4 @@
-<div class="bg-dark-matcha text-white px-8 py-4 flex items-center justify-between shadow flex-shrink-0 rounded-b-xl">
+{{-- <div class="bg-dark-matcha text-white px-8 py-4 flex items-center justify-between shadow flex-shrink-0 rounded-b-xl">
 
     <div class="flex items-center gap-10">
         <img src="{{ asset('images/logo.png') }}" alt="Logo MatchaBoy" class="h-20 w-auto">
@@ -21,9 +21,9 @@
         <form method="POST" action="{{ route('logout') }}" class="ml-2 m-0 p-0 flex items-center">
             @csrf
             <button type="submit" class="text-lg hover:scale-110 transition-transform cursor-pointer" title="Logout">
-                ➡️
+                <x-icons.logout class="w-6 h-6 text-white" />
             </button>
         </form>
     </div>
 
-</div>
+</div> --}}

@@ -1,9 +1,9 @@
 <div class="w-32 bg-white h-screen shadow-md flex flex-col items-center pt-8 flex-shrink-0">
 
-    <div class="mb-20">
-        </div>
+    <div class="mb-35">
+    </div>
 
-    <nav class="flex flex-col gap-4">
+    <nav class="flex flex-col gap-6">
 
         <a href="{{ route('dashboard') }}"
             class="flex flex-col items-center justify-center w-24 h-24 rounded-2xl transition-all duration-300 {{ request()->routeIs('dashboard') ? 'bg-[#86A789] text-white shadow-lg transform -translate-y-1' : 'text-black hover:bg-[#86A789] hover:text-white hover:-translate-y-1' }}">

@@ -202,7 +202,7 @@
                                     <td class="px-6 py-4 text-center">
                                         <div class="inline-flex items-center gap-2">
                                             <button type="button"
-                                                onclick="openEditModal({{ $item->id }}, '{{ addslashes($item->nama_bahan) }}', '{{ addslashes($item->kategori) }}', '{{ addslashes($item->satuan) }}', {{ $item->stok_awal }}, {{ $item->stok_saat_ini }}, {{ $item->stok_minimum ?? 0 }})"
+                                                onclick="openEditModal({{ $item->id }}, '{{ addslashes($item->nama_bahan ?? '') }}', '{{ addslashes($item->kategori ?? '') }}', '{{ addslashes($item->satuan ?? '') }}', {{ $item->stok_awal ?? 0 }}, {{ $item->stok_saat_ini ?? 0 }}, {{ $item->stok_minimum ?? 0 }})"
                                                 class="p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor"
                                                     viewBox="0 0 24 24">
@@ -211,22 +211,10 @@
                                                 </svg>
                                             </button>
 
-                                            <form action="{{ route('inventory.destroy', $item->id) }}" method="POST"
-                                                class="inline">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit"
-                                                    onclick="return confirm('Yakin ingin menghapus bahan baku ini?')"
-                                                    class="p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-red-600 transition-colors">
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor"
-                                                        viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2"
-                                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3m4 0H5">
-                                                        </path>
-                                                    </svg>
-                                                </button>
-                                            </form>
+                                            <button type="button" onclick="openDeleteModal({{ $item->id }})"
+                                                class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                                                <x-icons.trash class="w-5 h-5" />
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -257,20 +245,47 @@
     </div>
     @include('inventory.modal_create')
     @include('inventory.modal_edit')
+    @include('inventory.modal_delete')
 
     <script>
-        function openEditModal(id, nama_bahan, kategori, satuan, stok_awal, stok_saat_ini, stok_minimum) {
+        window.openDeleteModal = function(id) {
+            const modal = document.getElementById('deleteModal');
+            const modalContent = document.getElementById('deleteModalContent');
+            const form = document.getElementById('confirmDeleteForm');
+
+            if (!modal || !modalContent || !form) return;
+
+            form.action = '/inventory/' + id;
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modalContent.classList.remove('scale-95', 'opacity-0');
+                modalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        };
+
+        window.closeDeleteModal = function() {
+            const modal = document.getElementById('deleteModal');
+            const modalContent = document.getElementById('deleteModalContent');
+
+            if (!modal || !modalContent) return;
+
+            modalContent.classList.remove('scale-100', 'opacity-100');
+            modalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => modal.classList.add('hidden'), 200);
+        };
+
+        window.openEditModal = function(id, nama_bahan, kategori, satuan, stok_awal, stok_saat_ini, stok_minimum) {
             const modal = document.getElementById('editModal');
             const modalContent = document.getElementById('editModalContent');
             const form = document.getElementById('editForm');
 
-            if (!modal || !modalContent || !form) {
-                return;
-            }
+            if (!modal || !modalContent || !form) return;
 
             form.action = form.action.replace(/\/\d+$/, '/' + id);
+
             document.getElementById('edit_nama_bahan').value = nama_bahan;
-            document.getElementById('edit_kategori').value = kategori || '';
+            document.getElementById('edit_kategori').value = kategori;
             document.getElementById('edit_satuan').value = satuan;
             document.getElementById('edit_stok_awal').value = stok_awal;
             document.getElementById('edit_stok_saat_ini').value = stok_saat_ini;
@@ -281,21 +296,28 @@
                 modalContent.classList.remove('scale-95', 'opacity-0');
                 modalContent.classList.add('scale-100', 'opacity-100');
             }, 10);
-        }
+        };
 
-        function closeEditModal() {
+        window.closeEditModal = function() {
             const modal = document.getElementById('editModal');
             const modalContent = document.getElementById('editModalContent');
-
-            if (!modal || !modalContent) {
-                return;
-            }
+            if (!modal || !modalContent) return;
 
             modalContent.classList.remove('scale-100', 'opacity-100');
             modalContent.classList.add('scale-95', 'opacity-0');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 200);
-        }
+            setTimeout(() => modal.classList.add('hidden'), 200);
+        };
+
+        document.addEventListener("DOMContentLoaded", function() {
+            @if (session()->has('notify'))
+                const notifyData = @json(session('notify'));
+                window.dispatchEvent(new CustomEvent('notify', {
+                    detail: {
+                        message: notifyData.message,
+                        type: notifyData.type
+                    }
+                }));
+            @endif
+        });
     </script>
 @endsection

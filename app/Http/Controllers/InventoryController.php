@@ -97,7 +97,7 @@ class InventoryController extends Controller
         BahanBaku::create($validated);
 
         return redirect()->route('inventory.index')
-                       ->with('success', 'Bahan baku berhasil ditambahkan!');
+                       ->with('notify', ['success', 'Bahan baku berhasil ditambahkan!', 'type' => 'success']);
     }
 
     /**
@@ -118,7 +118,7 @@ class InventoryController extends Controller
         $bahanBaku->update($validated);
 
         return redirect()->route('inventory.index')
-                         ->with('success', 'Bahan baku berhasil diperbarui!');
+                         ->with('notify', ['success', 'Bahan baku berhasil diperbarui!', 'type' => 'success']);
     }
 
     /**
@@ -130,6 +130,6 @@ class InventoryController extends Controller
         $bahanBaku->delete();
 
         return redirect()->route('inventory.index')
-                         ->with('success', 'Bahan baku berhasil dihapus!');
+                         ->with('notify', ['success', 'Bahan baku berhasil dihapus!', 'type' => 'success']);
     }
 }
