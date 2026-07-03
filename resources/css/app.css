@@ -11,10 +11,10 @@
         "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
         "Noto Color Emoji";
 
-    --color-dark-matcha: #365E3F;
-    --color-soft-matcha: #86A789;
-    --color-warning-bold: #BA1A1A;
-    --color-warning-soft: #FFDAD6;
+    --color-dark-matcha: #365e3f;
+    --color-soft-matcha: #86a789;
+    --color-warning-bold: #ba1a1a;
+    --color-warning-soft: #ffdad6;
 }
 
 /* Login Page Styles */
@@ -27,7 +27,7 @@
 
 .login-left {
     flex: 1.6;
-    background-image: url("D:\coding\MatchaBoy (TA)\matchaBoy\public\images\asst_loginpg.jpg");
+    background-image: url("/images/asst_loginpg.jpg");
     background-size: cover;
     background-position: center;
     color: #fff;
