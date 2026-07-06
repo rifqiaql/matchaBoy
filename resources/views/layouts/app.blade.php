@@ -17,8 +17,8 @@
         <div class="flex items-center gap-10">
             <img src="{{ asset('images/logo.png') }}" alt="Logo MatchaBoy" class="h-20 w-auto">
             <div class="flex items-center gap-4">
-                <p class="text-lg font-bold tracking-wide">12.02.03 PM</p>
-                <p class="text-sm opacity-90 pt-0.5">Minggu, 5 September 2026</p>
+                <p id="app-clock-time" class="text-lg font-bold tracking-wide"></p>
+                <p id="app-clock-date" class="text-sm opacity-90 pt-0.5"></p>
             </div>
         </div>
 
@@ -62,6 +62,38 @@
     </div>
 
     @stack('scripts')
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const timeEl = document.getElementById('app-clock-time');
+            const dateEl = document.getElementById('app-clock-date');
+
+            if (!timeEl || !dateEl) return;
+
+            const timeFormatter = new Intl.DateTimeFormat('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true,
+            });
+
+            const dateFormatter = new Intl.DateTimeFormat('id-ID', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+            });
+
+            const updateClock = () => {
+                const now = new Date();
+                timeEl.textContent = timeFormatter.format(now).replace(/\s/g, ' ');
+                dateEl.textContent = dateFormatter.format(now);
+            };
+
+            updateClock();
+            setInterval(updateClock, 1000);
+        });
+    </script>
 </body>
 
 </html>

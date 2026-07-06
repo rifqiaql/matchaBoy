@@ -27,15 +27,15 @@
             <div class="grid grid-cols-3 gap-6">
                 @forelse ($products as $product)
                     @php
-                        $productImage = $product->image && \Illuminate\Support\Facades\Storage::disk('public')->exists('products/' . $product->image)
-                            ? asset('storage/products/' . $product->image)
-                            : asset('images/logo.png');
+                        $productImage =
+                            $product->image &&
+                            \Illuminate\Support\Facades\Storage::disk('public')->exists('products/' . $product->image)
+                                ? asset('storage/products/' . $product->image)
+                                : asset('images/logo.png');
                     @endphp
                     <div class="bg-white rounded-lg p-6 shadow">
                         <div class="h-40 bg-gray-50 rounded flex items-center justify-center mb-4 overflow-hidden">
-                            <img src="{{ $productImage }}"
-                                alt="{{ $product->name }}"
-                                class="h-20 w-auto object-contain"
+                            <img src="{{ $productImage }}" alt="{{ $product->name }}" class="h-20 w-auto object-contain"
                                 onerror="this.onerror=null;this.src='{{ asset('images/logo.png') }}';">
                         </div>
                         <h4 class="font-semibold mb-1 truncate" title="{{ $product->name }}">{{ $product->name }}</h4>
@@ -44,15 +44,15 @@
                             <p class="text-sm font-bold">Rp {{ number_format($product->price, 0, ',', '.') }}</p>
                             <button class="btn-icon primary text-sm add-to-cart" data-id="{{ $product->id }}"
                                 data-name="{{ $product->name }}" data-price="{{ $product->price }}"
-                                data-image="{{ $productImage }}"
-                                title="Tambah ke keranjang">
+                                data-image="{{ $productImage }}" title="Tambah ke keranjang">
                                 <x-icon name="shopping-cart" size="md" class="w-4 h-4 stroke-current" />
                                 <span>Tambah</span>
                             </button>
                         </div>
                     </div>
                 @empty
-                    <div class="col-span-3 rounded-lg border border-dashed border-gray-200 bg-white p-8 text-center text-sm text-gray-500">
+                    <div
+                        class="col-span-3 rounded-lg border border-dashed border-gray-200 bg-white p-8 text-center text-sm text-gray-500">
                         Belum ada produk di tabel products.
                     </div>
                 @endforelse
@@ -285,7 +285,8 @@
                         }
 
                         if (!response.ok) {
-                            const errorMessage = payload?.message || responseText || ('HTTP error, status = ' + response.status);
+                            const errorMessage = payload?.message || responseText || ('HTTP error, status = ' + response
+                                .status);
                             throw new Error('HTTP ' + response.status + ': ' + errorMessage);
                         }
 
