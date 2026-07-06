@@ -4,6 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? 'MatchaBoy' }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -12,7 +13,7 @@
 <body class="bg-gray-100 font-sans antialiased text-gray-800 h-screen flex flex-col overflow-hidden">
 
     <header
-        class="bg-dark-matcha text-white px-8 py-4 flex items-center justify-between shadow rounded-b-xl flex-shrink-0 z-40 relative">
+        class="bg-dark-matcha text-white px-8 py-4 flex items-center justify-between shadow rounded-b-xl shrink-0 z-40 relative">
         <div class="flex items-center gap-10">
             <img src="{{ asset('images/logo.png') }}" alt="Logo MatchaBoy" class="h-20 w-auto">
             <div class="flex items-center gap-4">
@@ -59,6 +60,8 @@
             <p x-text="message" class="text-sm font-medium"></p>
         </div>
     </div>
+
+    @stack('scripts')
 </body>
 
 </html>

@@ -6,6 +6,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\LaporanController;
+use App\Http\Controllers\OrderController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -40,4 +41,9 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
 
+    // Jalur untuk memproses checkout dari tombol Bayar Sekarang
+    Route::post('/checkout', [OrderController::class, 'checkout'])->name('checkout');
+
+    // Jalur untuk menyimpan data produk baru dari form modal
+    Route::post('/products', [OrderController::class, 'storeProduct'])->name('products.store');
 });
