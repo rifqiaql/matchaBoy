@@ -9,6 +9,7 @@ use App\Models\ProductIngredient;
 use App\Models\BahanBaku; // Memanggil model bahan baku milik teman lo
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class OrderController extends Controller
 {
@@ -123,8 +124,8 @@ class OrderController extends Controller
                 $imageFile = $request->file('image');
                 // Beri nama unik berdasarkan waktu agar tidak bentrok (contoh: 171983012.png)
                 $imageName = time() . '.' . $imageFile->getClientOriginalExtension();
-                // Simpan fisik file ke dalam folder: public/storage/products
-                $imageFile->storeAs('public/products', $imageName);
+                // Simpan fisik file ke dalam folder publik agar bisa diakses dari browser
+                Storage::disk('public')->putFileAs('products', $imageFile, $imageName);
             }
 
             // 3. Masukkan data ke tabel `products` menggunakan Query Builder murni
