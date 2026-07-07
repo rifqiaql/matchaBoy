@@ -159,11 +159,22 @@
             document.addEventListener('DOMContentLoaded', function() {
                 const editImageInput = document.getElementById('edit_item_image');
                 const fileNamePreview = document.getElementById('edit_file_name_preview');
+                const maxImageSizeKb = 5120;
+                const maxImageSizeBytes = maxImageSizeKb * 1024;
 
                 if (editImageInput && fileNamePreview) {
                     editImageInput.addEventListener('change', function() {
                         if (this.files && this.files.length > 0) {
-                            fileNamePreview.innerText = "Terpilih: " + this.files[0].name;
+                            const selectedFile = this.files[0];
+
+                            if (selectedFile.size > maxImageSizeBytes) {
+                                alert(`Ukuran gambar maksimal ${maxImageSizeKb} KB.`);
+                                this.value = '';
+                                fileNamePreview.innerText = "";
+                                return;
+                            }
+
+                            fileNamePreview.innerText = "Terpilih: " + selectedFile.name;
                         } else {
                             fileNamePreview.innerText = "";
                         }
@@ -190,6 +201,13 @@
                 let price = document.getElementById('edit_item_price').value;
                 let imageElement = document.getElementById('edit_item_image');
                 let imageInput = (imageElement && imageElement.files) ? imageElement.files[0] : null;
+                const maxImageSizeKb = 5120;
+                const maxImageSizeBytes = maxImageSizeKb * 1024;
+
+                if (imageInput && imageInput.size > maxImageSizeBytes) {
+                    alert(`Ukuran gambar maksimal ${maxImageSizeKb} KB.`);
+                    return;
+                }
 
                 let formData = new FormData();
                 formData.append('_method', 'PUT');
