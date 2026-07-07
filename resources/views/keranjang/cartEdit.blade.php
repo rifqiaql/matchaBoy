@@ -1,61 +1,82 @@
 @if (auth()->user() && auth()->user()->role === 'admin')
-    <div id="modalEditProduk" class="fixed inset-0 z-50 flex items-center justify-center hidden">
-        <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onclick="tutupModalEdit()"></div>
+    <div id="modalEditProduk"
+        class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
+
+        <div class="absolute inset-0" onclick="tutupModalEdit()"></div>
 
         <div
-            class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl relative z-10 m-4 border border-gray-100 animate-fade-in">
-            <div class="flex items-center justify-between pb-4 border-b border-gray-100">
+            class="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl relative z-10 transform transition-all duration-300">
+
+            <div class="bg-dark-matcha px-5 py-4 flex items-start justify-between">
                 <div>
-                    <h3 class="text-lg font-bold text-gray-800">Edit Produk</h3>
-                    <p class="text-xs text-gray-500 mt-0.5">Perbarui data katalog produk Matchachaboy</p>
+                    <h3 class="text-base font-semibold text-white">Edit Produk</h3>
+                    <p class="mt-0.5 text-xs text-white/80 ">Perbarui data komponen katalog produk
+                        Matchaboy</p>
                 </div>
                 <button type="button" onclick="tutupModalEdit()"
-                    class="text-gray-400 hover:text-gray-600 transition-colors text-2xl p-1">&times;</button>
+                    class="text-white/90 hover:text-white transition-opacity focus:outline-none ">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                        stroke="currentColor" class="h-5 w-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
             </div>
 
-            <form id="formEditProduk" onsubmit="simpanPerubahanProduk(event)" class="mt-4 space-y-4">
+            <form id="formEditProduk" onsubmit="simpanPerubahanProduk(event)" class="p-5 space-y-4">
                 <input type="hidden" id="edit_item_id">
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Item Name</label>
-                    <input type="text" id="edit_item_name" required
-                        class="w-full px-3 py-2.5 mt-1 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600/20 focus:border-green-600 bg-gray-50/50 text-sm">
+                    <label for="edit_item_name" class="mb-1 block text-xs font-medium text-gray-500">Item Name</label>
+                    <input type="text" id="edit_item_name" required placeholder="Matcha Latte....."
+                        class="w-full rounded-xl border-0 bg-[#F6F4EE] px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8FA88B]">
                 </div>
 
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Harga</label>
-                    <div class="relative mt-1">
-                        <span
-                            class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 text-sm font-medium">Rp</span>
-                        <input type="number" id="edit_item_price" required
-                            class="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600/20 focus:border-green-600 bg-gray-50/50 text-sm">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label for="edit_item_category"
+                            class="mb-1 block text-xs font-medium text-gray-500">Kategori</label>
+                        <select id="edit_item_category" required
+                            class="w-full rounded-xl border-0 bg-[#F6F4EE] px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8FA88B]">
+                            <option value="">Select category</option>
+                            <option value="Signature">Signature</option>
+                            <option value="Milk Based">Milk Based</option>
+                            <option value="Strawberry">Strawberry</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="edit_item_price" class="mb-1 block text-xs font-medium text-gray-500">Harga</label>
+                        <input type="number" id="edit_item_price" required placeholder="Rp ....."
+                            class="w-full rounded-xl border-0 bg-[#F6F4EE] px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#8FA88B]">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Gambar
-                        Produk (Opsional)</label>
+                    <label class="mb-1 block text-xs font-medium text-gray-500">Gambar Produk (Opsional)</label>
                     <div
-                        class="border border-dashed border-gray-300 rounded-xl p-3 bg-gray-50 flex flex-col items-center justify-center hover:bg-gray-100/70 transition-colors relative">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                            stroke="currentColor" class="w-6 h-6 text-gray-400 mb-1">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                        </svg>
-                        <span class="text-xs text-gray-500 font-medium mb-1">Klik untuk mengganti gambar</span>
-                        <input type="file" id="edit_item_image" accept="image/*"
-                            class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
-                        <span id="edit_file_name_preview"
-                            class="text-[11px] text-green-600 font-medium text-center truncate max-w-full px-2"></span>
+                        class="rounded-xl border-2 border-dashed border-gray-200 bg-[#FBFAF6] p-4 text-center transition hover:border-[#8FA88B] hover:bg-[#FAF8F1]">
+                        <label for="edit_item_image"
+                            class="flex cursor-pointer flex-col items-center justify-center gap-1 text-center">
+                            <span class="text-xs font-semibold text-gray-700">Choose File</span>
+                            <span id="edit_item_image_name" class="text-[11px] text-gray-400 truncate max-w-xs">No file
+                                chosen</span>
+                            <span class="text-[10px] text-gray-400">PNG, JPG, atau JPEG (max. 5MB)</span>
+                        </label>
+                        <input type="file" id="edit_item_image" accept="image/*" class="hidden"
+                            onchange="updateNamaFileEdit(this)">
                     </div>
                 </div>
 
-                <div class="flex justify-end pt-3 space-x-2 border-t border-gray-100">
+                <div class="flex items-center justify-end gap-3 border-t border-gray-100 pt-3 mt-3">
                     <button type="button" onclick="tutupModalEdit()"
-                        class="px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">Batal</button>
+                        class="rounded-xl px-4 py-2 text-xs font-medium border border-gray-200 bg-white  hover:bg-gray-400 transition-colors">
+                        Batal
+                    </button>
                     <button type="submit"
-                        class="px-4 py-2 text-sm font-medium text-white rounded-xl bg-green-700 hover:bg-green-800 shadow-sm transition-colors">Simpan
-                        Perubahan</button>
+                        class="inline-flex items-center justify-center rounded-xl px-5 py-2 text-xs font-semibold text-white bg-dark-matcha hover:bg-soft-matcha transition-colors"
+                        style="min-width: 120px;">
+                        Simpan Perubahan
+                    </button>
                 </div>
             </form>
         </div>

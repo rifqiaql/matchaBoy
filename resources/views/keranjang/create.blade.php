@@ -1,10 +1,10 @@
 <div id="modalTambahProduk"
     class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in px-4 py-6">
     <div class="w-full max-w-140 overflow-hidden rounded-2xl bg-white shadow-2xl">
-        <div class="bg-[#8FA88B] px-5 py-4 flex items-start justify-between">
+        <div class="bg-dark-matcha px-5 py-4 flex items-start justify-between">
             <div>
                 <h3 class="text-lg font-semibold text-white">Produk Baru</h3>
-                <p class="mt-0.5 text-sm text-white/80">Tambahkan item baru ke katalog inventaris Matchaboy</p>
+                <p class="mt-0.5 text-sm text-white/80">Tambahkan item baru ke katalog keranjang Matchaboy</p>
             </div>
             <button type="button" onclick="tutupModalProduk()" class="text-white/90 hover:text-white transition-opacity">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
