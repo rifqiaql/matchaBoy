@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -38,12 +39,23 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{id}', [InventoryController::class, 'destroy'])->name('destroy');
         Route::get('/export', [InventoryController::class, 'export'])->name('export');
     });
-
-    Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
-
-    // Jalur untuk memproses checkout dari tombol Bayar Sekarang
-    Route::post('/checkout', [OrderController::class, 'checkout'])->name('checkout');
-
-    // Jalur untuk menyimpan data produk baru dari form modal
-    Route::post('/products', [OrderController::class, 'storeProduct'])->name('products.store');
 });
+
+Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
+
+// Jalur untuk memproses checkout dari tombol Bayar Sekarang
+Route::post('/checkout', [OrderController::class, 'checkout'])->name('checkout');
+
+// Jalur untuk menyimpan data produk baru dari form modal
+Route::post('/products', [OrderController::class, 'storeProduct'])->name('products.store');
+
+// Ganti rute get /keranjang lama lo dengan yang mengarah ke controller ini
+Route::get('/keranjang', [ProductController::class, 'index'])->name('products.index');
+
+// Rute penanganan aksi manipulasi produk (tambah, edit, delete)
+Route::post('/products', [ProductController::class, 'store'])->name('products.store');
+Route::put('/products/{id}', [ProductController::class, 'update'])->name('products.update');
+Route::delete('/products/{id}', [ProductController::class, 'destroy'])->name('products.destroy');
+
+// Ganti baris rute GET keranjang lo menjadi seperti ini:
+Route::get('/keranjang', [ProductController::class, 'index'])->name('keranjang.index');
