@@ -59,3 +59,7 @@ Route::delete('/products/{id}', [ProductController::class, 'destroy'])->name('pr
 
 // Ganti baris rute GET keranjang lo menjadi seperti ini:
 Route::get('/keranjang', [ProductController::class, 'index'])->name('keranjang.index');
+
+// Pastiin ada ->name('keranjang.index') di ujungnya!
+Route::get('/keranjang', [CartController::class, 'index'])->name('keranjang.index');
+Route::post('/keranjang', [CartController::class, 'store'])->name('keranjang.store');
