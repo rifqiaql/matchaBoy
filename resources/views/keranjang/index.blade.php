@@ -121,9 +121,7 @@
 
     @include('keranjang.create')
     @include('keranjang.cartEdit')
-
-
-    @push('scripts')
+    @include('keranjang.cartDelete') @push('scripts')
         <script>
             // Fungsi Pengendali Modal Create Bawaan
             function tampilModalProduk() {
@@ -238,33 +236,6 @@
                     });
             }
 
-            // Hapus Produk via AJAX (DELETE)
-            function hapusProduk(id, name) {
-                if (confirm(`Apakah Anda yakin ingin menghapus produk "${name}" dari katalog?`)) {
-                    fetch(`/products/${id}`, {
-                            method: 'DELETE',
-                            headers: {
-                                'Accept': 'application/json',
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                            }
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                alert(data.message);
-                                location.reload();
-                            } else {
-                                alert("Gagal menghapus produk: " + data.message);
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            alert("Terjadi kegagalan sistem saat menghapus produk.");
-                        });
-                }
-            }
-
             // Logika Frontend Keranjang Belanja Utama
             document.addEventListener('DOMContentLoaded', function() {
                 let cart = [];
@@ -333,7 +304,6 @@
                 }
 
                 // Tambah Item ke Keranjang Belanja
-                // Menggunakan event delegation agar berjalan lancar pada elemen dinamis dari database
                 document.addEventListener('click', function(e) {
                     const button = e.target.closest('.add-to-cart');
                     if (button) {
