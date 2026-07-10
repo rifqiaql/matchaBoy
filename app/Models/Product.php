@@ -21,10 +21,16 @@ class Product extends Model
      * Relasi ke ProductIngredient (Tabel Jembatan Resep)
      * Satu produk bisa memiliki banyak bahan baku di resepnya
      */
-    public function ingredients(): HasMany
+    public function ingredients()
     {
-        return $this->hasMany(ProductIngredient::class, 'product_id', 'id');
+        // Hubungkan ke BahanBaku, definisikan nama tabel pivotnya (misal: product_ingredients)
+        // dan ambil kolom tambahan (withPivot) seperti jumlah_pemakaian
+        return $this->belongsToMany(BahanBaku::class, 'product_ingredients')
+            ->withPivot('jumlah') // sesuaikan nama kolom jumlah di tabel pivot lu
+            ->withTimestamps();
     }
+
+
 
     /**
      * Relasi ke OrderItem (Detail Penjualan)
