@@ -191,6 +191,48 @@
                 if (fileNamePreview) fileNamePreview.innerText = "";
             }
 
+            function hapusProduk(id, name) {
+                // 1. Dapatkan elemen modal dan form-nya
+                const modal = document.getElementById('deleteModal');
+                const content = document.getElementById('deleteModalContent');
+                const form = document.getElementById('confirmDeleteForm');
+
+                // 2. Pastikan form ditemukan sebelum lanjut
+                if (!form) {
+                    console.error(
+                        "ID 'confirmDeleteForm' tidak ditemukan! Pastikan file cartDelete.blade.php sudah ter-include.");
+                    alert("Gagal memuat modal hapus.");
+                    return;
+                }
+
+                // 3. Set action form secara dinamis ke URL produk yang akan dihapus
+                form.action = `/products/${id}`;
+
+                // 4. Tampilkan modal dengan animasi
+                modal.classList.remove('hidden');
+                // Beri sedikit delay agar transisi CSS berjalan
+                setTimeout(() => {
+                    content.classList.remove('scale-95', 'opacity-0');
+                    content.classList.add('scale-100', 'opacity-100');
+                }, 10);
+            }
+
+            /**
+             * Fungsi untuk menutup modal hapus
+             */
+            function closeDeleteModal() {
+                const modal = document.getElementById('deleteModal');
+                const content = document.getElementById('deleteModalContent');
+
+                // Animasi tutup
+                content.classList.remove('scale-100', 'opacity-100');
+                content.classList.add('scale-95', 'opacity-0');
+
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300);
+            }
+
             // Kirim Perubahan Edit via AJAX (PUT)
             function simpanPerubahanProduk(event) {
                 event.preventDefault();

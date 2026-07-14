@@ -1,5 +1,5 @@
 <div id="modalTambahProduk"
-    class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in px-4 py-6">
+    class="fixed inset-0 z-[100] hidden flex items-start justify-center pt-20 bg-black/50 backdrop-blur-sm transition-opacity">
     <div class="w-full max-w-140 overflow-hidden rounded-2xl bg-white shadow-2xl">
         <div class="bg-dark-matcha px-5 py-4 flex items-start justify-between">
             <div>
