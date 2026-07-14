@@ -8,10 +8,24 @@
                 <h1 class="text-2xl font-bold text-gray-900">Analytics & Stock Report</h1>
                 <p class="text-sm text-gray-500">Predictive insights and artisanal inventory management</p>
             </div>
-            <div class="flex items-center space-x-3">
-                <span class="bg-white px-3 py-1.5 rounded-lg shadow-sm text-sm border text-gray-600">📅 Jan 1 - Jan 30</span>
-                <button
-                    class="bg-[#2E4F4F] text-white px-4 py-1.5 rounded-lg shadow-sm text-sm font-semibold">Export</button>
+            <div class="flex flex-col items-end gap-3">
+                <div class="flex items-center space-x-3">
+                    <div class="flex items-center gap-2">
+                        <x-date_picker />
+
+
+                        <button
+                            class="bg-[#2E4F4F] text-white px-4 py-1.5 rounded-lg shadow-sm text-sm font-semibold hover:bg-opacity-90 transition">
+                            Export
+                        </button>
+                    </div>
+
+                    <div class="flex items-center bg-gray-50 p-1 rounded-lg border border-gray-200 text-xs font-semibold">
+                        <button
+                            class="bg-white text-gray-800 px-4 py-1 rounded-md shadow-sm border border-gray-100">Monthly</button>
+                        <button class="text-gray-500 px-4 py-1 hover:text-gray-700 transition">Weekly</button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -19,44 +33,44 @@
 
             <div class="col-span-2 space-y-6">
 
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                <div class="col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                     <h3 class="text-lg font-bold mb-1 text-gray-800">Demand Analysis</h3>
                     <p class="text-sm text-gray-400 mb-6">Actual vs. Forecasted consumption</p>
 
-                    <div class="flex items-end justify-between h-56 gap-3 px-2 mt-4">
-                        <div class="flex flex-col items-center gap-3 flex-1">
-                            <div class="w-full bg-[#2D5A34] rounded-t-lg transition-all hover:bg-green-600"
-                                style="height: 75%;"></div>
+                    <div class="flex items-end justify-around h-56 gap-2 mt-4">
+                        <div class="flex flex-col items-center gap-3">
+                            <div class="w-10 bg-[#2D5A34] rounded-t-lg transition-all hover:bg-green-600"
+                                style="height: 120px;"></div>
                             <span class="text-xs font-semibold text-gray-500">MON</span>
                         </div>
-                        <div class="flex flex-col items-center gap-3 flex-1">
-                            <div class="w-full bg-[#2D5A34] rounded-t-lg transition-all hover:bg-green-600"
-                                style="height: 60%;"></div>
+                        <div class="flex flex-col items-center gap-3">
+                            <div class="w-10 bg-[#2D5A34] rounded-t-lg transition-all hover:bg-green-600"
+                                style="height: 100px;"></div>
                             <span class="text-xs font-semibold text-gray-500">TUE</span>
                         </div>
-                        <div class="flex flex-col items-center gap-3 flex-1">
-                            <div class="w-full bg-[#2D5A34] rounded-t-lg transition-all hover:bg-green-600"
-                                style="height: 85%;"></div>
+                        <div class="flex flex-col items-center gap-3">
+                            <div class="w-10 bg-[#2D5A34] rounded-t-lg transition-all hover:bg-green-600"
+                                style="height: 140px;"></div>
                             <span class="text-xs font-semibold text-gray-500">WED</span>
                         </div>
-                        <div class="flex flex-col items-center gap-3 flex-1">
-                            <div class="w-full bg-[#2D5A34] rounded-t-lg transition-all hover:bg-green-600"
-                                style="height: 80%;"></div>
+                        <div class="flex flex-col items-center gap-3">
+                            <div class="w-10 bg-[#2D5A34] rounded-t-lg transition-all hover:bg-green-600"
+                                style="height: 130px;"></div>
                             <span class="text-xs font-semibold text-gray-500">THU</span>
                         </div>
-                        <div class="flex flex-col items-center gap-3 flex-1">
-                            <div class="w-full bg-[#2D5A34] rounded-t-lg transition-all hover:bg-green-600"
-                                style="height: 70%;"></div>
+                        <div class="flex flex-col items-center gap-3">
+                            <div class="w-10 bg-[#2D5A34] rounded-t-lg transition-all hover:bg-green-600"
+                                style="height: 110px;"></div>
                             <span class="text-xs font-semibold text-gray-500">FRI</span>
                         </div>
-                        <div class="flex flex-col items-center gap-3 flex-1">
-                            <div class="w-full bg-[#2D5A34] rounded-t-lg transition-all hover:bg-green-600"
-                                style="height: 95%;"></div>
+                        <div class="flex flex-col items-center gap-3">
+                            <div class="w-10 bg-[#2D5A34] rounded-t-lg transition-all hover:bg-green-600"
+                                style="height: 155px;"></div>
                             <span class="text-xs font-semibold text-gray-500">SAT</span>
                         </div>
-                        <div class="flex flex-col items-center gap-3 flex-1">
-                            <div class="w-full bg-[#2D5A34] rounded-t-lg transition-all hover:bg-green-600"
-                                style="height: 82%;"></div>
+                        <div class="flex flex-col items-center gap-3">
+                            <div class="w-10 bg-[#2D5A34] rounded-t-lg transition-all hover:bg-green-600"
+                                style="height: 135px;"></div>
                             <span class="text-xs font-semibold text-gray-500">SUN</span>
                         </div>
                     </div>
@@ -140,16 +154,97 @@
             </div>
         </div>
 
-        <div class="bg-[#2E4F4F] text-white p-6 rounded-2xl shadow-sm flex items-start space-x-4 w-full">
-            <div class="p-2 bg-white bg-opacity-10 rounded-xl text-lg">✨</div>
+        <div class="bg-dark-matcha text-white p-6 rounded-2xl shadow-sm flex items-start space-x-4 w-full">
+
+            <div class="p-2.5 bg-white/20 bg-opacity-10 rounded-xl flex items-center justify-center shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+                </svg>
+            </div>
+
             <div>
                 <h4 class="text-md font-bold">Trend Analysis AI Insight</h4>
                 <p class="text-sm text-gray-200 mt-1">
                     Demand for <span class="underline font-medium">Ceremonial Matcha</span> is expected to rise by <span
-                        class="font-bold text-emerald-300">15% next week</span>. Recommend increasing base order of milk by
-                    2 cases.
+                        class="font-bold text-white">15% next week</span>. Recommend increasing base order of milk by 2
+                    cases.
                 </p>
             </div>
+
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mt-6 w-full">
+
+            <div class="mb-6">
+                <h3 class="text-xl font-bold text-[#2D5A34]">Restock Planning</h3>
+                <p class="text-sm text-gray-400 mt-1">Inventory replenishment logic based on time-series forecasting</p>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+
+                    <thead>
+                        <tr class="text-[10px] uppercase tracking-wider text-gray-400 border-b border-gray-100">
+                            <th class="pb-3 font-bold">Ingredient Name</th>
+                            <th class="pb-3 font-bold">Current Stock</th>
+                            <th class="pb-3 font-bold">Average Usage</th>
+                            <th class="pb-3 font-bold">Predicted Depletion</th>
+                            <th class="pb-3 font-bold">Reorder Qty</th>
+                            <th class="pb-3 font-bold">Status</th>
+                        </tr>
+                    </thead>
+
+                    <tbody class="text-sm align-top">
+
+                        <tr class="border-b border-gray-50">
+                            <td class="py-5 font-bold text-[#2D5A34]">Bubuk Matcha</td>
+                            <td class="py-5 font-bold text-gray-800">1.2 kg</td>
+                            <td class="py-5 text-gray-500">450g /<br>week</td>
+                            <td class="py-5 font-bold text-red-600 flex items-start gap-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                                    class="w-4 h-4 mt-0.5">
+                                    <path fill-rule="evenodd"
+                                        d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a1 1 0 100-2 1 1 0 000 2z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                                <span>Friday,<br>Jan 26</span>
+                            </td>
+                            <td class="py-5 font-bold text-gray-800">5.0 kg</td>
+                            <td class="py-5">
+                                <span
+                                    class="bg-red-50 text-red-500 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase">Restock</span>
+                            </td>
+                        </tr>
+
+                        <tr class="border-b border-gray-50">
+                            <td class="py-5 font-bold text-[#2D5A34]">Premium Oat<br>Milk</td>
+                            <td class="py-5 font-bold text-gray-800">48<br>Units</td>
+                            <td class="py-5 text-gray-500">120<br>Units / week</td>
+                            <td class="py-5 text-gray-700">Wednesday,<br>Jan 24</td>
+                            <td class="py-5 font-bold text-gray-800">12<br>Cases</td>
+                            <td class="py-5">
+                                <span
+                                    class="bg-green-50 text-green-600 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase">Cukup</span>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td class="py-5 font-bold text-[#2D5A34]">Eco-Friendly<br>Paper Cups</td>
+                            <td class="py-5 font-bold text-gray-800">2,500<br>pcs</td>
+                            <td class="py-5 text-gray-500">1,200<br>pcs / week</td>
+                            <td class="py-5 text-gray-700">Friday, Feb 2</td>
+                            <td class="py-5 font-bold text-gray-800">5,000<br>pcs</td>
+                            <td class="py-5">
+                                <span
+                                    class="bg-green-50 text-green-600 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase">Cukup</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
         </div>
 
     </div>

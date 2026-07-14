@@ -27,7 +27,7 @@
 
 .login-left {
     flex: 1.6;
-    background-image: url("/images/asst_loginpg.jpg");
+    background-image: url("/public/images/aset_login.jpg");
     background-size: cover;
     background-position: center;
     color: #fff;
