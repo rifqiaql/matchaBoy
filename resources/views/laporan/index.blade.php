@@ -20,10 +20,23 @@
                         </button>
                     </div>
 
-                    <div class="flex items-center bg-gray-50 p-1 rounded-lg border border-gray-200 text-xs font-semibold">
-                        <button
-                            class="bg-white text-gray-800 px-4 py-1 rounded-md shadow-sm border border-gray-100">Monthly</button>
-                        <button class="text-gray-500 px-4 py-1 hover:text-gray-700 transition">Weekly</button>
+                    <div x-data="{ activeTab: 'monthly' }"
+                        class="flex items-center bg-gray-50 p-1 rounded-lg border border-gray-200 text-xs font-semibold">
+
+                        <button @click="activeTab = 'monthly'"
+                            :class="activeTab === 'monthly' ? 'bg-white text-gray-800 shadow-sm border-gray-100' :
+                                'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-200/50'"
+                            class="px-4 py-1 rounded-md border transition-all duration-300 ease-in-out">
+                            Monthly
+                        </button>
+
+                        <button @click="activeTab = 'weekly'"
+                            :class="activeTab === 'weekly' ? 'bg-white text-gray-800 shadow-sm border-gray-100' :
+                                'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-200/50'"
+                            class="px-4 py-1 rounded-md border transition-all duration-300 ease-in-out">
+                            Weekly
+                        </button>
+
                     </div>
                 </div>
             </div>

@@ -1,5 +1,6 @@
 <div id="deleteModal"
-    class="fixed inset-0 z-50 hidden bg-black/50 items-center justify-center backdrop-blur-sm transition-opacity">
+    class="fixed inset-0 z-50 hidden flex items-start justify-center pt-20 bg-black/50 backdrop-blur-sm transition-opacity">
+
     <div id="deleteModalContent"
         class="bg-white rounded-2xl shadow-xl w-full max-w-sm mx-4 overflow-hidden transform transition-all scale-95 opacity-0 p-6 text-center">
 
@@ -20,10 +21,11 @@
                 @csrf
                 @method('DELETE')
                 <button type="submit"
-                    class=" px-6 py-2.5 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors shadow-sm">
+                    class="px-6 py-2.5 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors shadow-sm">
                     Ya, Hapus
                 </button>
             </form>
         </div>
+
     </div>
 </div>
