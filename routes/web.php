@@ -8,6 +8,7 @@ use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\IngredientController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -63,3 +64,6 @@ Route::get('/keranjang', [ProductController::class, 'index'])->name('keranjang.i
 // Pastiin ada ->name('keranjang.index') di ujungnya!
 Route::get('/keranjang', [CartController::class, 'index'])->name('keranjang.index');
 Route::post('/keranjang', [CartController::class, 'store'])->name('keranjang.store');
+
+// Pastikan ditaruh di dalam middleware admin jika lu pakai
+Route::post('/products/{product}/ingredients', [IngredientController::class, 'store'])->name('products.ingredients.store');
