@@ -48,18 +48,27 @@ class CartController extends Controller
                 // Ambil data produk beserta relasi bahan bakunya (ingredients)
                 $product = Product::with('ingredients')->findOrFail($item['id']);
 
+                // =========================================================
+                // BLOK INI YANG LU LEWATKAN KEMARIN. JANGAN DIHAPUS!
+                // =========================================================
+                if ($product->ingredients->isEmpty()) {
+                    throw new \Exception("Sistem Gagal: Produk '{$product->name}' belum memiliki data resep (bahan baku) di database!");
+                }
+                // =========================================================
+
                 // 4. Loop setiap bahan baku yang menyusun produk ini
                 foreach ($product->ingredients as $ingredient) {
-                    // Total kebutuhan = takaran resep x jumlah beli
-                    $totalKebutuhan = $ingredient->pivot->jumlah * $item['quantity'];
 
-                    // Verifikasi stok gudang
-                    if ($ingredient->stok < $totalKebutuhan) {
+                    // PENTING: Gunakan 'quantity_needed' sesuai tabel product_ingredients
+                    $totalKebutuhan = $ingredient->pivot->quantity_needed * $item['quantity'];
+
+                    // PENTING: Gunakan 'stok_saat_ini' sesuai tabel bahan_baku
+                    if ($ingredient->stok_saat_ini < $totalKebutuhan) {
                         throw new \Exception("Stok bahan baku '{$ingredient->nama_bahan}' tidak cukup untuk membuat {$product->name}!");
                     }
 
-                    // Ganti decrement dengan cara matematika manual seperti yang lu tulis
-                    $ingredient->stok = $ingredient->stok - $totalKebutuhan;
+                    // PENTING: Potong kolom 'stok_saat_ini'
+                    $ingredient->stok_saat_ini = $ingredient->stok_saat_ini - $totalKebutuhan;
                     $ingredient->save();
                 }
             }

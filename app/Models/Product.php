@@ -23,10 +23,9 @@ class Product extends Model
      */
     public function ingredients()
     {
-        // Hubungkan ke BahanBaku, definisikan nama tabel pivotnya (misal: product_ingredients)
-        // dan ambil kolom tambahan (withPivot) seperti jumlah_pemakaian
-        return $this->belongsToMany(BahanBaku::class, 'product_ingredients')
-            ->withPivot('jumlah') // sesuaikan nama kolom jumlah di tabel pivot lu
+        // Parameter: (ModelTujuan, NamaTabelPivot, KunciLokal, KunciTujuan)
+        return $this->belongsToMany(BahanBaku::class, 'product_ingredients', 'product_id', 'ingredient_id')
+            ->withPivot('quantity_needed')
             ->withTimestamps();
     }
 

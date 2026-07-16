@@ -121,7 +121,9 @@
 
     @include('keranjang.create')
     @include('keranjang.cartEdit')
-    @include('keranjang.cartDelete') @push('scripts')
+    @include('keranjang.cartDelete')
+
+    @push('scripts')
         <script>
             // Fungsi Pengendali Modal Create Bawaan
             function tampilModalProduk() {
@@ -151,9 +153,11 @@
                 if (modal) modal.classList.add('hidden');
                 const form = document.getElementById('formEditProduk');
                 if (form) form.reset();
+
+                const fileNamePreview = document.getElementById('edit_file_name_preview');
+                if (fileNamePreview) fileNamePreview.innerText = "";
             }
 
-            // Tambahkan listener ini di dalam DOMContentLoaded atau di area script utama lo
             document.addEventListener('DOMContentLoaded', function() {
                 const editImageInput = document.getElementById('edit_item_image');
                 const fileNamePreview = document.getElementById('edit_file_name_preview');
@@ -180,24 +184,11 @@
                 }
             });
 
-            // Pastikan pada fungsi tutupModalEdit lo, preview nama file ikut direset kosong:
-            function tutupModalEdit() {
-                const modal = document.getElementById('modalEditProduk');
-                if (modal) modal.classList.add('hidden');
-                const form = document.getElementById('formEditProduk');
-                if (form) form.reset();
-
-                const fileNamePreview = document.getElementById('edit_file_name_preview');
-                if (fileNamePreview) fileNamePreview.innerText = "";
-            }
-
             function hapusProduk(id, name) {
-                // 1. Dapatkan elemen modal dan form-nya
                 const modal = document.getElementById('deleteModal');
                 const content = document.getElementById('deleteModalContent');
                 const form = document.getElementById('confirmDeleteForm');
 
-                // 2. Pastikan form ditemukan sebelum lanjut
                 if (!form) {
                     console.error(
                         "ID 'confirmDeleteForm' tidak ditemukan! Pastikan file cartDelete.blade.php sudah ter-include.");
@@ -205,26 +196,19 @@
                     return;
                 }
 
-                // 3. Set action form secara dinamis ke URL produk yang akan dihapus
                 form.action = `/products/${id}`;
 
-                // 4. Tampilkan modal dengan animasi
                 modal.classList.remove('hidden');
-                // Beri sedikit delay agar transisi CSS berjalan
                 setTimeout(() => {
                     content.classList.remove('scale-95', 'opacity-0');
                     content.classList.add('scale-100', 'opacity-100');
                 }, 10);
             }
 
-            /**
-             * Fungsi untuk menutup modal hapus
-             */
             function closeDeleteModal() {
                 const modal = document.getElementById('deleteModal');
                 const content = document.getElementById('deleteModalContent');
 
-                // Animasi tutup
                 content.classList.remove('scale-100', 'opacity-100');
                 content.classList.add('scale-95', 'opacity-0');
 
@@ -233,7 +217,6 @@
                 }, 300);
             }
 
-            // Kirim Perubahan Edit via AJAX (PUT)
             function simpanPerubahanProduk(event) {
                 event.preventDefault();
                 let id = document.getElementById('edit_item_id').value;
@@ -278,7 +261,9 @@
                     });
             }
 
+            // =========================================================================
             // Logika Frontend Keranjang Belanja Utama
+            // =========================================================================
             document.addEventListener('DOMContentLoaded', function() {
                 let cart = [];
                 const cartContainer = document.getElementById('cart-items-container');
@@ -372,6 +357,7 @@
                     }
                 });
 
+                // Event listener untuk tombol plus, minus, dan remove di keranjang
                 cartContainer.addEventListener('click', function(e) {
                     const plusBtn = e.target.closest('.plus-qty');
                     if (plusBtn) {
@@ -407,6 +393,63 @@
                         return;
                     }
                 });
+
+                // ===================================================================
+                // EKSEKUSI CHECKOUT: Kirim Array Keranjang ke Backend (CartController)
+                // ===================================================================
+                checkoutBtn.addEventListener('click', function() {
+                    if (cart.length === 0) {
+                        alert('Keranjang masih kosong!');
+                        return;
+                    }
+
+                    // Kunci tombol biar kasir ga ngeklik 2 kali (mencegah double pemotongan stok)
+                    const originalText = this.innerHTML;
+                    this.disabled = true;
+                    this.innerHTML = '<span class="font-medium">Memproses Transaksi...</span>';
+
+                    // Tembak data ke server pakai fetch
+                    fetch("{{ route('keranjang.store') }}", {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
+                                    .getAttribute('content')
+                            },
+                            // Ubah array 'cart' javascript lu jadi string JSON biar bisa dibaca PHP
+                            body: JSON.stringify({
+                                cart: cart
+                            })
+                        })
+                        .then(async response => {
+                            const data = await response.json();
+                            // Lempar error kalau status code bukan 200 OK
+                            if (!response.ok) {
+                                throw new Error(data.message ||
+                                    'Terjadi kesalahan sistem/stok tidak cukup.');
+                            }
+                            return data;
+                        })
+                        .then(data => {
+                            if (data.success) {
+                                // Sukses: Munculkan notif, kosongkan keranjang, dan refresh
+                                alert(data.message);
+                                cart = [];
+                                location.reload();
+                            }
+                        })
+                        .catch(error => {
+                            // Gagal: Tampilkan pesan error dari server (misal: stok gudang kurang)
+                            console.error('Error Checkout:', error);
+                            alert(error.message);
+
+                            // Kembalikan state tombol ke semula biar kasir bisa benerin keranjangnya
+                            checkoutBtn.disabled = false;
+                            checkoutBtn.innerHTML = originalText;
+                        });
+                });
+                // ===================================================================
             });
 
             // Menyimpan Produk Baru dari Modal Create (POST)
