@@ -23,19 +23,39 @@ class ProductController extends Controller
     }
 
     /**
-     * Menyimpan produk baru ke database (AJAX POST)
+     * Menyediakan data produk beserta resepnya untuk modal edit (AJAX GET)
+     */
+    public function edit($id)
+    {
+        // Ambil produk beserta relasi ingredients/resepnya
+        $product = Product::with('ingredients')->find($id);
+
+        if (!$product) {
+            return response()->json(['success' => false, 'message' => 'Produk tidak ditemukan.'], 404);
+        }
+
+        return response()->json($product);
+    }
+
+    /**
+     * Menyimpan produk baru ke database beserta resepnya (AJAX POST)
      */
     public function store(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255',
             'price' => 'required|numeric',
+            'category' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:' . self::MAX_IMAGE_SIZE_KB,
+            'ingredients' => 'nullable|array',
+            'ingredients.*.bahan_baku_id' => 'required|exists:bahan_baku,id',
+            'ingredients.*.quantity_needed' => 'required|numeric|min:0.01',
         ]);
 
         $product = new Product();
         $product->name = $request->name;
         $product->price = $request->price;
+        // Pastikan kategori ikut tersimpan
 
         if ($request->hasFile('image')) {
             $imageName = time() . '.' . $request->image->extension();
@@ -45,18 +65,29 @@ class ProductController extends Controller
 
         $product->save();
 
+        // PROSES UTAMA: Sinkronisasikan data resep dinamis ke tabel pivot
+        if ($request->has('ingredients')) {
+            $syncData = [];
+            foreach ($request->ingredients as $item) {
+                $syncData[$item['bahan_baku_id']] = [
+                    'quantity_needed' => $item['quantity_needed']
+                ];
+            }
+            $product->ingredients()->sync($syncData);
+        }
+
         return response()->json([
             'success' => true,
-            'message' => 'Produk baru berhasil ditambahkan ke database!'
+            'message' => 'Produk baru dan takaran resepnya berhasil disimpan ke database!'
         ]);
     }
 
     /**
-     * Memperbarui data produk (AJAX PUT)
+     * Memperbarui data produk beserta resepnya (AJAX PUT)
      */
     public function update(Request $request, $id)
     {
-        $product = Product::find($id);
+        $product = Product::query()->findOrFail($id);
 
         if (!$product) {
             return response()->json(['success' => false, 'message' => 'Produk tidak ditemukan.'], 404);
@@ -65,11 +96,16 @@ class ProductController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'price' => 'required|numeric',
+            'category' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:' . self::MAX_IMAGE_SIZE_KB,
+            'ingredients' => 'nullable|array',
+            'ingredients.*.bahan_baku_id' => 'required|exists:bahan_baku,id',
+            'ingredients.*.quantity_needed' => 'required|numeric|min:0.01',
         ]);
 
         $product->name = $request->name;
         $product->price = $request->price;
+        // Pastikan kategori ikut terupdate
 
         if ($request->hasFile('image')) {
             // Hapus gambar lama jika ada di storage
@@ -84,9 +120,23 @@ class ProductController extends Controller
 
         $product->save();
 
+        // PROSES UTAMA EDIT: Update resep dinamis (resep lama dihapus, diganti yang baru)
+        if ($request->has('ingredients')) {
+            $syncData = [];
+            foreach ($request->ingredients as $item) {
+                $syncData[$item['bahan_baku_id']] = [
+                    'quantity_needed' => $item['quantity_needed']
+                ];
+            }
+            $product->ingredients()->sync($syncData);
+        } else {
+            // Jika semua baris resep dihapus saat edit, kosongkan tabel pivot
+            $product->ingredients()->detach();
+        }
+
         return response()->json([
             'success' => true,
-            'message' => 'Data produk berhasil diperbarui!'
+            'message' => 'Data produk dan komponen resep berhasil diperbarui!'
         ]);
     }
 
@@ -95,7 +145,7 @@ class ProductController extends Controller
      */
     public function destroy($id)
     {
-        $product = Product::find($id);
+        $product = Product::query()->findOrFail($id);
 
         if (!$product) {
             return response()->json(['success' => false, 'message' => 'Produk tidak ditemukan.'], 404);
@@ -106,7 +156,10 @@ class ProductController extends Controller
             Storage::disk('public')->delete('products/' . $product->image);
         }
 
-        $product->delete();
+        // Hapus relasi resep di tabel pivot dulu agar tidak terjadi data yatim (foreign key constraint)
+        $product->ingredients()->detach();
+
+        Product::destroy($id);
 
         return response()->json([
             'success' => true,

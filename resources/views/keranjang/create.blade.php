@@ -14,7 +14,7 @@
             </button>
         </div>
 
-        <form id="formProdukBaru" onsubmit="simpanProdukBaru(event)" class="p-5 space-y-4">
+        <form id="formProdukBaru" onsubmit="simpanProdukBaru(event)" class="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
             <div>
                 <label for="item_name" class="mb-1 block text-sm font-medium text-gray-500">Item Name</label>
                 <input type="text" id="item_name" required placeholder="Matcha Latte....."
@@ -39,6 +39,42 @@
                         class="w-full rounded-md border-0 bg-[#F6F4EE] px-4 py-2.5 text-gray-900 placeholder-gray-400 shadow-sm ring-1 ring-transparent transition focus:outline-none focus:ring-2 focus:ring-[#8FA88B]">
                 </div>
             </div>
+
+            <!-- ========================================================================= -->
+            <!-- SECTION INPUT RESEP DINAMIS (Koneksi Produk ke Gudang) -->
+            <!-- ========================================================================= -->
+            <div class="border-t border-dashed border-gray-200 pt-3">
+                <div class="flex items-center justify-between mb-2">
+                    <label class="block text-sm font-medium text-gray-500">Resep / Kebutuhan Bahan Baku</label>
+                    <button type="button" id="add-ingredient-btn"
+                        class="text-xs font-semibold text-[#8FA88B] hover:text-[#3B5B43] transition">
+                        + Tambah Bahan
+                    </button>
+                </div>
+
+                <div id="resep-container" class="space-y-2">
+                    <!-- Baris Default Pertama -->
+                    <div class="flex gap-2 items-center resep-row bg-[#FBFAF6] p-2 rounded-lg ring-1 ring-gray-100">
+                        <select name="ingredients[0][bahan_baku_id]"
+                            class="flex-1 rounded-md border-0 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm ring-1 ring-gray-200 focus:outline-none focus:ring-2 focus:ring-[#8FA88B]"
+                            required>
+                            <option value="">-- Pilih Bahan --</option>
+                            @foreach ($all_ingredients as $bahan)
+                                <option value="{{ $bahan->id }}">{{ $bahan->nama_bahan }} ({{ $bahan->satuan }})
+                                </option>
+                            @endforeach
+                        </select>
+                        <input type="number" name="ingredients[0][quantity_needed]" step="0.01" min="0.01"
+                            required placeholder="Total"
+                            class="w-24 rounded-md border-0 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm ring-1 ring-gray-200 focus:outline-none focus:ring-2 focus:ring-[#8FA88B]">
+                        <button type="button"
+                            class="text-red-500 hover:text-red-700 text-sm font-medium px-2 py-1 remove-resep-btn">
+                            Hapus
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- ========================================================================= -->
 
             <div>
                 <label class="mb-2 block text-sm font-medium text-gray-500">Gambar Produk</label>
@@ -85,6 +121,24 @@
 
         modal.classList.add('hidden');
         modal.classList.remove('flex');
+
+        // Reset kontainer resep kembali ke 1 baris kosong saat modal ditutup
+        const container = document.getElementById('resep-container');
+        if (container) {
+            container.innerHTML = `
+                <div class="flex gap-2 items-center resep-row bg-[#FBFAF6] p-2 rounded-lg ring-1 ring-gray-100">
+                    <select name="ingredients[0][bahan_baku_id]" class="flex-1 rounded-md border-0 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm ring-1 ring-gray-200 focus:outline-none focus:ring-2 focus:ring-[#8FA88B]" required>
+                        <option value="">-- Pilih Bahan --</option>
+                        @foreach ($all_ingredients as $bahan)
+                            <option value="{{ $bahan->id }}">{{ $bahan->nama_bahan }} ({{ $bahan->satuan }})</option>
+                        @endforeach
+                    </select>
+                    <input type="number" name="ingredients[0][quantity_needed]" step="0.01" min="0.01" required placeholder="Total"
+                        class="w-24 rounded-md border-0 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm ring-1 ring-gray-200 focus:outline-none focus:ring-2 focus:ring-[#8FA88B]">
+                    <button type="button" class="text-red-500 hover:text-red-700 text-sm font-medium px-2 py-1 remove-resep-btn">Hapus</button>
+                </div>
+            `;
+        }
     }
 
     function updateNamaFileProduk(input) {
@@ -93,4 +147,44 @@
 
         label.textContent = input.files && input.files.length > 0 ? input.files[0].name : 'No file chosen';
     }
+
+    // Handle penambahan baris resep dinamis
+    document.addEventListener('DOMContentLoaded', function() {
+        const container = document.getElementById('resep-container');
+        const addBtn = document.getElementById('add-ingredient-btn');
+        let rowIndex = 1;
+
+        if (addBtn && container) {
+            addBtn.addEventListener('click', function() {
+                const newRow = document.createElement('div');
+                newRow.className =
+                    'flex gap-2 items-center resep-row bg-[#FBFAF6] p-2 rounded-lg ring-1 ring-gray-100 mt-2';
+                newRow.innerHTML = `
+                    <select name="ingredients[${rowIndex}][bahan_baku_id]" class="flex-1 rounded-md border-0 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm ring-1 ring-gray-200 focus:outline-none focus:ring-2 focus:ring-[#8FA88B]" required>
+                        <option value="">-- Pilih Bahan --</option>
+                        @foreach ($all_ingredients as $bahan)
+                            <option value="{{ $bahan->id }}">{{ $bahan->nama_bahan }} ({{ $bahan->satuan }})</option>
+                        @endforeach
+                    </select>
+                    <input type="number" name="ingredients[${rowIndex}][quantity_needed]" step="0.01" min="0.01" required placeholder="Total"
+                        class="w-24 rounded-md border-0 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm ring-1 ring-gray-200 focus:outline-none focus:ring-2 focus:ring-[#8FA88B]">
+                    <button type="button" class="text-red-500 hover:text-red-700 text-sm font-medium px-2 py-1 remove-resep-btn">Hapus</button>
+                `;
+                container.appendChild(newRow);
+                rowIndex++;
+            });
+
+            // Hapus baris resep dinamis
+            container.addEventListener('click', function(e) {
+                if (e.target.classList.contains('remove-resep-btn')) {
+                    const row = e.target.closest('.resep-row');
+                    if (container.querySelectorAll('.resep-row').length > 1) {
+                        row.remove();
+                    } else {
+                        alert('Setiap produk minimal wajib menyantumkan 1 resep bahan baku.');
+                    }
+                }
+            });
+        }
+    });
 </script>

@@ -128,13 +128,19 @@
             // Fungsi Pengendali Modal Create Bawaan
             function tampilModalProduk() {
                 const modal = document.getElementById('modalTambahProduk');
-                if (modal) modal.classList.remove('hidden');
+                if (modal) {
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                }
             }
 
             function tutupModalProduk() {
                 const modal = document.getElementById('modalTambahProduk');
                 const form = document.getElementById('formProdukBaru');
-                if (modal) modal.classList.add('hidden');
+                if (modal) {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }
                 if (form) form.reset();
             }
 
@@ -142,15 +148,53 @@
             function bukaModalEdit(id, name, price) {
                 const modal = document.getElementById('modalEditProduk');
                 if (!modal) return;
+
                 document.getElementById('edit_item_id').value = id;
                 document.getElementById('edit_item_name').value = name;
                 document.getElementById('edit_item_price').value = price;
+
                 modal.classList.remove('hidden');
+                modal.classList.add('flex');
+
+                // AJAX Ambil data resep eksis produk untuk dirender ke dalam modalEdit
+                const resepContainer = document.getElementById('edit-resep-container');
+                if (resepContainer) {
+                    resepContainer.innerHTML =
+                        '<div class="text-center py-2 text-xs text-gray-400" id="edit-resep-loading">Memuat data resep...</div>';
+                    editRowIndex = 0; // Reset index counter di cartEdit.blade.php
+
+                    fetch(`/products/${id}/edit`, {
+                            headers: {
+                                'Accept': 'application/json'
+                            }
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            resepContainer.innerHTML = '';
+                            if (data.ingredients && data.ingredients.length > 0) {
+                                data.ingredients.forEach(bahan => {
+                                    const row = buatBarisResepEdit(bahan.id, bahan.pivot.quantity_needed);
+                                    resepContainer.appendChild(row);
+                                });
+                            } else {
+                                resepContainer.innerHTML =
+                                    '<div class="text-center py-2 text-xs text-gray-400" id="edit-resep-loading">Belum ada resep terdaftar.</div>';
+                            }
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            resepContainer.innerHTML =
+                                '<div class="text-center py-2 text-xs text-red-500" id="edit-resep-loading">Gagal memuat resep.</div>';
+                        });
+                }
             }
 
             function tutupModalEdit() {
                 const modal = document.getElementById('modalEditProduk');
-                if (modal) modal.classList.add('hidden');
+                if (modal) {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }
                 const form = document.getElementById('formEditProduk');
                 if (form) form.reset();
 
@@ -222,6 +266,7 @@
                 let id = document.getElementById('edit_item_id').value;
                 let name = document.getElementById('edit_item_name').value;
                 let price = document.getElementById('edit_item_price').value;
+                let category = document.getElementById('edit_item_category').value;
                 let imageElement = document.getElementById('edit_item_image');
                 let imageInput = (imageElement && imageElement.files) ? imageElement.files[0] : null;
                 const maxImageSizeKb = 5120;
@@ -236,7 +281,15 @@
                 formData.append('_method', 'PUT');
                 formData.append('name', name);
                 formData.append('price', price);
+                formData.append('category', category);
                 if (imageInput) formData.append('image', imageInput);
+
+                // Baca input resep dinamis dari form edit
+                const editForm = document.getElementById('formEditProduk');
+                const resepInputs = editForm.querySelectorAll('[name^="ingredients"]');
+                resepInputs.forEach(input => {
+                    formData.append(input.name, input.value);
+                });
 
                 fetch(`/products/${id}`, {
                         method: 'POST',
@@ -357,7 +410,6 @@
                     }
                 });
 
-                // Event listener untuk tombol plus, minus, dan remove di keranjang
                 cartContainer.addEventListener('click', function(e) {
                     const plusBtn = e.target.closest('.plus-qty');
                     if (plusBtn) {
@@ -395,7 +447,7 @@
                 });
 
                 // ===================================================================
-                // EKSEKUSI CHECKOUT: Kirim Array Keranjang ke Backend (CartController)
+                // EKSEKUSI CHECKOUT: Kirim Array Keranjang ke Backend
                 // ===================================================================
                 checkoutBtn.addEventListener('click', function() {
                     if (cart.length === 0) {
@@ -403,12 +455,10 @@
                         return;
                     }
 
-                    // Kunci tombol biar kasir ga ngeklik 2 kali (mencegah double pemotongan stok)
                     const originalText = this.innerHTML;
                     this.disabled = true;
                     this.innerHTML = '<span class="font-medium">Memproses Transaksi...</span>';
 
-                    // Tembak data ke server pakai fetch
                     fetch("{{ route('keranjang.store') }}", {
                             method: 'POST',
                             headers: {
@@ -417,14 +467,12 @@
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
                                     .getAttribute('content')
                             },
-                            // Ubah array 'cart' javascript lu jadi string JSON biar bisa dibaca PHP
                             body: JSON.stringify({
                                 cart: cart
                             })
                         })
                         .then(async response => {
                             const data = await response.json();
-                            // Lempar error kalau status code bukan 200 OK
                             if (!response.ok) {
                                 throw new Error(data.message ||
                                     'Terjadi kesalahan sistem/stok tidak cukup.');
@@ -433,39 +481,37 @@
                         })
                         .then(data => {
                             if (data.success) {
-                                // Sukses: Munculkan notif, kosongkan keranjang, dan refresh
                                 alert(data.message);
                                 cart = [];
                                 location.reload();
                             }
                         })
                         .catch(error => {
-                            // Gagal: Tampilkan pesan error dari server (misal: stok gudang kurang)
                             console.error('Error Checkout:', error);
                             alert(error.message);
 
-                            // Kembalikan state tombol ke semula biar kasir bisa benerin keranjangnya
                             checkoutBtn.disabled = false;
                             checkoutBtn.innerHTML = originalText;
                         });
                 });
-                // ===================================================================
             });
 
-            // Menyimpan Produk Baru dari Modal Create (POST)
+            // Menyimpan Produk Baru dari Modal Create (POST) + Input Resep Otomatis
             function simpanProdukBaru(event) {
                 event.preventDefault();
                 let nameElement = document.getElementById('item_name');
                 let priceElement = document.getElementById('item_price');
+                let categoryElement = document.getElementById('item_category');
                 let imageElement = document.getElementById('item_image');
 
                 if (!nameElement || !priceElement) {
-                    alert("Elemen input HTML tidak ditemukan. Periksa kembali ID input di file create.blade.php Anda!");
+                    alert("Elemen input HTML tidak ditemukan.");
                     return;
                 }
 
                 let nameInput = nameElement.value;
                 let priceInput = priceElement.value;
+                let categoryInput = categoryElement ? categoryElement.value : '';
                 let imageInput = (imageElement && imageElement.files) ? imageElement.files[0] : null;
 
                 if (!nameInput || !priceInput) {
@@ -476,7 +522,15 @@
                 let formData = new FormData();
                 formData.append('name', nameInput);
                 formData.append('price', priceInput);
+                formData.append('category', categoryInput);
                 if (imageInput) formData.append('image', imageInput);
+
+                // Tarik otomatis array input resep dari create.blade.php
+                const createForm = document.getElementById('formProdukBaru');
+                const resepInputs = createForm.querySelectorAll('[name^="ingredients"]');
+                resepInputs.forEach(input => {
+                    formData.append(input.name, input.value);
+                });
 
                 fetch("{{ route('products.store') }}", {
                         method: 'POST',

@@ -19,6 +19,7 @@ class CartController extends Controller
     {
         return view('keranjang.index', [
             'products' => Product::query()->latest()->get(),
+            'all_ingredients' => \App\Models\BahanBaku::all(), // Tambah baris ini
         ]);
     }
 
