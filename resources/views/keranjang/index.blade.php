@@ -113,7 +113,7 @@
                 </div>
                 <button class="w-full btn-icon primary cart-checkout" title="Bayar Sekarang" id="checkout-btn" disabled>
                     <x-icon name="credit-card" size="md" class="w-4 h-4 stroke-current" />
-                    <span class="font-medium">Bayar Sekarang</span>
+                    <span class="font-medium">Check Out</span>
                 </button>
             </div>
         </div>
