@@ -1,8 +1,13 @@
-<div id="modalTambahProduk"
-    class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-opacity">
+<div id="modalTambahProduk" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
 
-    <!-- Modal Container: Dibatasi maksimal lebarnya (max-w-lg) biar ga melar -->
-    <div class="w-full max-w-lg overflow-hidden rounded-[20px] bg-white shadow-2xl flex flex-col max-h-[95vh]">
+    <!-- Backdrop: Dipisah warnanya ke sini, diberi ID dan status awal opacity-0 -->
+    <div id="tambahBackdrop"
+        class="absolute inset-0 bg-black/40 backdrop-blur-sm opacity-0 transition-opacity duration-300 ease-out"
+        onclick="tutupModalProduk()"></div>
+
+    <!-- Modal Container: Diberi ID dan status awal opacity-0 & scale-95 -->
+    <div id="tambahModalContent"
+        class="w-full max-w-lg overflow-hidden rounded-[20px] bg-white shadow-2xl relative z-10 flex flex-col max-h-[95vh] opacity-0 scale-95 transform transition-all duration-300 ease-out">
 
         <!-- Header -->
         <div class="bg-[#84A07F] px-6 py-5 flex items-start justify-between shrink-0">
@@ -98,7 +103,7 @@
             </div>
             <!-- ========================================================================= -->
 
-            <!-- Gambar Produk (Desain mirip Gambar 2) -->
+            <!-- Gambar Produk -->
             <div>
                 <label class="mb-1.5 block text-[13px] font-medium text-gray-600">Gambar Produk</label>
                 <div
@@ -138,49 +143,80 @@
 </div>
 
 <script>
-    // Memperbaiki fungsi tampil agar menggunakan flex untuk centering yg sempurna
+    // FUNGSI TAMPIL BERANIMASI
     function tampilModalProduk() {
         const modal = document.getElementById('modalTambahProduk');
+        const backdrop = document.getElementById('tambahBackdrop');
+        const content = document.getElementById('tambahModalContent');
         if (!modal) return;
+
+        // Munculkan secara teknis (display)
         modal.classList.remove('hidden');
         modal.classList.add('flex');
+
+        // Delay 50ms agar browser siap memutar animasi
+        setTimeout(() => {
+            if (backdrop) {
+                backdrop.classList.remove('opacity-0');
+                backdrop.classList.add('opacity-100');
+            }
+            if (content) {
+                content.classList.remove('opacity-0', 'scale-95');
+                content.classList.add('opacity-100', 'scale-100');
+            }
+        }, 50);
     }
 
+    // FUNGSI TUTUP BERANIMASI
     function tutupModalProduk() {
         const modal = document.getElementById('modalTambahProduk');
+        const backdrop = document.getElementById('tambahBackdrop');
+        const content = document.getElementById('tambahModalContent');
         if (!modal) return;
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
 
-        const form = document.getElementById('formProdukBaru');
-        if (form) form.reset();
-
-        // Reset label nama file
-        const labelFile = document.getElementById('item_image_name');
-        if (labelFile) {
-            labelFile.textContent = '';
-            labelFile.classList.add('hidden');
+        // Picu animasi menghilang
+        if (backdrop) {
+            backdrop.classList.remove('opacity-100');
+            backdrop.classList.add('opacity-0');
+        }
+        if (content) {
+            content.classList.remove('opacity-100', 'scale-100');
+            content.classList.add('opacity-0', 'scale-95');
         }
 
-        // Reset kontainer resep kembali ke 1 baris kosong
-        const container = document.getElementById('resep-container');
-        if (container) {
-            container.innerHTML = `
-                <div class="flex gap-2 items-center resep-row bg-white p-1">
-                    <select name="ingredients[0][bahan_baku_id]" class="flex-1 rounded-lg border-0 bg-[#F6F4EE] px-3 py-2.5 text-[13px] text-gray-900 focus:ring-2 focus:ring-[#8FA88B]" required>
-                        <option value="">-- Pilih Bahan --</option>
-                        @foreach ($all_ingredients as $bahan)
-                            <option value="{{ $bahan->id }}">{{ $bahan->nama_bahan }} ({{ $bahan->satuan }})</option>
-                        @endforeach
-                    </select>
-                    <input type="number" name="ingredients[0][quantity_needed]" step="0.01" min="0.01" required placeholder="Qty"
-                        class="w-20 rounded-lg border-0 bg-[#F6F4EE] px-3 py-2.5 text-[13px] text-gray-900 focus:ring-2 focus:ring-[#8FA88B] text-center">
-                    <button type="button" class="text-gray-400 hover:text-red-500 transition px-1 remove-resep-btn" title="Hapus">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                    </button>
-                </div>
-            `;
-        }
+        // Tunggu transisi selesai (300ms) baru di-hidden dan reset form
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+
+            const form = document.getElementById('formProdukBaru');
+            if (form) form.reset();
+
+            const labelFile = document.getElementById('item_image_name');
+            if (labelFile) {
+                labelFile.textContent = '';
+                labelFile.classList.add('hidden');
+            }
+
+            const container = document.getElementById('resep-container');
+            if (container) {
+                container.innerHTML = `
+                    <div class="flex gap-2 items-center resep-row bg-white p-1">
+                        <select name="ingredients[0][bahan_baku_id]" class="flex-1 rounded-lg border-0 bg-[#F6F4EE] px-3 py-2.5 text-[13px] text-gray-900 focus:ring-2 focus:ring-[#8FA88B]" required>
+                            <option value="">-- Pilih Bahan --</option>
+                            @foreach ($all_ingredients as $bahan)
+                                <option value="{{ $bahan->id }}">{{ $bahan->nama_bahan }} ({{ $bahan->satuan }})</option>
+                            @endforeach
+                        </select>
+                        <input type="number" name="ingredients[0][quantity_needed]" step="0.01" min="0.01" required placeholder="Qty"
+                            class="w-20 rounded-lg border-0 bg-[#F6F4EE] px-3 py-2.5 text-[13px] text-gray-900 focus:ring-2 focus:ring-[#8FA88B] text-center">
+                        <button type="button" class="text-gray-400 hover:text-red-500 transition px-1 remove-resep-btn" title="Hapus">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                    </div>
+                `;
+            }
+        }, 300);
     }
 
     function updateNamaFileProduk(input) {
