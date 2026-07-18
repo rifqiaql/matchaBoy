@@ -82,22 +82,34 @@ class InventoryController extends Controller
     /**
      * Store a newly created bahan baku in storage.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request)
     {
-        $validated = $request->validate([
-            // UBAH 'unique:bahan_bakus' menjadi 'unique:bahan_baku'
-            'nama_bahan' => 'required|string|max:255|unique:bahan_baku',
-            'kategori' => 'required|string|max:100',
-            'satuan' => 'required|string|max:100',
-            'stok_awal' => 'required|integer|min:0',
-            'stok_saat_ini' => 'required|integer|min:0',
-            'stok_minimum' => 'required|integer|min:0',
+        // 1. Validasi input yang masuk dari form baru
+        $request->validate([
+            'nama_bahan'      => 'required|string|max:255',
+            'kategori'        => 'required|string',
+            'satuan'          => 'required|string',
+            'jumlah_kemasan'  => 'required|numeric|min:0',
+            'isi_per_kemasan' => 'required|numeric|min:0',
+            'stok_minimum'    => 'required|numeric|min:0',
         ]);
 
-        BahanBaku::create($validated);
+        // 2. Kalkulasi cerdas di belakang layar
+        // Kalikan jumlah kemasan dengan isi per kemasan
+        $totalStok = $request->jumlah_kemasan * $request->isi_per_kemasan;
 
-        return redirect()->route('inventory.index')
-                       ->with('notify', ['success', 'Bahan baku berhasil ditambahkan!', 'type' => 'success']);
+        // 3. Simpan ke database
+        BahanBaku::create([
+            'nama_bahan'    => $request->nama_bahan,
+            'kategori'      => $request->kategori,
+            'satuan'        => $request->satuan,
+            // Hasil perkalian tadi disuntikkan ke stok_awal dan stok_saat_ini
+            'stok_awal'     => $totalStok, 
+            'stok_saat_ini' => $totalStok, 
+            'stok_minimum'  => $request->stok_minimum,
+        ]);
+
+        return redirect()->route('inventory.index')->with('success', 'Bahan baku berhasil ditambahkan!');
     }
 
     /**

@@ -40,13 +40,11 @@
                             <select name="kategori" id="kategori"
                                 class="w-full px-4 py-2.5 text-sm border border-[#E8E1D9] bg-[#FAF7F2] text-gray-800 rounded-lg focus:ring-2 focus:ring-[#365E3F] outline-none transition-all appearance-none cursor-pointer"
                                 required>
-                                <option value="" disabled {{ old('kategori') ? '' : 'selected' }}>Pilih
-                                    Kategori...</option>
+                                <option value="" disabled {{ old('kategori') ? '' : 'selected' }}>Pilih Kategori...</option>
                                 <option value="Bubuk" {{ old('kategori') == 'Bubuk' ? 'selected' : '' }}>Bubuk</option>
                                 <option value="Cairan" {{ old('kategori') == 'Cair' ? 'selected' : '' }}>Cair</option>
                                 <option value="Sirup" {{ old('kategori') == 'Sirup' ? 'selected' : '' }}>Sirup</option>
-                                <option value="Toping" {{ old('kategori') == 'Toping' ? 'selected' : '' }}>Toping
-                                </option>
+                                <option value="Toping" {{ old('kategori') == 'Toping' ? 'selected' : '' }}>Toping</option>
                             </select>
                             <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none"
                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -60,24 +58,15 @@
                     </div>
 
                     <div>
-                        <label for="satuan" class="block text-sm font-semibold text-gray-700 mb-1.5">Satuan</label>
+                        <label for="satuan" class="block text-sm font-semibold text-gray-700 mb-1.5">Satuan Dasar</label>
                         <div class="relative">
                             <select name="satuan" id="satuan"
                                 class="w-full px-4 py-2.5 text-sm border border-gray-200 bg-white text-gray-800 rounded-lg focus:ring-2 focus:ring-[#365E3F] outline-none transition-all appearance-none cursor-pointer"
                                 required>
-                                <option value="" disabled {{ old('satuan') ? '' : 'selected' }}>Pilih Satuan...
-                                </option>
-                                <option value="Gram" {{ old('satuan') == 'Gram' ? 'selected' : '' }}>Gram (g)
-                                </option>
-                                <option value="Kg" {{ old('satuan') == 'Kg' ? 'selected' : '' }}>Kilogram (Kg)
-                                </option>
-                                <option value="Mililiter" {{ old('satuan') == 'Mililiter' ? 'selected' : '' }}>
-                                    Mililiter (ml)</option>
-                                <option value="Liter" {{ old('satuan') == 'Liter' ? 'selected' : '' }}>Liter (L)
-                                </option>
-                                <option value="Pcs" {{ old('satuan') == 'Pcs' ? 'selected' : '' }}>Pieces (Pcs)
-                                </option>
-                                <option value="Pack" {{ old('satuan') == 'Pack' ? 'selected' : '' }}>Pack</option>
+                                <option value="" disabled {{ old('satuan') ? '' : 'selected' }}>Pilih Satuan...</option>
+                                <option value="Gram" {{ old('satuan') == 'Gram' ? 'selected' : '' }}>Gram (g)</option>
+                                <option value="Mililiter" {{ old('satuan') == 'Mililiter' ? 'selected' : '' }}>Mililiter (ml)</option>
+                                <option value="Pcs" {{ old('satuan') == 'Pcs' ? 'selected' : '' }}>Pieces (Pcs)</option>
                             </select>
                             <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none"
                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -85,6 +74,7 @@
                                     d="M19 9l-7 7-7-7"></path>
                             </svg>
                         </div>
+                        <p class="text-xs text-gray-500 mt-2">Pilih satuan terkecil (Base Unit) untuk resep.</p>
                         @error('satuan')
                             <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                         @enderror
@@ -98,28 +88,29 @@
 
                     <div class="grid grid-cols-2 gap-5 mb-5">
                         <div>
-                            <label for="stok_awal" class="block text-sm font-semibold text-gray-700 mb-1.5">Stok
-                                Awal</label>
-                            <input type="number" name="stok_awal" id="stok_awal" value="{{ old('stok_awal') }}"
-                                min="0"
+                            <label for="jumlah_kemasan" class="block text-sm font-semibold text-gray-700 mb-1.5">Jumlah Kemasan</label>
+                            <input type="number" name="jumlah_kemasan" id="jumlah_kemasan" value="{{ old('jumlah_kemasan') }}"
+                                min="0" step="0.01"
                                 class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#365E3F] focus:border-[#365E3F] outline-none transition-all placeholder-gray-400"
-                                placeholder="0" required>
-                            @error('stok_awal')
+                                placeholder="Contoh: 2" required>
+                            @error('jumlah_kemasan')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
                         </div>
 
                         <div>
-                            <label for="stok_saat_ini" class="block text-sm font-semibold text-gray-700 mb-1.5">Stok
-                                Saat Ini</label>
-                            <input type="number" name="stok_saat_ini" id="stok_saat_ini"
-                                value="{{ old('stok_saat_ini') }}" min="0"
+                            <label for="isi_per_kemasan" class="block text-sm font-semibold text-gray-700 mb-1.5">Isi per Kemasan</label>
+                            <input type="number" name="isi_per_kemasan" id="isi_per_kemasan"
+                                value="{{ old('isi_per_kemasan') }}" min="0" step="0.01"
                                 class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#365E3F] focus:border-[#365E3F] outline-none transition-all placeholder-gray-400"
-                                placeholder="0" required>
-                            @error('stok_saat_ini')
+                                placeholder="Contoh: 950" required>
+                            @error('isi_per_kemasan')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
                         </div>
+                    </div>
+                    <div class="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-5">
+                         <p class="text-xs text-blue-800 font-medium">Sistem akan otomatis mengalikan (Jumlah × Isi) untuk disimpan sebagai Total Stok.</p>
                     </div>
 
                     <div>
@@ -128,9 +119,8 @@
                         <input type="number" name="stok_minimum" id="stok_minimum" value="{{ old('stok_minimum') }}"
                             min="0"
                             class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#365E3F] focus:border-[#365E3F] outline-none transition-all placeholder-gray-400"
-                            placeholder="Contoh: 20" required>
-                        <p class="text-xs text-gray-500 mt-2">Sistem akan memberikan peringatan jika stok mencapai
-                            batas ini.</p>
+                            placeholder="Contoh: 200" required>
+                        <p class="text-xs text-gray-500 mt-2">Peringatan muncul jika total stok (dalam satuan dasar) mencapai batas ini.</p>
                         @error('stok_minimum')
                             <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                         @enderror
