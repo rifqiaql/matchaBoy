@@ -11,15 +11,32 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('products', function (Blueprint $table) {
-            $table->string('category')->nullable()->after('price');
-        });
+        if (!Schema::hasTable('products')) {
+            Schema::create('products', function (Blueprint $table) {
+                $table->id();
+                $table->string('name');
+                $table->integer('price');
+                $table->string('category')->nullable();
+                $table->string('image')->nullable();
+                $table->timestamps();
+            });
+
+            return;
+        }
+
+        if (!Schema::hasColumn('products', 'category')) {
+            Schema::table('products', function (Blueprint $table) {
+                $table->string('category')->nullable()->after('price');
+            });
+        }
     }
 
     public function down(): void
     {
-        Schema::table('products', function (Blueprint $table) {
-            $table->dropColumn('category');
-        });
+        if (Schema::hasTable('products') && Schema::hasColumn('products', 'category')) {
+            Schema::table('products', function (Blueprint $table) {
+                $table->dropColumn('category');
+            });
+        }
     }
 };

@@ -181,18 +181,14 @@
                                         <div class="flex flex-col items-start gap-1">
                                             <span
                                                 class="text-sm font-semibold text-gray-800">{{ $item->stok_saat_ini }}</span>
-                                            {{-- <div class="w-24 bg-gray-100 rounded-full h-2">
-                                                <div class="bg-dark-matcha h-2 rounded-full"
-                                                    style="width: {{ $persentase }}%"></div>
-                                            </div> --}}
-                                            {{-- <span class="text-xs text-gray-500">{{ $persentase }}%</span> --}}
                                         </div>
                                     </td>
                                     <td class="px-6 py-4">
                                         <span class="text-sm text-gray-600">{{ $item->satuan }}</span>
                                     </td>
                                     <td class="px-6 py-4 text-left">
-                                        <span class="text-sm font-medium text-gray-700">{{ $item->stok_awal }}</span>
+                                        <!-- DIPERBAIKI: Mengambil stok_minimum, bukan stok_awal -->
+                                        <span class="text-sm font-medium text-gray-700">{{ $item->stok_minimum }}</span>
                                     </td>
                                     <td class="px-6 py-4 text-center">
                                         <span class="px-3 py-1.5 rounded-full text-xs font-bold {{ $statusClass }}">
