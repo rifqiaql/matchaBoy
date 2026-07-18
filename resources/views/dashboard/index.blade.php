@@ -4,6 +4,7 @@
     <div class="p-8">
 
         <div class="grid grid-cols-4 gap-6 mb-8">
+            <!-- CARD 1: BUBUK MATCHA -->
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                 <div class="flex items-center justify-between mb-4">
                     <span class="text-sm font-semibold text-gray-500">Bubuk Matcha</span>
@@ -21,13 +22,17 @@
                         </div>
                     </div>
                 </div>
-                <p class="text-3xl font-bold text-dark-matcha">2.5 kg</p>
+                <p class="text-3xl font-bold text-dark-matcha">
+                    {{ $matcha ? $matcha->stok_saat_ini : 0 }}
+                    <span class="text-lg">{{ $matcha ? $matcha->satuan : '' }}</span>
+                </p>
                 <p class="text-xs text-gray-400 mt-2">Premium Grade</p>
                 <div class="w-full bg-gray-100 rounded-full h-2 mt-3">
                     <div class="bg-dark-matcha h-2 rounded-full w-3/4"></div>
                 </div>
             </div>
 
+            <!-- CARD 2: FULL CREAM -->
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                 <div class="flex items-center justify-between mb-4">
                     <span class="text-sm font-semibold text-gray-500">Full Cream</span>
@@ -46,62 +51,69 @@
                         </div>
                     </div>
                 </div>
-                <p class="text-3xl font-bold text-yellow-500">15 L</p>
+                <p class="text-3xl font-bold text-yellow-500">
+                    {{ $fullCream ? $fullCream->stok_saat_ini : 0 }}
+                    <span class="text-lg">{{ $fullCream ? $fullCream->satuan : '' }}</span>
+                </p>
                 <p class="text-xs text-gray-400 mt-2">Stock Supplier</p>
                 <div class="w-full bg-gray-100 rounded-full h-2 mt-3">
                     <div class="bg-yellow-500 h-2 rounded-full w-1/2"></div>
                 </div>
             </div>
 
+            <!-- CARD 3: SELAI STRAWBERRY -->
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                 <div class="flex items-center justify-between mb-4">
                     <span class="text-sm font-semibold text-gray-500">Selai Strawberry</span>
                     <div class="relative flex items-center justify-center w-10 h-10">
-                        <div class="relative flex items-center justify-center w-10 h-10">
-                            <div class="absolute inset-0 bg-dark-matcha opacity-20 blur-md rounded-xl"></div>
-                            <div
-                                class="relative flex items-center justify-center w-full h-full bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 shadow-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" class="lucide lucide-vegan-icon lucide-vegan">
-                                    <path d="M16 8q6 0 6-6-6 0-6 6" />
-                                    <path d="M17.41 3.59a10 10 0 1 0 3 3" />
-                                    <path d="M2 2a26.6 26.6 0 0 1 10 20c.9-6.82 1.5-9.5 4-14" />
-                                </svg>
-                            </div>
+                        <div class="absolute inset-0 bg-dark-matcha opacity-20 blur-md rounded-xl"></div>
+                        <div
+                            class="relative flex items-center justify-center w-full h-full bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="lucide lucide-vegan-icon lucide-vegan">
+                                <path d="M16 8q6 0 6-6-6 0-6 6" />
+                                <path d="M17.41 3.59a10 10 0 1 0 3 3" />
+                                <path d="M2 2a26.6 26.6 0 0 1 10 20c.9-6.82 1.5-9.5 4-14" />
+                            </svg>
                         </div>
                     </div>
                 </div>
-                <p class="text-3xl font-bold text-pink-400">15 L</p>
+                <p class="text-3xl font-bold text-pink-400">
+                    {{ $strawberry ? $strawberry->stok_saat_ini : 0 }}
+                    <span class="text-lg">{{ $strawberry ? $strawberry->satuan : '' }}</span>
+                </p>
                 <p class="text-xs text-gray-400 mt-2">Tersedia</p>
                 <div class="w-full bg-gray-100 rounded-full h-2 mt-3">
                     <div class="bg-pink-400 h-2 rounded-full w-2/3"></div>
                 </div>
             </div>
 
+            <!-- CARD 4: ES BATU -->
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                 <div class="flex items-center justify-between mb-4">
-                    <span class="text-sm font-semibold text-gray-500">Oats</span>
+                    <span class="text-sm font-semibold text-gray-500">Es Batu</span>
                     <div class="relative flex items-center justify-center w-10 h-10">
-                        <div class="relative flex items-center justify-center w-10 h-10">
-                            <div class="absolute inset-0 bg-dark-matcha opacity-20 blur-md rounded-xl"></div>
-                            <div
-                                class="relative flex items-center justify-center w-full h-full bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 shadow-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" class="lucide lucide-cookie-icon lucide-cookie">
-                                    <path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5" />
-                                    <path d="M8.5 8.5v.01" />
-                                    <path d="M16 15.5v.01" />
-                                    <path d="M12 12v.01" />
-                                    <path d="M11 17v.01" />
-                                    <path d="M7 14v.01" />
-                                </svg>
-                            </div>
+                        <div class="absolute inset-0 bg-dark-matcha opacity-20 blur-md rounded-xl"></div>
+                        <div
+                            class="relative flex items-center justify-center w-full h-full bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="lucide lucide-cookie-icon lucide-cookie">
+                                <path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5" />
+                                <path d="M8.5 8.5v.01" />
+                                <path d="M16 15.5v.01" />
+                                <path d="M12 12v.01" />
+                                <path d="M11 17v.01" />
+                                <path d="M7 14v.01" />
+                            </svg>
                         </div>
                     </div>
                 </div>
-                <p class="text-3xl font-bold text-green-500">5.2 kg</p>
+                <p class="text-3xl font-bold text-green-500">
+                    {{ $esBatu ? $esBatu->stok_saat_ini : 0 }}
+                    <span class="text-lg">{{ $esBatu ? $esBatu->satuan : '' }}</span>
+                </p>
                 <p class="text-xs text-gray-400 mt-2">In Stock</p>
                 <div class="w-full bg-gray-100 rounded-full h-2 mt-3">
                     <div class="bg-green-500 h-2 rounded-full w-4/5"></div>
@@ -158,33 +170,24 @@
                 <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex-1">
                     <h3 class="text-lg font-bold mb-6 text-gray-800">Top 3 Products</h3>
                     <div class="space-y-5">
-                        <div>
-                            <p class="text-sm font-semibold text-gray-700">Matcha Latte Original</p>
-                            <div class="flex items-center justify-between mt-2">
-                                <div class="flex-1 bg-gray-100 rounded-full h-2 mr-3">
-                                    <div class="bg-[#2D5A34] h-2 rounded-full" style="width: 80%;"></div>
+
+                        @forelse ($topProducts as $top)
+                            <div>
+                                <p class="text-sm font-semibold text-gray-700">{{ $top->name }}</p>
+                                <div class="flex items-center justify-between mt-2">
+                                    <div class="flex-1 bg-gray-100 rounded-full h-2 mr-3">
+                                        <!-- Warna bar dikasih default hijau untuk sementara -->
+                                        <div class="bg-[#2D5A34] h-2 rounded-full" style="width: 80%;"></div>
+                                    </div>
+                                    <span class="text-xs font-bold text-gray-600">{{ $top->total_sold }} Terjual</span>
                                 </div>
-                                <span class="text-xs font-bold text-gray-600">142</span>
                             </div>
-                        </div>
-                        <div>
-                            <p class="text-sm font-semibold text-gray-700">Caramel Matcha Latte</p>
-                            <div class="flex items-center justify-between mt-2">
-                                <div class="flex-1 bg-gray-100 rounded-full h-2 mr-3">
-                                    <div class="bg-[#86A789] h-2 rounded-full" style="width: 60%;"></div>
-                                </div>
-                                <span class="text-xs font-bold text-gray-600">98</span>
+                        @empty
+                            <div class="text-sm text-gray-400 text-center py-4">
+                                Belum ada data penjualan dari kasir.
                             </div>
-                        </div>
-                        <div>
-                            <p class="text-sm font-semibold text-gray-700">Strawberry Cream Matcha</p>
-                            <div class="flex items-center justify-between mt-2">
-                                <div class="flex-1 bg-gray-100 rounded-full h-2 mr-3">
-                                    <div class="bg-pink-400 h-2 rounded-full" style="width: 55%;"></div>
-                                </div>
-                                <span class="text-xs font-bold text-gray-600">74</span>
-                            </div>
-                        </div>
+                        @endforelse
+
                     </div>
                 </div>
 
