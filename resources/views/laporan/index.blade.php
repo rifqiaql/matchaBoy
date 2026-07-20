@@ -22,13 +22,14 @@
 
                     <div x-data="{ activeTab: 'monthly' }"
                         class="flex items-center bg-gray-50 p-1 rounded-lg border border-gray-200 text-xs font-semibold">
-                        <button @click="activeTab = 'monthly'"
+                        <!-- REVISI: Tambahkan pemicu switchChartMode() pada fungsi @click -->
+                        <button @click="activeTab = 'monthly'; switchChartMode('monthly')"
                             :class="activeTab === 'monthly' ? 'bg-white text-gray-800 shadow-sm border-gray-100' :
                                 'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-200/50'"
                             class="px-4 py-1 rounded-md border transition-all duration-300 ease-in-out">
                             Monthly
                         </button>
-                        <button @click="activeTab = 'weekly'"
+                        <button @click="activeTab = 'weekly'; switchChartMode('weekly')"
                             :class="activeTab === 'weekly' ? 'bg-white text-gray-800 shadow-sm border-gray-100' :
                                 'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-200/50'"
                             class="px-4 py-1 rounded-md border transition-all duration-300 ease-in-out">
@@ -44,27 +45,17 @@
 
             <!-- LEFT COLUMN: GRAPH & INSIGHTS -->
             <div class="col-span-2 space-y-6">
-                <!-- Demand Analysis Graphic Mockup -->
+                <!-- REVISI: Demand Analysis dengan Chart.js -->
                 <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                     <div class="flex justify-between items-center mb-1">
                         <h3 class="text-lg font-bold text-gray-800">Demand Analysis</h3>
-                        <div class="flex items-center gap-4 text-xs font-semibold text-gray-500">
-                            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[#2D5A34]"></span>
-                                Actual</span>
-                            <span class="flex items-center gap-1.5"><span
-                                    class="w-2 h-2 rounded-dashed border border-gray-400"></span> Forecast</span>
-                        </div>
+                        <!-- Legend manual dihapus karena Chart.js akan memunculkannya secara otomatis -->
                     </div>
                     <p class="text-sm text-gray-400 mb-6">Actual vs. Forecasted consumption</p>
 
-                    <div class="flex items-end justify-around h-56 gap-2 mt-4">
-                        @foreach (['MON' => 120, 'TUE' => 100, 'WED' => 140, 'THU' => 130, 'FRI' => 110, 'SAT' => 155, 'SUN' => 135] as $day => $height)
-                            <div class="flex flex-col items-center gap-3">
-                                <div class="w-10 bg-[#2D5A34] rounded-t-lg transition-all hover:bg-green-600"
-                                    style="height: {{ $height }}px;"></div>
-                                <span class="text-xs font-semibold text-gray-500">{{ $day }}</span>
-                            </div>
-                        @endforeach
+                    <!-- Container Grafik: Fixed Height agar layout stabil saat diganti bulanan -->
+                    <div class="w-full h-64 mt-4 relative">
+                        <canvas id="demandChart"></canvas>
                     </div>
                 </div>
 
@@ -196,7 +187,6 @@
                         @forelse($ingredients as $ing)
                             <tr class="border-b border-gray-50">
                                 <td class="py-5 font-bold text-[#2D5A34]">{{ $ing->nama_bahan }}</td>
-                                <!-- Format stok saat ini langsung dari database teman lu -->
                                 <td class="py-5 font-bold text-gray-800">{{ $ing->stok_saat_ini }}</td>
                                 <td class="py-5 text-gray-500">450g /<br>week</td>
                                 <td class="py-5 font-bold text-red-600 flex items-start gap-1">
@@ -208,8 +198,9 @@
                                         <span
                                             class="bg-red-50 text-red-500 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase">Restock</span>
                                     @else
-                                        <s
-                                            class="bg-green-50 text-green-600 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase">Cukup</s>
+                                        <!-- REVISI: Memperbaiki typo tag s menjadi span -->
+                                        <span
+                                            class="bg-green-50 text-green-600 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase">Cukup</span>
                                     @endif
                                 </td>
                             </tr>
@@ -225,4 +216,112 @@
         </div>
 
     </div>
+
+    <!-- REVISI: Inisialisasi Script Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Data Dummy Terstruktur
+            const dataGrafik = {
+                weekly: {
+                    labels: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'],
+                    actual: [120, 100, 140, 130, 110, 155, 135],
+                    forecast: [110, 105, 130, 135, 115, 150, 140]
+                },
+                monthly: {
+                    labels: Array.from({
+                        length: 30
+                    }, (_, i) => `${i + 1} Jul`),
+                    actual: [120, 100, 140, 130, 110, 155, 135, 140, 130, 125, 150, 160, 145, 130, 140, 155,
+                        165, 170, 150, 140, 135, 145, 160, 155, 150, 165, 175, 180, 170, 160
+                    ],
+                    forecast: [115, 105, 135, 130, 115, 150, 140, 135, 135, 130, 145, 155, 150, 135, 145, 150,
+                        160, 165, 155, 145, 140, 140, 155, 150, 155, 160, 170, 175, 175, 165
+                    ]
+                }
+            };
+
+            // Inisialisasi Chart
+            const ctx = document.getElementById('demandChart').getContext('2d');
+            window.demandChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: dataGrafik.monthly.labels, // Default ke mode bulanan sesuai state x-data
+                    datasets: [{
+                            type: 'line',
+                            label: 'Forecast',
+                            data: dataGrafik.monthly.forecast,
+                            borderColor: '#86A789',
+                            borderDash: [5, 5],
+                            backgroundColor: 'transparent',
+                            tension: 0.4,
+                            pointRadius: 2
+                        },
+                        {
+                            type: 'bar',
+                            label: 'Actual',
+                            data: dataGrafik.monthly.actual,
+                            backgroundColor: '#2D5A34',
+                            borderRadius: 6,
+                            borderSkipped: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            align: 'end'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                display: false
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        });
+
+        // Fungsi Global untuk diakses oleh Alpine.js
+        window.switchChartMode = function(mode) {
+            // Deklarasikan ulang data agar scope bisa membaca
+            const dataGrafik = {
+                weekly: {
+                    labels: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'],
+                    actual: [120, 100, 140, 130, 110, 155, 135],
+                    forecast: [110, 105, 130, 135, 115, 150, 140]
+                },
+                monthly: {
+                    labels: Array.from({
+                        length: 30
+                    }, (_, i) => `${i + 1} Jul`),
+                    actual: [120, 100, 140, 130, 110, 155, 135, 140, 130, 125, 150, 160, 145, 130, 140, 155, 165,
+                        170, 150, 140, 135, 145, 160, 155, 150, 165, 175, 180, 170, 160
+                    ],
+                    forecast: [115, 105, 135, 130, 115, 150, 140, 135, 135, 130, 145, 155, 150, 135, 145, 150, 160,
+                        165, 155, 145, 140, 140, 155, 150, 155, 160, 170, 175, 175, 165
+                    ]
+                }
+            };
+
+            if (window.demandChart) {
+                window.demandChart.data.labels = dataGrafik[mode].labels;
+                window.demandChart.data.datasets[0].data = dataGrafik[mode].forecast;
+                window.demandChart.data.datasets[1].data = dataGrafik[mode].actual;
+                window.demandChart.update();
+            }
+        };
+    </script>
 @endsection
