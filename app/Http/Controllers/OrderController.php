@@ -13,17 +13,7 @@ use Illuminate\Support\Facades\Storage;
 
 class OrderController extends Controller
 {
-    /**
-     * Menampilkan Halaman Analytics & Stock Report
-     */
-    public function index()
-    {
-        // Tarik data bahan baku untuk tabel Restock Planning
-        $ingredients = \App\Models\BahanBaku::all();
 
-        // Lempar ke view laporan
-        return view('laporan.index', compact('ingredients'));
-    }
 
     public function checkout(Request $request)
     {
@@ -159,47 +149,5 @@ class OrderController extends Controller
                 'message' => 'Gagal menyimpan produk: ' . $e->getMessage()
             ], 500);
         }
-    }
-
-    public function exportCSV()
-    {
-        $orders = \App\Models\Order::with(['user'])->latest()->get();
-
-        $filename = "Laporan_Penjualan_MatchaBoy_" . date('Ymd_His') . ".csv";
-
-        $headers = [
-            "Content-type"        => "text/csv",
-            "Content-Disposition" => "attachment; filename=$filename",
-            "Pragma"              => "no-cache",
-            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
-            "Expires"             => "0"
-        ];
-
-        $columns = ['No. Invoice', 'Tanggal Transaksi', 'Kasir', 'Subtotal', 'Pajak', 'Total Bayar', 'Status'];
-
-        $callback = function () use ($orders, $columns) {
-            $file = fopen('php://output', 'w');
-
-            // REVISI: Tambahkan ";" di akhir parameter sebagai delimiter kolom
-            fputcsv($file, $columns, ";");
-
-            // Tulis data transaksi dari database
-            foreach ($orders as $order) {
-                // REVISI: Tambahkan ";" di akhir parameter agar kolom terpisah rapi di Excel
-                fputcsv($file, [
-                    $order->invoice_number,
-                    $order->created_at->format('Y-m-d H:i:s'),
-                    $order->user->name ?? 'Sistem',
-                    $order->subtotal,
-                    $order->tax,
-                    $order->total_price,
-                    $order->status
-                ], ";");
-            }
-
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
     }
 }
