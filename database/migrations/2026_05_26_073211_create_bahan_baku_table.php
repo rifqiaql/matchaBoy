@@ -14,10 +14,14 @@ return new class extends Migration
         Schema::create('bahan_baku', function (Blueprint $table) {
             $table->id();
             $table->string('nama_bahan');
+
+            // INI BARIS YANG LU LEWATKAN KEMARIN:
+            $table->string('kategori')->nullable();
+
             $table->string('satuan');
-            $table->integer('stok_awal')->default(0);
-            $table->integer('stok_saat_ini')->default(0);
-            $table->integer('stok_minimum')->default(0);
+            $table->decimal('stok_awal', 10, 2)->default(0);
+            $table->decimal('stok_saat_ini', 10, 2)->default(0);
+            $table->decimal('stok_minimum', 10, 2)->default(0);
             $table->timestamps();
         });
     }

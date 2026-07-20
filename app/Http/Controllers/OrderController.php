@@ -13,6 +13,17 @@ use Illuminate\Support\Facades\Storage;
 
 class OrderController extends Controller
 {
+    /**
+     * Menampilkan Halaman Riwayat Transaksi / Laporan Kasir
+     */
+    public function index()
+    {
+        // Ambil data order, urutkan dari yang terbaru, bawa relasi kasir (user) dan rincian (items)
+        $orders = \App\Models\Order::with(['user', 'items.product'])->latest()->get();
+
+        // Lempar data ke file view resources/views/orders/index.blade.php
+        return view('orders.index', compact('orders'));
+    }
     public function checkout(Request $request)
     {
         // 1. Validasi input data keranjang yang dikirim oleh JavaScript (Front-End)

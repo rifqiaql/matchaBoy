@@ -42,43 +42,41 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
+        // 1. Validasi Produk & Resep sekaligus
         $request->validate([
             'name' => 'required|string|max:255',
-            'price' => 'required|numeric',
-            'category' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:' . self::MAX_IMAGE_SIZE_KB,
-            'ingredients' => 'nullable|array',
+            'price' => 'required|numeric|min:0',
+            'category' => 'required|string',
+            // 'image' => 'nullable|image|max:5120',
+
+            // Validasi Resep
+            'ingredients' => 'required|array|min:1',
             'ingredients.*.bahan_baku_id' => 'required|exists:bahan_baku,id',
             'ingredients.*.quantity_needed' => 'required|numeric|min:0.01',
         ]);
 
-        $product = new Product();
-        $product->name = $request->name;
-        $product->price = $request->price;
-        // Pastikan kategori ikut tersimpan
+        // 2. Simpan Produk Dulu
+        $product = Product::create([
+            'name' => $request->name,
+            'price' => $request->price,
+            'category' => $request->category,
+            // 'image' => $imagePath, // Sesuaikan dengan logika upload gambar lu
+        ]);
 
-        if ($request->hasFile('image')) {
-            $imageName = time() . '.' . $request->image->extension();
-            $request->image->storeAs('products', $imageName, 'public');
-            $product->image = $imageName;
+        // 3. Eksekusi Resep (Menggunakan logika lu yang sudah benar)
+        $syncData = [];
+        foreach ($request->ingredients as $item) {
+            $syncData[$item['bahan_baku_id']] = [
+                'quantity_needed' => $item['quantity_needed']
+            ];
         }
 
-        $product->save();
-
-        // PROSES UTAMA: Sinkronisasikan data resep dinamis ke tabel pivot
-        if ($request->has('ingredients')) {
-            $syncData = [];
-            foreach ($request->ingredients as $item) {
-                $syncData[$item['bahan_baku_id']] = [
-                    'quantity_needed' => $item['quantity_needed']
-                ];
-            }
-            $product->ingredients()->sync($syncData);
-        }
+        // Relasikan produk dengan bahan bakunya ke tabel pivot
+        $product->ingredients()->sync($syncData);
 
         return response()->json([
             'success' => true,
-            'message' => 'Produk baru dan takaran resepnya berhasil disimpan ke database!'
+            'message' => 'Produk dan Resep berhasil ditambahkan!'
         ]);
     }
 

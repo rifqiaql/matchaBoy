@@ -42,16 +42,21 @@
                         @if (auth()->user() && auth()->user()->role === 'admin')
                             <div
                                 class="absolute top-3 right-3 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 bg-white/80 backdrop-blur-sm p-1 rounded-md shadow-sm">
+
+                                <!-- TOMBOL EDIT SUDAH DIPERBAIKI -->
                                 <button type="button"
                                     class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
-                                    title="Edit Produk"
-                                    onclick="bukaModalEdit('{{ $product->id }}', '{{ addslashes($product->name) }}', '{{ $product->price }}')">
+                                    title="Edit Produk" data-id="{{ $product->id }}" data-name="{{ $product->name }}"
+                                    data-category="{{ $product->category }}" data-price="{{ $product->price }}"
+                                    data-ingredients="{{ json_encode($product->ingredients) }}"
+                                    onclick="bukaModalEdit(this)">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                         stroke-width="2" stroke="currentColor" class="w-4 h-4">
                                         <path stroke-linecap="round" stroke-linejoin="round"
                                             d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
                                     </svg>
                                 </button>
+
                                 <button type="button"
                                     class="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
                                     title="Hapus Produk"
@@ -126,109 +131,7 @@
     @push('scripts')
         <script>
             // =========================================================================
-            // 1. MODUL EDIT PRODUK (BUKA & TUTUP)
-            // =========================================================================
-            function bukaModalEdit(id, name, price) {
-                const modal = document.getElementById('modalEditProduk');
-                const backdrop = document.getElementById('editBackdrop');
-                const content = document.getElementById('editModalContent');
-
-                if (!modal) {
-                    alert("ID 'modalEditProduk' tidak ditemukan. Pastikan cartEdit.blade.php sudah di-include!");
-                    return;
-                }
-
-                // Isi data ke form
-                document.getElementById('edit_item_id').value = id;
-                document.getElementById('edit_item_name').value = name;
-                document.getElementById('edit_item_price').value = price;
-
-                // Tampilkan kerangka modal
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-
-                // Mainkan animasi masuk
-                setTimeout(() => {
-                    if (backdrop) {
-                        backdrop.classList.remove('opacity-0');
-                        backdrop.classList.add('opacity-100');
-                    }
-                    if (content) {
-                        content.classList.remove('scale-95', 'opacity-0');
-                        content.classList.add('scale-100', 'opacity-100');
-                    }
-                }, 50);
-
-                // AJAX Ambil data resep eksis
-                const resepContainer = document.getElementById('edit-resep-container');
-                if (resepContainer) {
-                    resepContainer.innerHTML =
-                        '<div class="text-center py-4 text-xs text-gray-400 bg-[#F6F4EE] rounded-xl border border-dashed border-gray-300">Memuat data resep...</div>';
-                    editRowIndex = 0;
-
-                    fetch(`/products/${id}/edit`, {
-                            headers: {
-                                'Accept': 'application/json'
-                            }
-                        })
-                        .then(res => res.json())
-                        .then(data => {
-                            resepContainer.innerHTML = '';
-                            if (data.ingredients && data.ingredients.length > 0) {
-                                data.ingredients.forEach(bahan => {
-                                    const row = buatBarisResepEdit(bahan.id, bahan.pivot.quantity_needed);
-                                    resepContainer.appendChild(row);
-                                });
-                            } else {
-                                resepContainer.innerHTML =
-                                    '<div class="text-center py-4 text-xs text-gray-400 bg-[#F6F4EE] rounded-xl border border-dashed border-gray-300">Belum ada resep terdaftar.</div>';
-                            }
-                        })
-                        .catch(err => {
-                            console.error("Gagal load resep:", err);
-                            resepContainer.innerHTML =
-                                '<div class="text-center py-4 text-xs text-red-500 bg-[#F6F4EE] rounded-xl border border-dashed border-gray-300">Gagal memuat resep dari server.</div>';
-                        });
-                }
-            } // <--- Fungsi buka selesai di sini
-
-            // SEJAJAR DI LUAR: Fungsi untuk menutup modal edit
-            function tutupModalEdit() {
-                const modal = document.getElementById('modalEditProduk');
-                const backdrop = document.getElementById('editBackdrop');
-                const content = document.getElementById('editModalContent');
-
-                if (!modal) return;
-
-                // Jalankan animasi keluar
-                if (backdrop) {
-                    backdrop.classList.remove('opacity-100');
-                    backdrop.classList.add('opacity-0');
-                }
-                if (content) {
-                    content.classList.remove('scale-100', 'opacity-100');
-                    content.classList.add('scale-95', 'opacity-0');
-                }
-
-                // Sembunyikan total setelah animasi beres
-                setTimeout(() => {
-                    modal.classList.add('hidden');
-                    modal.classList.remove('flex');
-
-                    const form = document.getElementById('formEditProduk');
-                    if (form) form.reset();
-
-                    const fileNamePreview = document.getElementById('edit_item_image_name');
-                    if (fileNamePreview) {
-                        fileNamePreview.textContent = "";
-                        fileNamePreview.classList.add('hidden');
-                    }
-                }, 300);
-            }
-
-
-            // =========================================================================
-            // 2. MODUL HAPUS PRODUK (BUKA & TUTUP)
+            // 1. MODUL HAPUS PRODUK (BUKA & TUTUP)
             // =========================================================================
             function hapusProduk(id) {
                 const modal = document.getElementById('deleteModal');
@@ -251,9 +154,8 @@
                         content.classList.add('scale-100', 'opacity-100');
                     }
                 }, 50);
-            } // <--- Fungsi buka selesai di sini
+            }
 
-            // SEJAJAR DI LUAR: Fungsi untuk menutup modal hapus
             function closeDeleteModal() {
                 const modal = document.getElementById('deleteModal');
                 const content = document.getElementById('deleteModalContent');
@@ -272,7 +174,7 @@
 
 
             // =========================================================================
-            // 3. AJAX SUBMIT DATA KE CONTROLLER
+            // 2. AJAX SUBMIT DATA KE CONTROLLER
             // =========================================================================
             function simpanProdukBaru(event) {
                 event.preventDefault();
@@ -364,7 +266,7 @@
 
 
             // =========================================================================
-            // 4. LOGIKA FRONTEND KERANJANG BELANJA (KASIR)
+            // 3. LOGIKA FRONTEND KERANJANG BELANJA (KASIR)
             // =========================================================================
             document.addEventListener('DOMContentLoaded', function() {
                 let cart = [];

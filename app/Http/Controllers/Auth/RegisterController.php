@@ -19,14 +19,18 @@ class RegisterController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        // 1. Validasi Hrus Menyertakan Username
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:users', // Username wajib unik
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
         ]);
 
-        $user =User::create([
+        // 2. Simpan Username ke Database
+        $user = User::create([
             'name' => $validated['name'],
+            'username' => $validated['username'], // Ini yang bikin error kalau lu skip
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
         ]);

@@ -4,7 +4,7 @@
 
         <div class="absolute inset-0" onclick="tutupModalEdit()"></div>
 
-        <!-- Modal Container: Dibatasi max-w-lg dan ditengahkan -->
+        <!-- Modal Container -->
         <div
             class="w-full max-w-lg overflow-hidden rounded-[20px] bg-white shadow-2xl relative z-10 flex flex-col max-h-[95vh]">
 
@@ -26,13 +26,14 @@
             <!-- Form Body -->
             <form id="formEditProduk" onsubmit="simpanPerubahanProduk(event)" class="overflow-y-auto p-6 space-y-5">
                 @csrf
-                <input type="hidden" id="edit_item_id">
+                <!-- Name perlu diset jika pakai form biasa, tapi karena AJAX, id cukup -->
+                <input type="hidden" id="edit_item_id" name="id">
 
                 <!-- Item Name -->
                 <div>
                     <label for="edit_item_name" class="mb-1.5 block text-[13px] font-medium text-gray-600">Item
                         Name</label>
-                    <input type="text" id="edit_item_name" required placeholder="Matcha Latte....."
+                    <input type="text" id="edit_item_name" name="name" required placeholder="Matcha Latte....."
                         class="w-full rounded-xl border-0 bg-[#F6F4EE] px-4 py-3 text-sm text-gray-900 placeholder-gray-400 shadow-sm ring-1 ring-transparent transition focus:outline-none focus:ring-2 focus:ring-[#8FA88B]">
                 </div>
 
@@ -42,7 +43,7 @@
                         <label for="edit_item_category"
                             class="mb-1.5 block text-[13px] font-medium text-gray-600">Kategori</label>
                         <div class="relative">
-                            <select id="edit_item_category" required
+                            <select id="edit_item_category" name="category" required
                                 class="w-full appearance-none rounded-xl border-0 bg-[#F6F4EE] px-4 py-3 text-sm text-gray-900 shadow-sm ring-1 ring-transparent transition focus:outline-none focus:ring-2 focus:ring-[#8FA88B]">
                                 <option value="">Select category</option>
                                 <option value="Signature">Signature</option>
@@ -62,14 +63,12 @@
                     <div>
                         <label for="edit_item_price"
                             class="mb-1.5 block text-[13px] font-medium text-gray-600">Harga</label>
-                        <input type="number" id="edit_item_price" required placeholder="Rp ......"
+                        <input type="number" id="edit_item_price" name="price" required placeholder="Rp ......"
                             class="w-full rounded-xl border-0 bg-[#F6F4EE] px-4 py-3 text-sm text-gray-900 placeholder-gray-400 shadow-sm ring-1 ring-transparent transition focus:outline-none focus:ring-2 focus:ring-[#8FA88B]">
                     </div>
                 </div>
 
-                <!-- ========================================================================= -->
                 <!-- SECTION EDIT RESEP DINAMIS -->
-                <!-- ========================================================================= -->
                 <div class="border-t border-dashed border-gray-200 pt-4">
                     <div class="flex items-center justify-between mb-3">
                         <label class="block text-[13px] font-medium text-gray-600">Kebutuhan Bahan Baku</label>
@@ -87,7 +86,6 @@
                         </div>
                     </div>
                 </div>
-                <!-- ========================================================================= -->
 
                 <!-- Gambar Produk -->
                 <div>
@@ -108,7 +106,7 @@
                             <span id="edit_item_image_name"
                                 class="text-[12px] text-[#6A8466] font-medium mt-2 bg-[#F6F4EE] px-3 py-1 rounded-full hidden"></span>
                         </label>
-                        <input type="file" id="edit_item_image" accept="image/*" class="hidden"
+                        <input type="file" name="image" id="edit_item_image" accept="image/*" class="hidden"
                             onchange="updateNamaFileEdit(this)">
                     </div>
                 </div>
@@ -138,11 +136,65 @@
         @foreach ($all_ingredients as $bahan)
             {
                 id: "{{ $bahan->id }}",
-                nama: "{{ $bahan->nama_bahan }}",
-                satuan: "{{ $bahan->satuan }}"
+                nama: "{{ addslashes($bahan->nama_bahan) }}",
+                satuan: "{{ addslashes($bahan->satuan) }}"
             },
         @endforeach
     ];
+
+    /**
+     * FUNGSI UTAMA: Menerima data dari tombol Edit dan menyuntikkannya ke form
+     */
+    function bukaModalEdit(button) {
+        // 1. Ambil data dari atribut HTML tombol
+        const id = button.getAttribute('data-id');
+        const name = button.getAttribute('data-name');
+        const category = button.getAttribute('data-category');
+        const price = button.getAttribute('data-price');
+        const ingredientsData = button.getAttribute('data-ingredients');
+
+        // 2. Isi value form dasar
+        document.getElementById('edit_item_id').value = id;
+        document.getElementById('edit_item_name').value = name;
+        document.getElementById('edit_item_category').value = category;
+        document.getElementById('edit_item_price').value = price;
+
+        // 3. Render ulang daftar bahan baku
+        const container = document.getElementById('edit-resep-container');
+        container.innerHTML = ''; // Kosongkan form resep sebelumnya
+        editRowIndex = 0;
+
+        try {
+            const ingredients = JSON.parse(ingredientsData);
+
+            if (ingredients && ingredients.length > 0) {
+                ingredients.forEach(item => {
+                    // Pastikan key object (bahan_baku_id / quantity_needed) sesuai dengan return JSON dari API/Controller lu
+                    const row = buatBarisResepEdit(item.bahan_baku_id, item.qty_dibutuhkan || item
+                        .quantity_needed);
+                    container.appendChild(row);
+                });
+            } else {
+                container.innerHTML =
+                    '<div class="text-center py-4 text-xs text-gray-400 bg-[#F6F4EE] rounded-xl border border-dashed border-gray-300" id="edit-resep-loading">Belum ada resep terdaftar untuk produk ini.</div>';
+            }
+        } catch (error) {
+            console.error("Gagal mem-parsing data resep: ", error);
+            container.innerHTML =
+                '<div class="text-center py-4 text-xs text-red-500 bg-red-50 rounded-xl">Terjadi kesalahan memuat resep.</div>';
+        }
+
+        // 4. Buka Modal
+        const modal = document.getElementById('modalEditProduk');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function tutupModalEdit() {
+        const modal = document.getElementById('modalEditProduk');
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+    }
 
     function updateNamaFileEdit(input) {
         const label = document.getElementById('edit_item_image_name');
@@ -157,14 +209,11 @@
         }
     }
 
-    /**
-     * Membuat sebaris elemen HTML pilihan resep dinamis (Disesuaikan UI Create)
-     */
     function buatBarisResepEdit(selectedBahanId = '', quantityNeeded = '') {
         let optionsHtml = '<option value="">-- Pilih Bahan --</option>';
         opsiBahanBaku.forEach(bahan => {
-            const selected = String(bahan.id) === String(selectedBahanId) ? 'selected' : '';
-            optionsHtml += `<option value="${bahan.id}" ${selected}>${bahan.nama} (${bahan.satuan})</option>`;
+            const isSelected = String(bahan.id) === String(selectedBahanId) ? 'selected' : '';
+            optionsHtml += `<option value="${bahan.id}" ${isSelected}>${bahan.nama} (${bahan.satuan})</option>`;
         });
 
         const row = document.createElement('div');
@@ -183,21 +232,17 @@
         return row;
     }
 
-    // Listener tombol tambah bahan baku di form edit
     document.addEventListener('DOMContentLoaded', function() {
         const container = document.getElementById('edit-resep-container');
         const addBtn = document.getElementById('edit-add-ingredient-btn');
 
         if (addBtn && container) {
             addBtn.addEventListener('click', function() {
-                // Hapus tulisan "memuat" atau "resep kosong" jika ada
                 const loadingMsg = document.getElementById('edit-resep-loading');
                 if (loadingMsg) loadingMsg.remove();
-
                 container.appendChild(buatBarisResepEdit());
             });
 
-            // Hapus baris resep dinamis
             container.addEventListener('click', function(e) {
                 if (e.target.closest('.remove-edit-resep-btn')) {
                     const row = e.target.closest('.edit-resep-row');

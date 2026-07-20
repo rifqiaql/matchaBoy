@@ -11,16 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (Schema::hasTable('products')) {
-            return;
-        }
-
-        Schema::create('products', function (Blueprint $table) {
+        Schema::create('order_items', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->integer('price');
-            $table->string('category')->nullable();
-            $table->string('image')->nullable();
+            $table->foreignId('order_id')->constrained('orders')->onDelete('cascade');
+            $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
+            $table->integer('quantity');
+            $table->integer('price'); // Pakai integer karena ngikutin Rupiah
             $table->timestamps();
         });
     }
@@ -30,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('products');
+        Schema::dropIfExists('order_items');
     }
 };

@@ -24,8 +24,9 @@
 
                     <div class="form-group">
                         <label class="small">Email Address</label>
+                        <!-- REVISI: Atribut autocomplete="username" wajib ada agar browser mendeteksi ini sebagai identitas login -->
                         <input id="email" type="email" class="form-input" name="email" value="{{ old('email') }}"
-                            required autofocus placeholder="name@teahouse.com">
+                            required autocomplete="username" autofocus placeholder="name@teahouse.com">
                         @if ($errors->has('email'))
                             <div class="small" style="color:#c0392b">{{ $errors->first('email') }}</div>
                         @endif
@@ -33,8 +34,9 @@
 
                     <div class="form-group">
                         <label class="small">Password</label>
+                        <!-- REVISI: Atribut autocomplete="current-password" wajib ada agar browser bisa menawarkan auto-fill password -->
                         <input id="password" type="password" class="form-input" name="password" required
-                            placeholder="••••••••">
+                            autocomplete="current-password" placeholder="••••••••">
                         @if ($errors->has('password'))
                             <div class="small" style="color:#c0392b">{{ $errors->first('password') }}</div>
                         @endif
@@ -47,8 +49,11 @@
                     </div>
 
                     <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
-                        <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:#6b7a6b"><input
-                                type="checkbox" name="remember"> Keep me signed in for 30 days</label>
+                        <!-- REVISI: id="remember" ditambahkan, dan value ditahan menggunakan fungsi old() jika login gagal -->
+                        <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:#6b7a6b">
+                            <input type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
+                            Keep me signed in for 30 days
+                        </label>
                     </div>
 
                     <div class="form-actions">

@@ -33,56 +33,89 @@ class CartController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        // 1. Validasi input JSON dari form keranjang/checkout (Validasi Array)
+        // 1. Validasi input keranjang dan metode pembayaran
         $request->validate([
             'cart'            => 'required|array',
             'cart.*.id'       => 'required|exists:products,id',
             'cart.*.quantity' => 'required|integer|min:1',
+            'payment_method'  => 'nullable|string'
         ]);
 
-        // 2. Gunakan DB Transaction biar aman
         DB::beginTransaction();
 
         try {
-            // 3. Looping setiap item yang ada di dalam keranjang belanja
+            $subtotal = 0;
+            $tax = 0;
+            $orderItemsData = []; // Wadah sementara biar gak query 2x
+
+            // 2. Loop Pertama: Verifikasi Resep & Hitung Finansial
             foreach ($request->cart as $item) {
-                // Ambil data produk beserta relasi bahan bakunya (ingredients)
                 $product = Product::with('ingredients')->findOrFail($item['id']);
 
-                // =========================================================
-                // BLOK INI YANG LU LEWATKAN KEMARIN. JANGAN DIHAPUS!
-                // =========================================================
                 if ($product->ingredients->isEmpty()) {
-                    throw new \Exception("Sistem Gagal: Produk '{$product->name}' belum memiliki data resep (bahan baku) di database!");
+                    throw new \Exception("Sistem Gagal: Produk '{$product->name}' belum memiliki data resep di database!");
                 }
-                // =========================================================
 
-                // 4. Loop setiap bahan baku yang menyusun produk ini
+                // Kalkulasi harga dari backend (aman dari manipulasi hacker)
+                $itemTotalPrice = $product->price * $item['quantity'];
+                $subtotal += $itemTotalPrice;
+
+                // Simpan struktur item untuk dieksekusi setelah nota induk dibuat
+                $orderItemsData[] = [
+                    'product'  => $product,
+                    'quantity' => $item['quantity'],
+                    'price'    => $product->price // Snapshot harga saat transaksi
+                ];
+            }
+
+            $totalPrice = $subtotal + $tax;
+
+            // 3. Buat Data Transaksi Induk (Tabel orders)
+            $order = \App\Models\Order::create([
+                'invoice_number' => 'INV-' . date('Ymd') . '-' . rand(1000, 9999),
+                'user_id'        => auth()->id(), // Mencatat kasir yang bertugas
+                'subtotal'       => $subtotal,
+                'tax'            => $tax,
+                'total_price'    => $totalPrice,
+                'payment_method' => $request->payment_method ?? 'cash',
+                'status'         => 'completed',
+            ]);
+
+            // 4. Loop Kedua: Simpan Rincian Belanja & Eksekusi Pemotongan Stok
+            foreach ($orderItemsData as $data) {
+                $product = $data['product'];
+                $qty = $data['quantity'];
+
+                // A. Catat ke tabel order_items
+                \App\Models\OrderItem::create([
+                    'order_id'   => $order->id,
+                    'product_id' => $product->id,
+                    'quantity'   => $qty,
+                    'price'      => $data['price'],
+                ]);
+
+                // B. Potong stok di tabel bahan_baku
                 foreach ($product->ingredients as $ingredient) {
+                    $totalKebutuhan = $ingredient->pivot->quantity_needed * $qty;
 
-                    // PENTING: Gunakan 'quantity_needed' sesuai tabel product_ingredients
-                    $totalKebutuhan = $ingredient->pivot->quantity_needed * $item['quantity'];
-
-                    // PENTING: Gunakan 'stok_saat_ini' sesuai tabel bahan_baku
                     if ($ingredient->stok_saat_ini < $totalKebutuhan) {
-                        throw new \Exception("Stok bahan baku '{$ingredient->nama_bahan}' tidak cukup untuk membuat {$product->name}!");
+                        throw new \Exception("Stok '{$ingredient->nama_bahan}' tidak cukup untuk {$product->name}! Butuh: {$totalKebutuhan}, Sisa: {$ingredient->stok_saat_ini}");
                     }
 
-                    // PENTING: Potong kolom 'stok_saat_ini'
-                    $ingredient->stok_saat_ini = $ingredient->stok_saat_ini - $totalKebutuhan;
+                    $ingredient->stok_saat_ini -= $totalKebutuhan;
                     $ingredient->save();
                 }
             }
 
-            // Simpan transaksi sukses
+            // 5. Kunci semua perubahan database
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Pembayaran berhasil diproses dan stok gudang telah dikurangi!'
+                'message' => 'Transaksi sukses! Nota tercetak dan stok otomatis dipotong.'
             ]);
         } catch (\Exception $e) {
-            // Batalkan semua perubahan jika ada error/stok kurang
+            // Batalkan pencatatan uang DAN pemotongan barang jika ada 1 saja error
             DB::rollBack();
 
             return response()->json([

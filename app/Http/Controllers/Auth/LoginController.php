@@ -22,13 +22,14 @@ class LoginController extends Controller
             'password' => 'required|string',
         ]);
 
-        if (Auth::attempt($credentials)) {
+        // REVISI MUTLAK: Tambahkan $request->boolean('remember') sebagai parameter kedua
+        if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
             return redirect()->intended('dashboard')->with('success', 'Login successful. Welcome back to MatchaBoy!');
         }
 
         return back()->withErrors([
-                'email' => 'The provided credentials do not match our records.',
+            'email' => 'The provided credentials do not match our records.',
         ])->onlyInput('email');
     }
 

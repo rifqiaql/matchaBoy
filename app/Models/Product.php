@@ -24,7 +24,7 @@ class Product extends Model
     public function ingredients()
     {
         // Parameter: (ModelTujuan, NamaTabelPivot, KunciLokal, KunciTujuan)
-        return $this->belongsToMany(BahanBaku::class, 'product_ingredients', 'product_id', 'ingredient_id')
+        return $this->belongsToMany(BahanBaku::class, 'product_bahan_baku', 'product_id', 'bahan_baku_id')
             ->withPivot('quantity_needed')
             ->withTimestamps();
     }

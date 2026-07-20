@@ -11,16 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (Schema::hasTable('products')) {
-            return;
-        }
-
-        Schema::create('products', function (Blueprint $table) {
+        Schema::create('product_bahan_baku', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->integer('price');
-            $table->string('category')->nullable();
-            $table->string('image')->nullable();
+            $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
+            $table->foreignId('bahan_baku_id')->constrained('bahan_baku')->onDelete('cascade');
+            $table->decimal('quantity_needed', 8, 2); // Wajib desimal untuk takaran resep
             $table->timestamps();
         });
     }
@@ -30,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('products');
+        Schema::dropIfExists('product_bahan_baku');
     }
 };
