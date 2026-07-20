@@ -14,16 +14,17 @@ use Illuminate\Support\Facades\Storage;
 class OrderController extends Controller
 {
     /**
-     * Menampilkan Halaman Riwayat Transaksi / Laporan Kasir
+     * Menampilkan Halaman Analytics & Stock Report
      */
     public function index()
     {
-        // Ambil data order, urutkan dari yang terbaru, bawa relasi kasir (user) dan rincian (items)
-        $orders = \App\Models\Order::with(['user', 'items.product'])->latest()->get();
+        // Tarik data bahan baku untuk tabel Restock Planning
+        $ingredients = \App\Models\BahanBaku::all();
 
-        // Lempar data ke file view resources/views/orders/index.blade.php
-        return view('orders.index', compact('orders'));
+        // Lempar ke view laporan
+        return view('laporan.index', compact('ingredients'));
     }
+
     public function checkout(Request $request)
     {
         // 1. Validasi input data keranjang yang dikirim oleh JavaScript (Front-End)
@@ -158,5 +159,47 @@ class OrderController extends Controller
                 'message' => 'Gagal menyimpan produk: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    public function exportCSV()
+    {
+        $orders = \App\Models\Order::with(['user'])->latest()->get();
+
+        $filename = "Laporan_Penjualan_MatchaBoy_" . date('Ymd_His') . ".csv";
+
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename=$filename",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        $columns = ['No. Invoice', 'Tanggal Transaksi', 'Kasir', 'Subtotal', 'Pajak', 'Total Bayar', 'Status'];
+
+        $callback = function () use ($orders, $columns) {
+            $file = fopen('php://output', 'w');
+
+            // REVISI: Tambahkan ";" di akhir parameter sebagai delimiter kolom
+            fputcsv($file, $columns, ";");
+
+            // Tulis data transaksi dari database
+            foreach ($orders as $order) {
+                // REVISI: Tambahkan ";" di akhir parameter agar kolom terpisah rapi di Excel
+                fputcsv($file, [
+                    $order->invoice_number,
+                    $order->created_at->format('Y-m-d H:i:s'),
+                    $order->user->name ?? 'Sistem',
+                    $order->subtotal,
+                    $order->tax,
+                    $order->total_price,
+                    $order->status
+                ], ";");
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

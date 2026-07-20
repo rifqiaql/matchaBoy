@@ -67,3 +67,9 @@ Route::post('/keranjang', [CartController::class, 'store'])->name('keranjang.sto
 
 // Pastikan ditaruh di dalam middleware admin jika lu pakai
 Route::post('/products/{product}/ingredients', [IngredientController::class, 'store'])->name('products.ingredients.store');
+
+// Rute untuk menampilkan halaman laporan
+Route::get('/laporan', [\App\Http\Controllers\OrderController::class, 'index'])->name('laporan.index');
+
+// TAMBAHKAN BARIS INI: Rute untuk mengeksekusi download Excel/CSV
+Route::get('/laporan/export', [\App\Http\Controllers\OrderController::class, 'exportCSV'])->name('laporan.export');
