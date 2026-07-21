@@ -191,7 +191,7 @@
                     </div>
                 </div>
 
-                <!-- CARD URGENT WARNING DINAMIS (Menggunakan logika persentase seperti di Laporan) -->
+                <!-- CARD URGENT WARNING DINAMIS -->
                 @php
                     $allBahan = \App\Models\BahanBaku::all();
                     $kritisItems = $allBahan->filter(function($item) {
@@ -246,88 +246,99 @@
 
         </div>
 
-        <!-- BLOK BAWAH (STATIS/TEMPLATE BAWAAN) -->
+        <!-- BLOK BAWAH DINAMIS -->
         <div class="grid grid-cols-2 gap-6">
 
+            <!-- KIRI: STATUS GUDANG (INVENTORY HEALTH SUMMARY) -->
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <h3 class="text-lg font-bold mb-4 text-gray-800">Peringatan Stock</h3>
+                <h3 class="text-lg font-bold mb-4 text-gray-800">Status Stok Gudang</h3>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm text-left">
                         <thead>
                             <tr class="border-b border-gray-100 text-gray-400">
-                                <th class="pb-3 font-medium">Nama Stock</th>
-                                <th class="pb-3 font-medium">Quantity</th>
-                                <th class="pb-3 font-medium">Priority</th>
+                                <th class="pb-3 font-medium">Nama Bahan</th>
+                                <th class="pb-3 font-medium">Sisa Kuantitas</th>
+                                <th class="pb-3 font-medium">Indikator</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-50">
-                            <tr>
-                                <td class="py-4 font-medium text-gray-700">Bubuk Matcha</td>
-                                <td class="py-4 text-gray-500">1.2 kg</td>
-                                <td class="py-4"><span
-                                        class="px-3 py-1 bg-red-50 text-red-600 rounded-full text-xs font-bold">RESTOCK</span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="py-4 font-medium text-gray-700">SKM</td>
-                                <td class="py-4 text-gray-500">4 cans</td>
-                                <td class="py-4"><span
-                                        class="px-3 py-1 bg-yellow-50 text-yellow-600 rounded-full text-xs font-bold">TERSEDIA</span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="py-4 font-medium text-gray-700">Full Cream</td>
-                                <td class="py-4 text-gray-500">12 units</td>
-                                <td class="py-4"><span
-                                        class="px-3 py-1 bg-green-50 text-green-600 rounded-full text-xs font-bold">GOOD</span>
-                                </td>
-                            </tr>
+                            @php
+                                // Mengambil semua bahan, kalkulasi persentase, dan urutkan dari yang paling sekarat
+                                $inventoryStatus = \App\Models\BahanBaku::all()->map(function($item) {
+                                    $persentase = $item->stok_awal > 0 ? ($item->stok_saat_ini / $item->stok_awal) * 100 : 0;
+                                    $item->persentase = round($persentase);
+                                    return $item;
+                                })->sortBy('persentase')->take(4);
+                            @endphp
+
+                            @forelse($inventoryStatus as $item)
+                                @php
+                                    if($item->persentase <= 20) {
+                                        $badgeClass = 'bg-red-50 text-red-600';
+                                        $badgeText = 'KRITIS';
+                                    } elseif($item->persentase <= 50) {
+                                        $badgeClass = 'bg-yellow-50 text-yellow-600';
+                                        $badgeText = 'MENIPIS';
+                                    } else {
+                                        $badgeClass = 'bg-green-50 text-green-600';
+                                        $badgeText = 'AMAN';
+                                    }
+                                @endphp
+                                <tr>
+                                    <td class="py-4 font-semibold text-gray-700">{{ $item->nama_bahan }}</td>
+                                    <td class="py-4 text-gray-600 font-medium">
+                                        {{ $item->stok_saat_ini }} <span class="text-xs text-gray-400">{{ $item->satuan }}</span>
+                                    </td>
+                                    <td class="py-4">
+                                        <span class="px-3 py-1.5 {{ $badgeClass }} rounded-md text-[10px] tracking-wider uppercase font-bold">
+                                            {{ $badgeText }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="3" class="py-6 text-center text-gray-400 italic font-medium">Data bahan baku kosong.</td>
+                                </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
             </div>
 
+            <!-- KANAN: AKTIVITAS TERBARU (ORDER KASIR) -->
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <h3 class="text-lg font-bold mb-6 text-gray-800">Aktivitas Terbaru</h3>
+                <h3 class="text-lg font-bold mb-6 text-gray-800">Aktivitas Transaksi Terbaru</h3>
                 <div class="space-y-6">
-                    <div class="flex gap-4">
-                        <div
-                            class="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0 border border-green-100">
-                            <span class="text-sm">✅</span>
-                        </div>
-                        <div>
-                            <p class="text-sm font-bold text-gray-800">Matcha Powder stock updated</p>
-                            <p class="text-xs text-gray-500 mt-1">Manual stock entry by Admin | Increased by 5.0 kg</p>
-                            <p class="text-[10px] font-semibold text-gray-400 mt-2 uppercase tracking-wider">2 minutes ago
-                            </p>
-                        </div>
-                    </div>
+                    @php
+                        // Menarik 4 order transaksi terakhir dari database
+                        $recentOrders = \App\Models\Order::with('user')->latest()->take(4)->get();
+                    @endphp
 
-                    <div class="flex gap-4">
-                        <div
-                            class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 border border-blue-100">
-                            <span class="text-sm">📦</span>
+                    @forelse($recentOrders as $order)
+                        <div class="flex gap-4">
+                            <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 border border-blue-100">
+                                <span class="text-sm">🧾</span>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-start">
+                                    <p class="text-sm font-bold text-gray-800">Pesanan Masuk #{{ $order->invoice_number }}</p>
+                                    <span class="text-xs font-bold text-[#365E3F]">
+                                        Rp {{ number_format($order->total_price, 0, ',', '.') }}
+                                    </span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    Diproses oleh Kasir: {{ $order->user->name ?? 'Admin' }}
+                                </p>
+                                <p class="text-[10px] font-semibold text-gray-400 mt-2 uppercase tracking-wider">
+                                    {{ $order->created_at->diffForHumans() }}
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <p class="text-sm font-bold text-gray-800">New order placed</p>
-                            <p class="text-xs text-gray-500 mt-1">PO #008 2024-001 sent to Supplier. Soldier has received
-                            </p>
-                            <p class="text-[10px] font-semibold text-gray-400 mt-2 uppercase tracking-wider">1 hour ago</p>
+                    @empty
+                        <div class="text-sm text-gray-400 text-center py-4 italic">
+                            Belum ada riwayat transaksi kasir.
                         </div>
-                    </div>
-
-                    <div class="flex gap-4">
-                        <div
-                            class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0 border border-red-100">
-                            <span class="text-sm">⚠️</span>
-                        </div>
-                        <div>
-                            <p class="text-sm font-bold text-gray-800">Expiry alert for SKM</p>
-                            <p class="text-xs text-gray-500 mt-1">Batch #4321 expiring in 3 days. Action required</p>
-                            <p class="text-[10px] font-semibold text-gray-400 mt-2 uppercase tracking-wider">6 hours ago
-                            </p>
-                        </div>
-                    </div>
+                    @endforelse
                 </div>
             </div>
 
