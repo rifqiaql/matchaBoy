@@ -17,6 +17,13 @@
             </div>
         @endif
 
+        @if (session('error'))
+            <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+                <span class="text-red-600 text-xl">⚠</span>
+                <p class="text-sm font-medium text-red-800">{{ session('error') }}</p>
+            </div>
+        @endif
+
         <!-- Top Action Bar -->
         <div class="flex items-center justify-between gap-4 mb-8">
             <form method="GET" action="{{ route('inventory.index') }}" class="flex items-center gap-3 flex-1">
@@ -197,9 +204,23 @@
                                     </td>
                                     <td class="px-6 py-4 text-center">
                                         <div class="inline-flex items-center gap-2">
+                                            <!-- TOMBOL BARU: RE-STOCK / STOK MASUK -->
+                                            <button type="button"
+                                                onclick="openRestockModal({{ $item->id }}, '{{ addslashes($item->nama_bahan ?? '') }}', '{{ addslashes($item->satuan ?? '') }}')"
+                                                class="p-2 text-white bg-blue-500 hover:bg-blue-600 rounded-md transition-colors"
+                                                title="Tambah Stok">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M12 4v16m8-8H4"></path>
+                                                </svg>
+                                            </button>
+
+                                            <!-- TOMBOL EDIT DATA (CRUD BIASA) -->
                                             <button type="button"
                                                 onclick="openEditModal({{ $item->id }}, '{{ addslashes($item->nama_bahan ?? '') }}', '{{ addslashes($item->kategori ?? '') }}', '{{ addslashes($item->satuan ?? '') }}', {{ $item->stok_awal ?? 0 }}, {{ $item->stok_saat_ini ?? 0 }}, {{ $item->stok_minimum ?? 0 }})"
-                                                class="p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors">
+                                                class="p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+                                                title="Edit Detail Barang">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor"
                                                     viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -209,7 +230,12 @@
 
                                             <button type="button" onclick="openDeleteModal({{ $item->id }})"
                                                 class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                                                <x-icons.trash class="w-5 h-5" />
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                                    </path>
+                                                </svg>
                                             </button>
                                         </div>
                                     </td>
@@ -239,11 +265,55 @@
             @endif
         </div>
     </div>
+
     @include('inventory.modal_create')
     @include('inventory.modal_edit')
     @include('inventory.modal_delete')
+    @include('inventory.modal_restock') <!-- TAMBAHAN INCLUDE MODAL RESTOCK -->
 
     <script>
+        // FUNGSI BARU UNTUK MODAL RESTOCK (SUDAH DIREVISI MENERIMA PARAMETER SATUAN)
+        window.openRestockModal = function(id, namaBahan, satuan) {
+            const modal = document.getElementById('restockModal');
+            const modalContent = document.getElementById('restockModalContent');
+            const form = document.getElementById('restockForm');
+            const namaBahanSpan = document.getElementById('restockNamaBahan');
+
+            // Mengambil elemen label satuan di dalam modal_restock.blade.php
+            const labelSatuan1 = document.getElementById('labelSatuan1');
+            const labelSatuan2 = document.getElementById('labelSatuan2');
+
+            if (!modal || !modalContent || !form) return;
+
+            // Set URL Action Form
+            form.action = '/inventory/' + id + '/tambah-stok';
+
+            // Set Nama Bahan di Modal Title
+            if (namaBahanSpan) namaBahanSpan.textContent = namaBahan;
+
+            // Set teks satuan secara dinamis berdasarkan baris yang diklik
+            if (labelSatuan1) labelSatuan1.textContent = satuan;
+            if (labelSatuan2) labelSatuan2.textContent = satuan;
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modalContent.classList.remove('scale-95', 'opacity-0');
+                modalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        };
+
+        window.closeRestockModal = function() {
+            const modal = document.getElementById('restockModal');
+            const modalContent = document.getElementById('restockModalContent');
+
+            if (!modal || !modalContent) return;
+
+            modalContent.classList.remove('scale-100', 'opacity-100');
+            modalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => modal.classList.add('hidden'), 200);
+        };
+
+
         window.openDeleteModal = function(id) {
             const modal = document.getElementById('deleteModal');
             const modalContent = document.getElementById('deleteModalContent');

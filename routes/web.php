@@ -73,3 +73,7 @@ Route::post('/products/{product}/ingredients', [IngredientController::class, 'st
 // Ganti rute laporan lu menjadi dua baris ini:
 Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
 Route::get('/laporan/export', [LaporanController::class, 'exportCSV'])->name('laporan.export');
+
+
+// RUTE BARU: Untuk memproses Restock / Barang Masuk (POST)
+Route::post('/inventory/{id}/tambah-stok', [InventoryController::class, 'tambahStok'])->name('inventory.tambah-stok');
