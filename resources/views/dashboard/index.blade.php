@@ -3,7 +3,9 @@
 @section('content')
     <div class="p-8">
 
-        <!-- Kumpulan Card Atas -->
+        <!-- ======================================================= -->
+        <!-- ROW 1: KUMPULAN CARD STOK BAHAN BAKU -->
+        <!-- ======================================================= -->
         <div class="grid grid-cols-4 gap-6 mb-8">
             <!-- CARD 1: BUBUK MATCHA -->
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
@@ -11,13 +13,9 @@
                     <span class="text-sm font-semibold text-gray-500">Bubuk Matcha</span>
                     <div class="relative flex items-center justify-center w-10 h-10">
                         <div class="absolute inset-0 bg-dark-matcha opacity-20 blur-md rounded-xl"></div>
-                        <div
-                            class="relative flex items-center justify-center w-full h-full bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 shadow-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="lucide lucide-leaf-icon lucide-leaf">
-                                <path
-                                    d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+                        <div class="relative flex items-center justify-center w-full h-full bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-leaf-icon lucide-leaf">
+                                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
                                 <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
                             </svg>
                         </div>
@@ -39,14 +37,10 @@
                     <span class="text-sm font-semibold text-gray-500">Full Cream</span>
                     <div class="relative flex items-center justify-center w-10 h-10">
                         <div class="absolute inset-0 bg-dark-matcha opacity-20 blur-md rounded-xl"></div>
-                        <div
-                            class="relative flex items-center justify-center w-full h-full bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 shadow-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="lucide lucide-milk-icon lucide-milk">
+                        <div class="relative flex items-center justify-center w-full h-full bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-milk-icon lucide-milk">
                                 <path d="M8 2h8" />
-                                <path
-                                    d="M9 2v2.789a4 4 0 0 1-.672 2.219l-.656.984A4 4 0 0 0 7 10.212V20a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-9.789a4 4 0 0 0-.672-2.219l-.656-.984A4 4 0 0 1 15 4.788V2" />
+                                <path d="M9 2v2.789a4 4 0 0 1-.672 2.219l-.656.984A4 4 0 0 0 7 10.212V20a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-9.789a4 4 0 0 0-.672-2.219l-.656-.984A4 4 0 0 1 15 4.788V2" />
                                 <path d="M7 15a6.472 6.472 0 0 1 5 0 6.47 6.47 0 0 0 5 0" />
                             </svg>
                         </div>
@@ -68,11 +62,8 @@
                     <span class="text-sm font-semibold text-gray-500">Selai Strawberry</span>
                     <div class="relative flex items-center justify-center w-10 h-10">
                         <div class="absolute inset-0 bg-dark-matcha opacity-20 blur-md rounded-xl"></div>
-                        <div
-                            class="relative flex items-center justify-center w-full h-full bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 shadow-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="lucide lucide-vegan-icon lucide-vegan">
+                        <div class="relative flex items-center justify-center w-full h-full bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-vegan-icon lucide-vegan">
                                 <path d="M16 8q6 0 6-6-6 0-6 6" />
                                 <path d="M17.41 3.59a10 10 0 1 0 3 3" />
                                 <path d="M2 2a26.6 26.6 0 0 1 10 20c.9-6.82 1.5-9.5 4-14" />
@@ -96,11 +87,8 @@
                     <span class="text-sm font-semibold text-gray-500">Es Batu</span>
                     <div class="relative flex items-center justify-center w-10 h-10">
                         <div class="absolute inset-0 bg-dark-matcha opacity-20 blur-md rounded-xl"></div>
-                        <div
-                            class="relative flex items-center justify-center w-full h-full bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 shadow-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="lucide lucide-cookie-icon lucide-cookie">
+                        <div class="relative flex items-center justify-center w-full h-full bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-cookie-icon lucide-cookie">
                                 <path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5" />
                                 <path d="M8.5 8.5v.01" />
                                 <path d="M16 15.5v.01" />
@@ -122,62 +110,35 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-3 gap-6 mb-8">
 
+        <!-- ======================================================= -->
+        <!-- ROW 2: GRAFIK TRANSAKSI & URGENT WARNING -->
+        <!-- ======================================================= -->
+        <div class="grid grid-cols-3 gap-6 mb-8">
+            
+            <!-- GRAFIK CHART.JS (DINAMIS 7 HARI) -->
             <div class="col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                 <h3 class="text-lg font-bold mb-1 text-gray-800">Demand Analysis</h3>
-                <p class="text-sm text-gray-400 mb-6">Actual vs. Forecasted consumption</p>
+                <p class="text-sm text-gray-400 mb-6">Tren transaksi kasir 7 hari terakhir</p>
 
-                <div class="flex items-end justify-around h-56 gap-2 mt-4">
-                    <div class="flex flex-col items-center gap-3">
-                        <div class="w-10 bg-[#2D5A34] rounded-t-lg transition-all hover:bg-green-600"
-                            style="height: 120px;"></div>
-                        <span class="text-xs font-semibold text-gray-500">MON</span>
-                    </div>
-                    <div class="flex flex-col items-center gap-3">
-                        <div class="w-10 bg-[#2D5A34] rounded-t-lg transition-all hover:bg-green-600"
-                            style="height: 100px;"></div>
-                        <span class="text-xs font-semibold text-gray-500">TUE</span>
-                    </div>
-                    <div class="flex flex-col items-center gap-3">
-                        <div class="w-10 bg-[#2D5A34] rounded-t-lg transition-all hover:bg-green-600"
-                            style="height: 140px;"></div>
-                        <span class="text-xs font-semibold text-gray-500">WED</span>
-                    </div>
-                    <div class="flex flex-col items-center gap-3">
-                        <div class="w-10 bg-[#2D5A34] rounded-t-lg transition-all hover:bg-green-600"
-                            style="height: 130px;"></div>
-                        <span class="text-xs font-semibold text-gray-500">THU</span>
-                    </div>
-                    <div class="flex flex-col items-center gap-3">
-                        <div class="w-10 bg-[#2D5A34] rounded-t-lg transition-all hover:bg-green-600"
-                            style="height: 110px;"></div>
-                        <span class="text-xs font-semibold text-gray-500">FRI</span>
-                    </div>
-                    <div class="flex flex-col items-center gap-3">
-                        <div class="w-10 bg-[#2D5A34] rounded-t-lg transition-all hover:bg-green-600"
-                            style="height: 155px;"></div>
-                        <span class="text-xs font-semibold text-gray-500">SAT</span>
-                    </div>
-                    <div class="flex flex-col items-center gap-3">
-                        <div class="w-10 bg-[#2D5A34] rounded-t-lg transition-all hover:bg-green-600"
-                            style="height: 135px;"></div>
-                        <span class="text-xs font-semibold text-gray-500">SUN</span>
-                    </div>
+                <!-- Wadah Canvas untuk Chart.js (Menggantikan balok HTML palsu) -->
+                <div class="w-full h-64 mt-4 relative">
+                    <canvas id="dashboardDemandChart"></canvas>
                 </div>
             </div>
 
+            <!-- KOLOM KANAN: TOP PRODUCTS & WARNING -->
             <div class="flex flex-col gap-6">
+                <!-- TOP 3 PRODUCTS -->
                 <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex-1">
                     <h3 class="text-lg font-bold mb-6 text-gray-800">Top 3 Products</h3>
                     <div class="space-y-5">
-
                         @forelse ($topProducts as $top)
                             <div>
                                 <p class="text-sm font-semibold text-gray-700">{{ $top->name }}</p>
                                 <div class="flex items-center justify-between mt-2">
-                                    <div class="flex-1 bg-gray-100 rounded-full h-2 mr-3">
-                                        <div class="bg-[#2D5A34] h-2 rounded-full" style="width: 80%;"></div>
+                                    <div class="flex-1 bg-gray-100 rounded-full h-2 mr-3 overflow-hidden">
+                                        <div class="bg-[#2D5A34] h-full rounded-full" style="width: 80%;"></div>
                                     </div>
                                     <span class="text-xs font-bold text-gray-600">{{ $top->total_sold }} Terjual</span>
                                 </div>
@@ -187,11 +148,10 @@
                                 Belum ada data penjualan dari kasir.
                             </div>
                         @endforelse
-
                     </div>
                 </div>
 
-                <!-- CARD URGENT WARNING DINAMIS -->
+                <!-- URGENT WARNING DINAMIS (Batas < 20%) -->
                 @php
                     $allBahan = \App\Models\BahanBaku::all();
                     $kritisItems = $allBahan->filter(function($item) {
@@ -222,8 +182,7 @@
                             <p class="text-[10px] text-gray-500 mt-2 italic font-medium">+ {{ $lowStockCount - 3 }} item lainnya menipis...</p>
                         @endif
                     </div>
-                    <a href="{{ route('inventory.index') }}"
-                        class="mt-5 w-full block text-center bg-red-600 text-white text-xs font-bold py-2.5 rounded-lg hover:bg-red-700 transition-colors shadow-sm">
+                    <a href="{{ route('inventory.index') }}" class="mt-5 w-full block text-center bg-red-600 text-white text-xs font-bold py-2.5 rounded-lg hover:bg-red-700 transition-colors shadow-sm">
                         Periksa Detail Gudang
                     </a>
                 </div>
@@ -236,17 +195,18 @@
                         </div>
                         <p class="text-xs text-gray-600 mt-3 leading-relaxed">Seluruh bahan baku saat ini berada dalam kondisi persentase yang aman (> 20%).</p>
                     </div>
-                    <a href="{{ route('inventory.index') }}"
-                        class="mt-4 w-full block text-center bg-[#365E3F] text-white text-xs font-bold py-2.5 rounded-lg hover:bg-[#2a4a31] transition-colors shadow-sm">
+                    <a href="{{ route('inventory.index') }}" class="mt-4 w-full block text-center bg-[#365E3F] text-white text-xs font-bold py-2.5 rounded-lg hover:bg-[#2a4a31] transition-colors shadow-sm">
                         Buka Modul Gudang
                     </a>
                 </div>
                 @endif
             </div>
-
         </div>
 
-        <!-- BLOK BAWAH DINAMIS -->
+
+        <!-- ======================================================= -->
+        <!-- ROW 3: HEALTH SUMMARY & AKTIVITAS TRANSAKSI -->
+        <!-- ======================================================= -->
         <div class="grid grid-cols-2 gap-6">
 
             <!-- KIRI: STATUS GUDANG (INVENTORY HEALTH SUMMARY) -->
@@ -263,7 +223,6 @@
                         </thead>
                         <tbody class="divide-y divide-gray-50">
                             @php
-                                // Mengambil semua bahan, kalkulasi persentase, dan urutkan dari yang paling sekarat
                                 $inventoryStatus = \App\Models\BahanBaku::all()->map(function($item) {
                                     $persentase = $item->stok_awal > 0 ? ($item->stok_saat_ini / $item->stok_awal) * 100 : 0;
                                     $item->persentase = round($persentase);
@@ -344,4 +303,46 @@
 
         </div>
     </div>
+
+    <!-- ======================================================= -->
+    <!-- SCRIPT INIT CHART.JS -->
+    <!-- ======================================================= -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('dashboardDemandChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: @json($chartLabels), // Variabel dari DashboardController
+                    datasets: [{
+                        label: 'Total Transaksi',
+                        data: @json($chartData),     // Variabel dari DashboardController
+                        backgroundColor: '#2D5A34',
+                        borderRadius: 6,
+                        borderSkipped: false,
+                        barPercentage: 0.6 // Menjaga bar tidak terlalu gemuk
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false } // Sembunyikan tulisan legend karena cuma 1 dataset
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { display: false },
+                            ticks: { stepSize: 1 } // Paksa agar y-axis bulat
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
 @endsection
