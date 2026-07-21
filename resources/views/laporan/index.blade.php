@@ -20,9 +20,9 @@
                         </a>
                     </div>
 
-                    <div x-data="{ activeTab: 'monthly' }"
+                    <!-- REVISI: Default activeTab diubah ke 'weekly' agar sinkron dengan data asli dari database (7 hari) -->
+                    <div x-data="{ activeTab: 'weekly' }"
                         class="flex items-center bg-gray-50 p-1 rounded-lg border border-gray-200 text-xs font-semibold">
-                        <!-- REVISI: Tambahkan pemicu switchChartMode() pada fungsi @click -->
                         <button @click="activeTab = 'monthly'; switchChartMode('monthly')"
                             :class="activeTab === 'monthly' ? 'bg-white text-gray-800 shadow-sm border-gray-100' :
                                 'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-200/50'"
@@ -49,7 +49,6 @@
                 <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                     <div class="flex justify-between items-center mb-1">
                         <h3 class="text-lg font-bold text-gray-800">Demand Analysis</h3>
-                        <!-- Legend manual dihapus karena Chart.js akan memunculkannya secara otomatis -->
                     </div>
                     <p class="text-sm text-gray-400 mb-6">Actual vs. Forecasted consumption</p>
 
@@ -198,7 +197,6 @@
                                         <span
                                             class="bg-red-50 text-red-500 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase">Restock</span>
                                     @else
-                                        <!-- REVISI: Memperbaiki typo tag s menjadi span -->
                                         <span
                                             class="bg-green-50 text-green-600 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase">Cukup</span>
                                     @endif
@@ -220,37 +218,40 @@
     <!-- REVISI: Inisialisasi Script Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Data Dummy Terstruktur
-            const dataGrafik = {
-                weekly: {
-                    labels: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'],
-                    actual: [120, 100, 140, 130, 110, 155, 135],
-                    forecast: [110, 105, 130, 135, 115, 150, 140]
-                },
-                monthly: {
-                    labels: Array.from({
-                        length: 30
-                    }, (_, i) => `${i + 1} Jul`),
-                    actual: [120, 100, 140, 130, 110, 155, 135, 140, 130, 125, 150, 160, 145, 130, 140, 155,
-                        165, 170, 150, 140, 135, 145, 160, 155, 150, 165, 175, 180, 170, 160
-                    ],
-                    forecast: [115, 105, 135, 130, 115, 150, 140, 135, 135, 130, 145, 155, 150, 135, 145, 150,
-                        160, 165, 155, 145, 140, 140, 155, 150, 155, 160, 170, 175, 175, 165
-                    ]
-                }
-            };
+        // 1. Deklarasi Objek Data Grafik Global agar bisa dibaca semua fungsi
+        const dataGrafik = {
+            weekly: {
+                // INJEKSI PHP: Menarik array tanggal 7 hari terakhir dan data transaksinya
+                labels: @json($chartLabels),
+                actual: @json($chartData),
+                // Data statis sementara untuk garis Forecast (karena ini UI AI dummy)
+                forecast: [10, 15, 20, 25, 30, 25, 15]
+            },
+            monthly: {
+                labels: Array.from({
+                    length: 30
+                }, (_, i) => `${i + 1} Jul`),
+                actual: [120, 100, 140, 130, 110, 155, 135, 140, 130, 125, 150, 160, 145, 130, 140, 155, 165, 170, 150,
+                    140, 135, 145, 160, 155, 150, 165, 175, 180, 170, 160
+                ],
+                forecast: [115, 105, 135, 130, 115, 150, 140, 135, 135, 130, 145, 155, 150, 135, 145, 150, 160, 165,
+                    155, 145, 140, 140, 155, 150, 155, 160, 170, 175, 175, 165
+                ]
+            }
+        };
 
-            // Inisialisasi Chart
+        // 2. Inisialisasi Chart saat halaman selesai diload
+        document.addEventListener('DOMContentLoaded', function() {
             const ctx = document.getElementById('demandChart').getContext('2d');
             window.demandChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: dataGrafik.monthly.labels, // Default ke mode bulanan sesuai state x-data
+                    // Default menggunakan data Weekly (Real Database Data)
+                    labels: dataGrafik.weekly.labels,
                     datasets: [{
                             type: 'line',
                             label: 'Forecast',
-                            data: dataGrafik.monthly.forecast,
+                            data: dataGrafik.weekly.forecast,
                             borderColor: '#86A789',
                             borderDash: [5, 5],
                             backgroundColor: 'transparent',
@@ -260,7 +261,7 @@
                         {
                             type: 'bar',
                             label: 'Actual',
-                            data: dataGrafik.monthly.actual,
+                            data: dataGrafik.weekly.actual,
                             backgroundColor: '#2D5A34',
                             borderRadius: 6,
                             borderSkipped: false
@@ -282,7 +283,10 @@
                             beginAtZero: true,
                             grid: {
                                 display: false
-                            }
+                            },
+                            ticks: {
+                                stepSize: 1
+                            } // Memaksa y-axis tidak desimal (1 transaksi bukan 1.5)
                         },
                         x: {
                             grid: {
@@ -294,28 +298,8 @@
             });
         });
 
-        // Fungsi Global untuk diakses oleh Alpine.js
+        // 3. Fungsi Global untuk diakses oleh tombol Alpine.js
         window.switchChartMode = function(mode) {
-            // Deklarasikan ulang data agar scope bisa membaca
-            const dataGrafik = {
-                weekly: {
-                    labels: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'],
-                    actual: [120, 100, 140, 130, 110, 155, 135],
-                    forecast: [110, 105, 130, 135, 115, 150, 140]
-                },
-                monthly: {
-                    labels: Array.from({
-                        length: 30
-                    }, (_, i) => `${i + 1} Jul`),
-                    actual: [120, 100, 140, 130, 110, 155, 135, 140, 130, 125, 150, 160, 145, 130, 140, 155, 165,
-                        170, 150, 140, 135, 145, 160, 155, 150, 165, 175, 180, 170, 160
-                    ],
-                    forecast: [115, 105, 135, 130, 115, 150, 140, 135, 135, 130, 145, 155, 150, 135, 145, 150, 160,
-                        165, 155, 145, 140, 140, 155, 150, 155, 160, 170, 175, 175, 165
-                    ]
-                }
-            };
-
             if (window.demandChart) {
                 window.demandChart.data.labels = dataGrafik[mode].labels;
                 window.demandChart.data.datasets[0].data = dataGrafik[mode].forecast;
