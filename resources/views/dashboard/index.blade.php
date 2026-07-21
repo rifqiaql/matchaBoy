@@ -3,6 +3,7 @@
 @section('content')
     <div class="p-8">
 
+        <!-- Kumpulan Card Atas -->
         <div class="grid grid-cols-4 gap-6 mb-8">
             <!-- CARD 1: BUBUK MATCHA -->
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
@@ -176,7 +177,6 @@
                                 <p class="text-sm font-semibold text-gray-700">{{ $top->name }}</p>
                                 <div class="flex items-center justify-between mt-2">
                                     <div class="flex-1 bg-gray-100 rounded-full h-2 mr-3">
-                                        <!-- Warna bar dikasih default hijau untuk sementara -->
                                         <div class="bg-[#2D5A34] h-2 rounded-full" style="width: 80%;"></div>
                                     </div>
                                     <span class="text-xs font-bold text-gray-600">{{ $top->total_sold }} Terjual</span>
@@ -191,22 +191,62 @@
                     </div>
                 </div>
 
-                <div class="bg-red-50 rounded-2xl p-5 border border-red-100 shadow-sm">
-                    <div class="flex items-center gap-2 mb-2">
-                        <span class="text-red-600">⚠️</span>
-                        <p class="text-sm font-bold text-red-700">Peringatan [URGENT]</p>
+                <!-- CARD URGENT WARNING DINAMIS (Menggunakan logika persentase seperti di Laporan) -->
+                @php
+                    $allBahan = \App\Models\BahanBaku::all();
+                    $kritisItems = $allBahan->filter(function($item) {
+                        return ($item->stok_awal > 0 ? ($item->stok_saat_ini / $item->stok_awal) * 100 : 0) <= 20;
+                    });
+                    $lowStockCount = $kritisItems->count();
+                @endphp
+
+                @if($lowStockCount > 0)
+                <div class="bg-red-50 rounded-2xl p-5 border border-red-100 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-red-600">⚠️</span>
+                            <p class="text-sm font-bold text-red-700">Peringatan Kritis ({{ $lowStockCount }} Item)</p>
+                        </div>
+                        <p class="text-xs text-gray-800 mt-2 font-medium">Bahan baku berikut berstatus KRITIS (Stok ≤ 20%):</p>
+                        
+                        <ul class="mt-3 space-y-2">
+                            @foreach($kritisItems->take(3) as $item)
+                                <li class="flex items-center justify-between text-xs bg-white/60 p-2 rounded border border-red-100">
+                                    <span class="font-semibold text-gray-700">{{ $item->nama_bahan }}</span>
+                                    <span class="font-bold text-red-600">{{ $item->stok_saat_ini }} {{ $item->satuan }}</span>
+                                </li>
+                            @endforeach
+                        </ul>
+                        
+                        @if($lowStockCount > 3)
+                            <p class="text-[10px] text-gray-500 mt-2 italic font-medium">+ {{ $lowStockCount - 3 }} item lainnya menipis...</p>
+                        @endif
                     </div>
-                    <p class="text-xs text-gray-800 mt-2 font-medium">Sugar will run out in 3 days.</p>
-                    <p class="text-xs text-gray-500 mt-1">Last order is on Supplier Soldierhan.</p>
-                    <button
-                        class="mt-4 w-full bg-dark-matcha text-white text-xs font-bold py-2.5 rounded-lg hover:bg-soft-matcha transition-colors shadow-sm">
-                        Buat Pesanan
-                    </button>
+                    <a href="{{ route('inventory.index') }}"
+                        class="mt-5 w-full block text-center bg-red-600 text-white text-xs font-bold py-2.5 rounded-lg hover:bg-red-700 transition-colors shadow-sm">
+                        Periksa Detail Gudang
+                    </a>
                 </div>
+                @else
+                <div class="bg-green-50 rounded-2xl p-5 border border-green-100 shadow-sm flex flex-col justify-between h-full">
+                    <div>
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-green-600">✅</span>
+                            <p class="text-sm font-bold text-green-700">Status Gudang Aman</p>
+                        </div>
+                        <p class="text-xs text-gray-600 mt-3 leading-relaxed">Seluruh bahan baku saat ini berada dalam kondisi persentase yang aman (> 20%).</p>
+                    </div>
+                    <a href="{{ route('inventory.index') }}"
+                        class="mt-4 w-full block text-center bg-[#365E3F] text-white text-xs font-bold py-2.5 rounded-lg hover:bg-[#2a4a31] transition-colors shadow-sm">
+                        Buka Modul Gudang
+                    </a>
+                </div>
+                @endif
             </div>
 
         </div>
 
+        <!-- BLOK BAWAH (STATIS/TEMPLATE BAWAAN) -->
         <div class="grid grid-cols-2 gap-6">
 
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
