@@ -13,13 +13,23 @@
                 <div class="flex items-center space-x-3">
                     <div class="flex items-center gap-2">
 
-                        <!-- REVISI: Form Filter Tanggal Dinamis -->
-                        <form action="{{ route('laporan.index') }}" method="GET" id="dateFilterForm" class="m-0 p-0">
+                        <!-- Form Filter Dinamis (Tanggal & Window SMA) -->
+                        <form action="{{ route('laporan.index') }}" method="GET" id="filterForm"
+                            class="m-0 p-0 flex items-center gap-2">
                             <input type="date" name="end_date"
                                 value="{{ request('end_date', \Carbon\Carbon::now()->format('Y-m-d')) }}"
                                 class="bg-white border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-[#2E4F4F] focus:border-[#2E4F4F] block px-3 py-1.5 cursor-pointer shadow-sm hover:border-gray-300 transition-colors"
-                                onchange="document.getElementById('dateFilterForm').submit();"
-                                max="{{ \Carbon\Carbon::now()->format('Y-m-d') }}">
+                                onchange="this.form.submit();" max="{{ \Carbon\Carbon::now()->format('Y-m-d') }}">
+
+                            <select name="n" onchange="this.form.submit();"
+                                class="bg-white border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-[#2E4F4F] focus:border-[#2E4F4F] block px-3 py-1.5 cursor-pointer shadow-sm hover:border-gray-300 transition-colors">
+                                <option value="3" {{ request('n', 3) == 3 ? 'selected' : '' }}>SMA: n = 3 Hari
+                                    (Reaktif)</option>
+                                <option value="5" {{ request('n', 3) == 5 ? 'selected' : '' }}>SMA: n = 5 Hari
+                                    (Moderat)</option>
+                                <option value="7" {{ request('n', 3) == 7 ? 'selected' : '' }}>SMA: n = 7 Hari (Stabil)
+                                </option>
+                            </select>
                         </form>
 
                         <a href="{{ route('laporan.export') }}"
@@ -28,7 +38,6 @@
                         </a>
                     </div>
 
-                    <!-- Default activeTab: 'weekly' -->
                     <div x-data="{ activeTab: 'weekly' }"
                         class="flex items-center bg-gray-50 p-1 rounded-lg border border-gray-200 text-xs font-semibold">
                         <button @click="activeTab = 'monthly'; switchChartMode('monthly')"
@@ -65,27 +74,29 @@
                     </div>
                 </div>
 
-                <!-- Stock Fluctuations Widget -->
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-bold text-gray-800">Stock Fluctuations</h3>
-                        <span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">+8.4%
-                            Efficiency</span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="p-4 bg-gray-50 rounded-xl">
-                            <span class="text-xs text-gray-400 font-bold block uppercase">Available Stock</span>
-                            <span class="text-2xl font-extrabold text-gray-900">1,284 <span
-                                    class="text-sm font-normal text-gray-500">Units</span></span>
-                        </div>
-                        <div class="p-4 bg-gray-50 rounded-xl">
-                            <span class="text-xs text-gray-400 font-bold block uppercase">Reserve Capacity</span>
-                            <span class="text-2xl font-extrabold text-gray-900">24%</span>
-                        </div>
-                    </div>
-                </div>
+                <!-- WIDGET STOCK FLUCTUATION DIHAPUS DARI SINI -->
 
-                <!-- AI Summary Prediction Box -->
+                <!-- AI Summary Prediction Box (100% DINAMIS DENGAN PERKONDISIAN) -->
+                @php
+                    $latestSma = collect($analisisSma)->last();
+                    $prediksiBesok = $latestSma->prediksi ?? 0;
+                    $aktualTerakhir = $latestSma->aktual ?? 0;
+
+                    // Logika Perkondisian Arah Tren
+                    if ($prediksiBesok > $aktualTerakhir) {
+                        $trendStatus = 'Lonjakan';
+                        $trendColor = 'text-yellow-400';
+                        $trendAdvice = 'Siapkan stok ekstra untuk mengantisipasi potensi kekurangan bahan baku.';
+                    } elseif ($prediksiBesok < $aktualTerakhir) {
+                        $trendStatus = 'Penurunan';
+                        $trendColor = 'text-blue-300';
+                        $trendAdvice = 'Tahan restock berlebih untuk meminimalisir risiko bahan baku terbuang (waste).';
+                    } else {
+                        $trendStatus = 'Stabil';
+                        $trendColor = 'text-green-300';
+                        $trendAdvice = 'Pertahankan ritme operasional normal.';
+                    }
+                @endphp
                 <div class="bg-dark-matcha text-white p-6 rounded-2xl shadow-sm flex items-start space-x-4 w-full"
                     style="background-color: #2D5A34;">
                     <div class="p-2.5 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
@@ -96,11 +107,13 @@
                         </svg>
                     </div>
                     <div>
-                        <h4 class="text-md font-bold">Summary Prediction AI Insight</h4>
+                        <h4 class="text-md font-bold">System Actionable Insight</h4>
                         <p class="text-sm text-gray-200 mt-1">
-                            Demand for <span class="underline font-medium">Ceremonial Matcha</span> is expected to rise by
-                            <span class="font-bold text-white">15% next week</span> due to local holiday foot traffic.
-                            Recommend increasing base order of milk by 2 cases.
+                            Algoritma mendeteksi potensi <span
+                                class="font-bold {{ $trendColor }}">{{ $trendStatus }}</span> permintaan.
+                            Estimasi target produksi esok hari berada di angka <span
+                                class="font-bold text-white underline text-lg">{{ $prediksiBesok }} Porsi</span>.
+                            {{ $trendAdvice }}
                         </p>
                     </div>
                 </div>
@@ -148,7 +161,7 @@
                     </div>
                 </div>
 
-                <!-- Waste Identification Panel -->
+                <!-- Perishable Focus -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-md font-bold text-gray-800">Perishable Focus</h3>
@@ -184,7 +197,7 @@
                     </div>
                 </div>
 
-                <!-- Product Priority Usage -->
+                <!-- Restock Priority -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
                     <h3 class="text-md font-bold text-gray-800 mb-1">Restock Priority</h3>
                     <p class="text-[10px] text-gray-400 mb-4">Item dengan sisa kapasitas terendah</p>
@@ -209,42 +222,63 @@
             </div>
         </div>
 
-        <!-- BOTTOM BLOCK: RESTOCK PLANNING (ORIGINAL LU) -->
+        <!-- BOTTOM BLOCK: RESTOCK PLANNING (100% DINAMIS DARI SMA) -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mt-6 w-full">
             <div class="mb-6">
-                <h3 class="text-xl font-bold text-[#2D5A34]">Restock Planning</h3>
-                <p class="text-sm text-gray-400 mt-1">Inventory replenishment logic based on time-series forecasting</p>
+                <h3 class="text-xl font-bold text-[#2D5A34]">Rencana Produksi & Restock</h3>
+                <p class="text-sm text-gray-400 mt-1">Proyeksi penyusutan bahan baku untuk target produksi besok
+                    ({{ $prediksiBesok }} Porsi)</p>
             </div>
 
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="text-[10px] uppercase tracking-wider text-gray-400 border-b border-gray-100">
-                            <th class="pb-3 font-bold">Ingredient Name</th>
-                            <th class="pb-3 font-bold">Current Stock</th>
-                            <th class="pb-3 font-bold">Average Usage</th>
-                            <th class="pb-3 font-bold">Predicted Depletion</th>
-                            <th class="pb-3 font-bold">Reorder Qty</th>
-                            <th class="pb-3 font-bold">Status</th>
+                            <th class="pb-3 font-bold">Nama Bahan Baku</th>
+                            <th class="pb-3 font-bold">Sisa Stok Gudang</th>
+                            <th class="pb-3 font-bold">Kebutuhan (Per Porsi)</th>
+                            <th class="pb-3 font-bold text-red-600">Estimasi Penyusutan Besok</th>
+                            <th class="pb-3 font-bold">Sisa Akhir (Proyeksi)</th>
+                            <th class="pb-3 font-bold text-center">Rekomendasi Sistem</th>
                         </tr>
                     </thead>
                     <tbody class="text-sm align-top">
                         @forelse($ingredients as $ing)
+                            @php
+                                // Asumsi sementara sebelum wawancara BOM
+                                $takaranResep = str_contains(strtolower($ing->nama_bahan), 'susu') ? 150 : 20;
+                                $estimasiPenyusutan = $prediksiBesok * $takaranResep;
+                                $proyeksiSisa = $ing->stok_saat_ini - $estimasiPenyusutan;
+                                $batasKritis = $ing->stok_awal * 0.2;
+                                $butuhRestock = $proyeksiSisa <= $batasKritis;
+                            @endphp
                             <tr class="border-b border-gray-50">
                                 <td class="py-5 font-bold text-[#2D5A34]">{{ $ing->nama_bahan }}</td>
-                                <td class="py-5 font-bold text-gray-800">{{ $ing->stok_saat_ini }}</td>
-                                <td class="py-5 text-gray-500">450g /<br>week</td>
-                                <td class="py-5 font-bold text-red-600 flex items-start gap-1">
-                                    <span class="text-gray-700 font-normal">Estimasi Sistem</span>
+                                <td class="py-5 font-bold text-gray-800">{{ $ing->stok_saat_ini }} <span
+                                        class="text-xs font-normal text-gray-500">{{ $ing->satuan }}</span></td>
+                                <td class="py-5 text-gray-500 font-mono text-xs">{{ $takaranResep }} {{ $ing->satuan }}
                                 </td>
-                                <td class="py-5 font-bold text-gray-800">5.0 kg</td>
-                                <td class="py-5">
-                                    @if ($ing->stok_saat_ini < 1000)
+                                <td class="py-5 font-bold text-red-600">
+                                    - {{ $estimasiPenyusutan }} <span
+                                        class="text-xs font-normal">{{ $ing->satuan }}</span>
+                                </td>
+                                <td class="py-5 font-bold {{ $proyeksiSisa < 0 ? 'text-red-600' : 'text-gray-800' }}">
+                                    {{ $proyeksiSisa }} <span
+                                        class="text-xs font-normal text-gray-500">{{ $ing->satuan }}</span>
+                                </td>
+                                <td class="py-5 text-center">
+                                    @if ($proyeksiSisa < 0)
                                         <span
-                                            class="bg-red-50 text-red-500 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase">Restock</span>
+                                            class="bg-red-600 text-white px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase shadow-sm">KRITIS
+                                            - DEFISIT</span>
+                                    @elseif ($butuhRestock)
+                                        <span
+                                            class="bg-red-50 text-red-600 border border-red-200 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase">Segera
+                                            Restock</span>
                                     @else
                                         <span
-                                            class="bg-green-50 text-green-600 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase">Cukup</span>
+                                            class="bg-green-50 text-green-600 border border-green-200 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase">Stok
+                                            Aman</span>
                                     @endif
                                 </td>
                             </tr>
@@ -259,9 +293,7 @@
             </div>
         </div>
 
-        <!-- ======================================================= -->
         <!-- NEW BLOCK: TABEL AUDIT PEMBUKTIAN SMA -->
-        <!-- ======================================================= -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mt-6 w-full">
             <div class="mb-6 flex justify-between items-center">
                 <div>

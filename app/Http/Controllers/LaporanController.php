@@ -17,10 +17,13 @@ class LaporanController extends Controller
     public function index(Request $request): View
     {
         // TANGKAP PARAMETER TANGGAL DARI URL
-        // Jika user memilih tanggal, gunakan itu. Jika tidak, gunakan hari ini.
         $endDate = $request->has('end_date')
             ? Carbon::parse($request->input('end_date'))
             : Carbon::now();
+
+        // TANGKAP PARAMETER WINDOW (N) DARI URL
+        // Jika tidak ada parameter (baru pertama kali buka halaman), default ke 3
+        $n = (int) $request->input('n', 3);
 
         // 1. Ambil data bahan baku & ringkasan
         $ingredients = BahanBaku::all();
@@ -33,11 +36,12 @@ class LaporanController extends Controller
         $oatStock = BahanBaku::where('nama_bahan', 'like', '%oat%')->first();
 
         // ====================================================================
-        // LOGIKA KALKULASI SINGLE MOVING AVERAGE (SMA 3-HARI) & TABEL AUDIT
+        // LOGIKA KALKULASI SINGLE MOVING AVERAGE (SMA DINAMIS) & TABEL AUDIT
         // ====================================================================
-        $n = 3; // Parameter Window SMA
 
-        // Tarik data total cup/porsi terjual per hari (14 hari ke belakang dari $endDate)
+        // PERBAIKAN LOGIKA: Tarik data sejauh ($n + 13) hari ke belakang.
+        // Ini memastikan kita punya cukup "bahan bakar" data historis untuk menghitung
+        // nilai SMA pertama, sehingga UI selalu mendapat 14 hari data prediksi yang utuh.
         $historisDemand = DB::table('order_items')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
             ->select(
@@ -45,7 +49,7 @@ class LaporanController extends Controller
                 DB::raw('SUM(order_items.quantity) as total_qty')
             )
             ->whereBetween('orders.created_at', [
-                $endDate->copy()->subDays(13)->startOfDay(),
+                $endDate->copy()->subDays($n + 13)->startOfDay(),
                 $endDate->copy()->endOfDay()
             ])
             ->groupBy('tanggal')
@@ -80,19 +84,23 @@ class LaporanController extends Controller
 
             $tanggalFormatted = Carbon::parse($data->tanggal)->isoFormat('D MMM YYYY');
 
-            // Data untuk Tabel Audit di bagian bawah View
-            $analisisSma[] = (object) [
-                'tanggal'  => $tanggalFormatted,
-                'aktual'   => $data->total_qty,
-                'prediksi' => $prediksi,
-                'rumus'    => $rumus,
-                'error'    => $error,
-            ];
+            // Kita hanya memasukkan data ke View jika index sudah melewati batas buang (fase learning algoritma)
+            // Tujuannya agar Tabel dan Grafik bersih, tidak menampilkan hari-hari yang error-nya kosong
+            if ($index >= $n) {
+                // Data untuk Tabel Audit
+                $analisisSma[] = (object) [
+                    'tanggal'  => $tanggalFormatted,
+                    'aktual'   => $data->total_qty,
+                    'prediksi' => $prediksi,
+                    'rumus'    => $rumus,
+                    'error'    => $error,
+                ];
 
-            // Data untuk Grafik Kombinasi (Bar vs Line)
-            $chartSmaLabels[]   = Carbon::parse($data->tanggal)->isoFormat('D MMM');
-            $chartSmaAktual[]   = $data->total_qty;
-            $chartSmaPrediksi[] = $prediksi; // nilai null akan membuat garis Chart.js terputus dengan wajar
+                // Data untuk Grafik Kombinasi (Bar vs Line)
+                $chartSmaLabels[]   = Carbon::parse($data->tanggal)->isoFormat('D MMM');
+                $chartSmaAktual[]   = $data->total_qty;
+                $chartSmaPrediksi[] = $prediksi;
+            }
         }
 
 
@@ -114,7 +122,6 @@ class LaporanController extends Controller
         $chartData = [];
 
         for ($i = 6; $i >= 0; $i--) {
-            // Gunakan copy() agar variabel $endDate asli tidak bergeser saat di-loop
             $tanggal = $endDate->copy()->subDays($i)->format('Y-m-d');
             $labelHari = $endDate->copy()->subDays($i)->format('d M');
 
@@ -152,7 +159,7 @@ class LaporanController extends Controller
             $chartDataMonthly[] = $transaksiHariIni ? $transaksiHariIni->total_transactions : 0;
         }
 
-        // Lempar SEMUA variabel ke view laporan.index
+        // Lempar SEMUA variabel ke view
         return view('laporan.index', compact(
             'ingredients',
             'totalOrders',
@@ -162,11 +169,11 @@ class LaporanController extends Controller
             'chartData',
             'chartLabelsMonthly',
             'chartDataMonthly',
-            'n',                   // Parameter SMA (3)
-            'analisisSma',         // Array Data untuk Tabel Audit
-            'chartSmaLabels',      // Label Grafik SMA
-            'chartSmaAktual',      // Data Bar Grafik SMA
-            'chartSmaPrediksi'     // Data Line Grafik SMA
+            'n',                   // Parameter SMA Aktif
+            'analisisSma',
+            'chartSmaLabels',
+            'chartSmaAktual',
+            'chartSmaPrediksi'
         ));
     }
 
