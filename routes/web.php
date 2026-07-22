@@ -9,6 +9,7 @@ use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\IngredientController;
+
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -77,3 +78,6 @@ Route::get('/laporan/export', [LaporanController::class, 'exportCSV'])->name('la
 
 // RUTE BARU: Untuk memproses Restock / Barang Masuk (POST)
 Route::post('/inventory/{id}/tambah-stok', [InventoryController::class, 'tambahStok'])->name('inventory.tambah-stok');
+
+Route::get('/laporan', [\App\Http\Controllers\LaporanController::class, 'index'])->name('laporan.index');
+Route::get('/laporan/export-csv', [\App\Http\Controllers\LaporanController::class, 'exportCSV'])->name('laporan.export');

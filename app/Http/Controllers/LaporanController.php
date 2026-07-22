@@ -12,17 +12,20 @@ use Illuminate\Support\Facades\DB;
 class LaporanController extends Controller
 {
     /**
-     * Menampilkan Halaman Analytics & Stock Report
+     * Menampilkan Halaman Analytics, Stock Report & Audit SMA
      */
-    public function index(): View
+    public function index(Request $request): View
     {
-        // 1. Ambil data bahan baku
-        $ingredients = BahanBaku::all();
+        // TANGKAP PARAMETER TANGGAL DARI URL
+        // Jika user memilih tanggal, gunakan itu. Jika tidak, gunakan hari ini.
+        $endDate = $request->has('end_date')
+            ? Carbon::parse($request->input('end_date'))
+            : Carbon::now();
 
-        // 2. Hitung Total Orders riil
+        // 1. Ambil data bahan baku & ringkasan
+        $ingredients = BahanBaku::all();
         $totalOrders = Order::count();
 
-        // 3. Ambil bahan mentah spesifik
         $milkStock = BahanBaku::where('nama_bahan', 'like', '%susu%')
             ->orWhere('nama_bahan', 'like', '%milk%')
             ->first();
@@ -30,13 +33,80 @@ class LaporanController extends Controller
         $oatStock = BahanBaku::where('nama_bahan', 'like', '%oat%')->first();
 
         // ====================================================================
-        // DATA GRAFIK: 7 HARI (WEEKLY)
+        // LOGIKA KALKULASI SINGLE MOVING AVERAGE (SMA 3-HARI) & TABEL AUDIT
+        // ====================================================================
+        $n = 3; // Parameter Window SMA
+
+        // Tarik data total cup/porsi terjual per hari (14 hari ke belakang dari $endDate)
+        $historisDemand = DB::table('order_items')
+            ->join('orders', 'order_items.order_id', '=', 'orders.id')
+            ->select(
+                DB::raw('DATE(orders.created_at) as tanggal'),
+                DB::raw('SUM(order_items.quantity) as total_qty')
+            )
+            ->whereBetween('orders.created_at', [
+                $endDate->copy()->subDays(13)->startOfDay(),
+                $endDate->copy()->endOfDay()
+            ])
+            ->groupBy('tanggal')
+            ->orderBy('tanggal', 'asc')
+            ->get();
+
+        $analisisSma = [];
+        $chartSmaLabels = [];
+        $chartSmaAktual = [];
+        $chartSmaPrediksi = [];
+
+        foreach ($historisDemand as $index => $data) {
+            $prediksi = null;
+            $error = null;
+            $rumus = '-';
+
+            // Hitung SMA jika data historis ke belakang sudah mencukupi periode (n)
+            if ($index >= $n) {
+                $totalSebelumnya = 0;
+                $deretAngka = [];
+
+                for ($i = 1; $i <= $n; $i++) {
+                    $angka = $historisDemand[$index - $i]->total_qty;
+                    $totalSebelumnya += $angka;
+                    $deretAngka[] = $angka;
+                }
+
+                $prediksi = round($totalSebelumnya / $n);
+                $error = $data->total_qty - $prediksi;
+                $rumus = "(" . implode(" + ", array_reverse($deretAngka)) . ") / " . $n;
+            }
+
+            $tanggalFormatted = Carbon::parse($data->tanggal)->isoFormat('D MMM YYYY');
+
+            // Data untuk Tabel Audit di bagian bawah View
+            $analisisSma[] = (object) [
+                'tanggal'  => $tanggalFormatted,
+                'aktual'   => $data->total_qty,
+                'prediksi' => $prediksi,
+                'rumus'    => $rumus,
+                'error'    => $error,
+            ];
+
+            // Data untuk Grafik Kombinasi (Bar vs Line)
+            $chartSmaLabels[]   = Carbon::parse($data->tanggal)->isoFormat('D MMM');
+            $chartSmaAktual[]   = $data->total_qty;
+            $chartSmaPrediksi[] = $prediksi; // nilai null akan membuat garis Chart.js terputus dengan wajar
+        }
+
+
+        // ====================================================================
+        // DATA GRAFIK BANYAK TRANSAKSI: 7 HARI (WEEKLY)
         // ====================================================================
         $salesData = Order::select(
             DB::raw('DATE(created_at) as date'),
             DB::raw('COUNT(id) as total_transactions')
         )
-            ->where('created_at', '>=', Carbon::now()->subDays(6)->startOfDay())
+            ->whereBetween('created_at', [
+                $endDate->copy()->subDays(6)->startOfDay(),
+                $endDate->copy()->endOfDay()
+            ])
             ->groupBy('date')
             ->get();
 
@@ -44,8 +114,9 @@ class LaporanController extends Controller
         $chartData = [];
 
         for ($i = 6; $i >= 0; $i--) {
-            $tanggal = Carbon::now()->subDays($i)->format('Y-m-d');
-            $labelHari = Carbon::now()->subDays($i)->format('d M');
+            // Gunakan copy() agar variabel $endDate asli tidak bergeser saat di-loop
+            $tanggal = $endDate->copy()->subDays($i)->format('Y-m-d');
+            $labelHari = $endDate->copy()->subDays($i)->format('d M');
 
             $chartLabels[] = $labelHari;
 
@@ -53,14 +124,18 @@ class LaporanController extends Controller
             $chartData[] = $transaksiHariIni ? $transaksiHariIni->total_transactions : 0;
         }
 
+
         // ====================================================================
-        // DATA GRAFIK: 30 HARI (MONTHLY)
+        // DATA GRAFIK BANYAK TRANSAKSI: 30 HARI (MONTHLY)
         // ====================================================================
         $monthlySalesData = Order::select(
             DB::raw('DATE(created_at) as date'),
             DB::raw('COUNT(id) as total_transactions')
         )
-            ->where('created_at', '>=', Carbon::now()->subDays(29)->startOfDay())
+            ->whereBetween('created_at', [
+                $endDate->copy()->subDays(29)->startOfDay(),
+                $endDate->copy()->endOfDay()
+            ])
             ->groupBy('date')
             ->get();
 
@@ -68,8 +143,8 @@ class LaporanController extends Controller
         $chartDataMonthly = [];
 
         for ($i = 29; $i >= 0; $i--) {
-            $tanggal = Carbon::now()->subDays($i)->format('Y-m-d');
-            $labelHari = Carbon::now()->subDays($i)->format('d M');
+            $tanggal = $endDate->copy()->subDays($i)->format('Y-m-d');
+            $labelHari = $endDate->copy()->subDays($i)->format('d M');
 
             $chartLabelsMonthly[] = $labelHari;
 
@@ -77,7 +152,7 @@ class LaporanController extends Controller
             $chartDataMonthly[] = $transaksiHariIni ? $transaksiHariIni->total_transactions : 0;
         }
 
-        // Lempar SEMUA variabel ke view (Inilah yang tadi bikin sistem lu error karena gak ada)
+        // Lempar SEMUA variabel ke view laporan.index
         return view('laporan.index', compact(
             'ingredients',
             'totalOrders',
@@ -85,8 +160,13 @@ class LaporanController extends Controller
             'oatStock',
             'chartLabels',
             'chartData',
-            'chartLabelsMonthly', // Solusi Error Lu
-            'chartDataMonthly'    // Solusi Error Lu
+            'chartLabelsMonthly',
+            'chartDataMonthly',
+            'n',                   // Parameter SMA (3)
+            'analisisSma',         // Array Data untuk Tabel Audit
+            'chartSmaLabels',      // Label Grafik SMA
+            'chartSmaAktual',      // Data Bar Grafik SMA
+            'chartSmaPrediksi'     // Data Line Grafik SMA
         ));
     }
 

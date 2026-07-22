@@ -12,7 +12,15 @@
             <div class="flex flex-col items-end gap-3">
                 <div class="flex items-center space-x-3">
                     <div class="flex items-center gap-2">
-                        <x-date_picker />
+
+                        <!-- REVISI: Form Filter Tanggal Dinamis -->
+                        <form action="{{ route('laporan.index') }}" method="GET" id="dateFilterForm" class="m-0 p-0">
+                            <input type="date" name="end_date"
+                                value="{{ request('end_date', \Carbon\Carbon::now()->format('Y-m-d')) }}"
+                                class="bg-white border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-[#2E4F4F] focus:border-[#2E4F4F] block px-3 py-1.5 cursor-pointer shadow-sm hover:border-gray-300 transition-colors"
+                                onchange="document.getElementById('dateFilterForm').submit();"
+                                max="{{ \Carbon\Carbon::now()->format('Y-m-d') }}">
+                        </form>
 
                         <a href="{{ route('laporan.export') }}"
                             class="bg-[#2E4F4F] text-white px-4 py-1.5 rounded-lg shadow-sm text-sm font-semibold hover:bg-opacity-90 transition inline-block text-center">
@@ -20,7 +28,7 @@
                         </a>
                     </div>
 
-                    <!-- REVISI: Default activeTab diubah ke 'weekly' agar sinkron dengan data asli dari database (7 hari) -->
+                    <!-- Default activeTab: 'weekly' -->
                     <div x-data="{ activeTab: 'weekly' }"
                         class="flex items-center bg-gray-50 p-1 rounded-lg border border-gray-200 text-xs font-semibold">
                         <button @click="activeTab = 'monthly'; switchChartMode('monthly')"
@@ -45,14 +53,13 @@
 
             <!-- LEFT COLUMN: GRAPH & INSIGHTS -->
             <div class="col-span-2 space-y-6">
-                <!-- REVISI: Demand Analysis dengan Chart.js -->
+                <!-- Demand Analysis -->
                 <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                     <div class="flex justify-between items-center mb-1">
                         <h3 class="text-lg font-bold text-gray-800">Demand Analysis</h3>
                     </div>
                     <p class="text-sm text-gray-400 mb-6">Actual vs. Forecasted consumption</p>
 
-                    <!-- Container Grafik: Fixed Height agar layout stabil saat diganti bulanan -->
                     <div class="w-full h-64 mt-4 relative">
                         <canvas id="demandChart"></canvas>
                     </div>
@@ -79,7 +86,8 @@
                 </div>
 
                 <!-- AI Summary Prediction Box -->
-                <div class="bg-dark-matcha text-white p-6 rounded-2xl shadow-sm flex items-start space-x-4 w-full">
+                <div class="bg-dark-matcha text-white p-6 rounded-2xl shadow-sm flex items-start space-x-4 w-full"
+                    style="background-color: #2D5A34;">
                     <div class="p-2.5 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-white" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -100,9 +108,7 @@
 
             <!-- RIGHT COLUMN: PERFORMANCE METRICS & WASTES -->
             <div class="col-span-1 space-y-6">
-
                 @php
-                    // Logika Kalkulasi Dinamis (Tanpa menyentuh controller lagi)
                     $kritisCount = $ingredients
                         ->filter(function ($item) {
                             return ($item->stok_awal > 0 ? ($item->stok_saat_ini / $item->stok_awal) * 100 : 0) <= 20;
@@ -125,7 +131,7 @@
                     <div class="grid grid-cols-2 gap-2 text-center">
                         <div class="p-3 border rounded-xl flex flex-col items-center">
                             <div
-                                class="w-12 h-12 rounded-full border-4 border-[#86A789] flex items-center justify-center font-bold text-sm">
+                                class="w-12 h-12 rounded-full border-4 border-[#86A789] flex items-center justify-center font-bold text-sm text-gray-800">
                                 {{ $ingredients->count() }}
                             </div>
                             <span class="text-[11px] text-gray-500 mt-2">Total Item Aktif</span>
@@ -203,7 +209,7 @@
             </div>
         </div>
 
-        <!-- BOTTOM BLOCK: DINAMIS RESTOCK PLANNING FROM DATABASE -->
+        <!-- BOTTOM BLOCK: RESTOCK PLANNING (ORIGINAL LU) -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mt-6 w-full">
             <div class="mb-6">
                 <h3 class="text-xl font-bold text-[#2D5A34]">Restock Planning</h3>
@@ -253,52 +259,102 @@
             </div>
         </div>
 
+        <!-- ======================================================= -->
+        <!-- NEW BLOCK: TABEL AUDIT PEMBUKTIAN SMA -->
+        <!-- ======================================================= -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mt-6 w-full">
+            <div class="mb-6 flex justify-between items-center">
+                <div>
+                    <h3 class="text-xl font-bold text-[#2D5A34]">Tabel Pembuktian Algoritma SMA</h3>
+                    <p class="text-sm text-gray-400 mt-1">Langkah matematis kalkulasi prediksi demand ($n =
+                        {{ $n }} \text{ hari}$)</p>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr
+                            class="text-[10px] uppercase tracking-wider text-gray-400 border-b border-gray-100 bg-gray-50/50">
+                            <th class="py-3 px-4 font-bold">Tanggal</th>
+                            <th class="py-3 px-4 font-bold text-center">Aktual Terjual (Porsi)</th>
+                            <th class="py-3 px-4 font-bold text-center">Langkah Perhitungan (Rumus)</th>
+                            <th class="py-3 px-4 font-bold text-center">Hasil Prediksi (SMA)</th>
+                            <th class="py-3 px-4 font-bold text-right">Error (Selisih)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm divide-y divide-gray-50">
+                        @forelse($analisisSma as $row)
+                            <tr class="hover:bg-gray-50/80 transition-colors">
+                                <td class="py-4 px-4 font-semibold text-gray-700">{{ $row->tanggal }}</td>
+                                <td class="py-4 px-4 text-center font-bold text-gray-800">{{ $row->aktual }}</td>
+                                <td class="py-4 px-4 text-center font-mono text-xs text-gray-500">{{ $row->rumus }}</td>
+                                <td class="py-4 px-4 text-center font-bold text-[#2D5A34]">
+                                    @if ($row->prediksi !== null)
+                                        {{ $row->prediksi }}
+                                    @else
+                                        <span class="text-gray-300 italic text-xs font-normal">Membutuhkan
+                                            {{ $n }} hari historis</span>
+                                    @endif
+                                </td>
+                                <td class="py-4 px-4 text-right">
+                                    @if ($row->error !== null)
+                                        <span
+                                            class="px-2.5 py-1 rounded-md text-xs font-bold {{ $row->error > 0 ? 'bg-red-50 text-red-600' : ($row->error < 0 ? 'bg-blue-50 text-blue-600' : 'bg-green-50 text-green-600') }}">
+                                            {{ $row->error > 0 ? '+' : '' }}{{ $row->error }}
+                                        </span>
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="py-6 text-center text-gray-400 italic">Data transaksi belum
+                                    mencukupi untuk audit SMA.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
 
-    <!-- REVISI: Inisialisasi Script Chart.js -->
+    <!-- SCRIPT CHART.JS -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // 1. Deklarasi Objek Data Grafik Global agar bisa dibaca semua fungsi
         const dataGrafik = {
             weekly: {
-                // INJEKSI PHP: Menarik array tanggal 7 hari terakhir dan data transaksinya
-                labels: @json($chartLabels),
-                actual: @json($chartData),
-                // Data statis sementara untuk garis Forecast (karena ini UI AI dummy)
-                forecast: [10, 15, 20, 25, 30, 25, 15]
+                labels: @json($chartSmaLabels),
+                actual: @json($chartSmaAktual),
+                forecast: @json($chartSmaPrediksi)
             },
             monthly: {
-                // INJEKSI PHP: Menarik data 30 hari dari Controller
                 labels: @json($chartLabelsMonthly),
                 actual: @json($chartDataMonthly),
-
-                // Catatan Analitis:
-                // Data forecast (ramalan) sengaja dibiarkan statis sementara
-                // karena aplikasi TA lu belum punya algoritma Machine Learning sungguhan untuk meramal masa depan.
-                // Gua pakai trik mengisi array dengan angka rata-rata palsu agar UI tidak kosong.
                 forecast: Array.from({
                     length: 30
                 }, () => Math.floor(Math.random() * (20 - 5 + 1)) + 5)
             }
         };
 
-        // 2. Inisialisasi Chart saat halaman selesai diload
         document.addEventListener('DOMContentLoaded', function() {
             const ctx = document.getElementById('demandChart').getContext('2d');
             window.demandChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    // Default menggunakan data Weekly (Real Database Data)
                     labels: dataGrafik.weekly.labels,
                     datasets: [{
                             type: 'line',
                             label: 'Forecast',
                             data: dataGrafik.weekly.forecast,
-                            borderColor: '#86A789',
+                            borderColor: '#E53E3E',
                             borderDash: [5, 5],
                             backgroundColor: 'transparent',
                             tension: 0.4,
-                            pointRadius: 2
+                            pointRadius: 4,
+                            pointBackgroundColor: '#E53E3E'
                         },
                         {
                             type: 'bar',
@@ -328,7 +384,7 @@
                             },
                             ticks: {
                                 stepSize: 1
-                            } // Memaksa y-axis tidak desimal (1 transaksi bukan 1.5)
+                            }
                         },
                         x: {
                             grid: {
@@ -340,7 +396,6 @@
             });
         });
 
-        // 3. Fungsi Global untuk diakses oleh tombol Alpine.js
         window.switchChartMode = function(mode) {
             if (window.demandChart) {
                 window.demandChart.data.labels = dataGrafik[mode].labels;
