@@ -100,21 +100,44 @@
 
             <!-- RIGHT COLUMN: PERFORMANCE METRICS & WASTES -->
             <div class="col-span-1 space-y-6">
-                <!-- Performance Metrics Circle Indicators -->
+
+                @php
+                    // Logika Kalkulasi Dinamis (Tanpa menyentuh controller lagi)
+                    $kritisCount = $ingredients
+                        ->filter(function ($item) {
+                            return ($item->stok_awal > 0 ? ($item->stok_saat_ini / $item->stok_awal) * 100 : 0) <= 20;
+                        })
+                        ->count();
+
+                    $priorityItems = $ingredients
+                        ->map(function ($item) {
+                            $item->persentase =
+                                $item->stok_awal > 0 ? round(($item->stok_saat_ini / $item->stok_awal) * 100) : 0;
+                            return $item;
+                        })
+                        ->sortBy('persentase')
+                        ->take(3);
+                @endphp
+
+                <!-- Performance Metrics -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Performance Metrics</h3>
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Real-Time Metrics</h3>
                     <div class="grid grid-cols-2 gap-2 text-center">
                         <div class="p-3 border rounded-xl flex flex-col items-center">
                             <div
                                 class="w-12 h-12 rounded-full border-4 border-[#86A789] flex items-center justify-center font-bold text-sm">
-                                4.2x</div>
-                            <span class="text-[11px] text-gray-500 mt-2">Inventory Turnover</span>
+                                {{ $ingredients->count() }}
+                            </div>
+                            <span class="text-[11px] text-gray-500 mt-2">Total Item Aktif</span>
                         </div>
                         <div class="p-3 border rounded-xl flex flex-col items-center">
                             <div
-                                class="w-12 h-12 rounded-full border-4 border-[#86A789] flex items-center justify-center font-bold text-sm">
-                                94%</div>
-                            <span class="text-[11px] text-gray-500 mt-2">Prediction Accuracy</span>
+                                class="w-12 h-12 rounded-full border-4 {{ $kritisCount > 0 ? 'border-red-500 text-red-600' : 'border-[#86A789] text-gray-800' }} flex items-center justify-center font-bold text-sm">
+                                {{ $kritisCount }}
+                            </div>
+                            <span
+                                class="text-[11px] {{ $kritisCount > 0 ? 'text-red-500 font-bold' : 'text-gray-500' }} mt-2">Status
+                                Kritis</span>
                         </div>
                     </div>
                 </div>
@@ -122,42 +145,59 @@
                 <!-- Waste Identification Panel -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-md font-bold text-gray-800">Waste Identification</h3>
-                        <span class="text-xs font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded">3.5% avg</span>
+                        <h3 class="text-md font-bold text-gray-800">Perishable Focus</h3>
                     </div>
                     <div class="space-y-3">
-                        <div class="p-3 bg-red-50 rounded-xl border border-red-100 flex justify-between items-center">
-                            <div>
-                                <h4 class="text-xs font-bold text-gray-800">Whole Milk (Perishable)</h4>
-                                <p class="text-[10px] text-red-500">Expiring in 2 days</p>
+                        @if ($milkStock)
+                            <div class="p-3 bg-red-50 rounded-xl border border-red-100 flex justify-between items-center">
+                                <div>
+                                    <h4 class="text-xs font-bold text-gray-800">{{ $milkStock->nama_bahan }}</h4>
+                                    <p class="text-[10px] text-red-500">Prioritas Pemakaian</p>
+                                </div>
+                                <span class="font-bold text-xs text-gray-700">{{ $milkStock->stok_saat_ini }}
+                                    {{ $milkStock->satuan }}</span>
                             </div>
-                            <span class="font-bold text-xs text-gray-700">12.5L</span>
-                        </div>
-                        <div class="p-3 bg-gray-50 rounded-xl flex justify-between items-center">
-                            <div>
-                                <h4 class="text-xs font-bold text-gray-800">Oat Milk</h4>
-                                <p class="text-[10px] text-gray-400">Overstock surplus</p>
+                        @endif
+
+                        @if ($oatStock)
+                            <div class="p-3 bg-gray-50 rounded-xl border border-gray-200 flex justify-between items-center">
+                                <div>
+                                    <h4 class="text-xs font-bold text-gray-800">{{ $oatStock->nama_bahan }}</h4>
+                                    <p class="text-[10px] text-gray-400">Pantau Stok</p>
+                                </div>
+                                <span class="font-bold text-xs text-gray-700">{{ $oatStock->stok_saat_ini }}
+                                    {{ $oatStock->satuan }}</span>
                             </div>
-                            <span class="font-bold text-xs text-gray-700">4.2L</span>
-                        </div>
+                        @endif
+
+                        @if (!$milkStock && !$oatStock)
+                            <div class="p-3 bg-gray-50 rounded-xl flex justify-center items-center">
+                                <span class="text-xs text-gray-400 italic">Belum ada data susu/oat terdaftar.</span>
+                            </div>
+                        @endif
                     </div>
                 </div>
 
                 <!-- Product Priority Usage -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                    <h3 class="text-md font-bold text-gray-800 mb-4">Product Priority</h3>
+                    <h3 class="text-md font-bold text-gray-800 mb-1">Restock Priority</h3>
+                    <p class="text-[10px] text-gray-400 mb-4">Item dengan sisa kapasitas terendah</p>
                     <div class="space-y-3">
-                        @foreach (['Ceremonial Matcha' => '88%', 'Hojicha Powder' => '62%', 'Bamboo Whisks' => '45%'] as $prod => $pct)
+                        @forelse ($priorityItems as $prod)
                             <div>
                                 <div class="flex justify-between text-xs font-medium mb-1">
-                                    <span>{{ $prod }}</span>
-                                    <span>{{ $pct }}</span>
+                                    <span class="text-gray-700">{{ $prod->nama_bahan }}</span>
+                                    <span
+                                        class="{{ $prod->persentase <= 20 ? 'text-red-600 font-bold' : 'text-gray-600' }}">{{ $prod->persentase }}%</span>
                                 </div>
-                                <div class="w-full bg-gray-100 h-2 rounded-full">
-                                    <div class="bg-[#2E4F4F] h-2 rounded-full" style="width: {{ $pct }}"></div>
+                                <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                                    <div class="{{ $prod->persentase <= 20 ? 'bg-red-500' : 'bg-[#2E4F4F]' }} h-2 rounded-full transition-all duration-500"
+                                        style="width: {{ $prod->persentase }}%"></div>
                                 </div>
                             </div>
-                        @endforeach
+                        @empty
+                            <p class="text-xs text-center text-gray-400 italic">Data bahan baku kosong.</p>
+                        @endforelse
                     </div>
                 </div>
             </div>
@@ -228,15 +268,17 @@
                 forecast: [10, 15, 20, 25, 30, 25, 15]
             },
             monthly: {
-                labels: Array.from({
+                // INJEKSI PHP: Menarik data 30 hari dari Controller
+                labels: @json($chartLabelsMonthly),
+                actual: @json($chartDataMonthly),
+
+                // Catatan Analitis:
+                // Data forecast (ramalan) sengaja dibiarkan statis sementara
+                // karena aplikasi TA lu belum punya algoritma Machine Learning sungguhan untuk meramal masa depan.
+                // Gua pakai trik mengisi array dengan angka rata-rata palsu agar UI tidak kosong.
+                forecast: Array.from({
                     length: 30
-                }, (_, i) => `${i + 1} Jul`),
-                actual: [120, 100, 140, 130, 110, 155, 135, 140, 130, 125, 150, 160, 145, 130, 140, 155, 165, 170, 150,
-                    140, 135, 145, 160, 155, 150, 165, 175, 180, 170, 160
-                ],
-                forecast: [115, 105, 135, 130, 115, 150, 140, 135, 135, 130, 145, 155, 150, 135, 145, 150, 160, 165,
-                    155, 145, 140, 140, 155, 150, 155, 160, 170, 175, 175, 165
-                ]
+                }, () => Math.floor(Math.random() * (20 - 5 + 1)) + 5)
             }
         };
 

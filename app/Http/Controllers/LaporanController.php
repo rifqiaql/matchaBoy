@@ -6,8 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 use App\Models\Order;
 use App\Models\BahanBaku;
-use Carbon\Carbon; // Wajib untuk manipulasi waktu
-use Illuminate\Support\Facades\DB; // Wajib untuk raw query
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class LaporanController extends Controller
 {
@@ -16,13 +16,13 @@ class LaporanController extends Controller
      */
     public function index(): View
     {
-        // 1. Ambil data bahan baku untuk tabel Restock Planning
+        // 1. Ambil data bahan baku
         $ingredients = BahanBaku::all();
 
-        // 2. Hitung Total Orders riil dari database (Kumulatif)
+        // 2. Hitung Total Orders riil
         $totalOrders = Order::count();
 
-        // 3. Ambil bahan mentah spesifik dari database untuk Waste Identification
+        // 3. Ambil bahan mentah spesifik
         $milkStock = BahanBaku::where('nama_bahan', 'like', '%susu%')
             ->orWhere('nama_bahan', 'like', '%milk%')
             ->first();
@@ -30,10 +30,8 @@ class LaporanController extends Controller
         $oatStock = BahanBaku::where('nama_bahan', 'like', '%oat%')->first();
 
         // ====================================================================
-        // LOGIKA BARU: Analitik Tren Permintaan (7 Hari Terakhir)
+        // DATA GRAFIK: 7 HARI (WEEKLY)
         // ====================================================================
-
-        // Tarik data mentah dari database yang digrup per tanggal (hanya 7 hari terakhir)
         $salesData = Order::select(
             DB::raw('DATE(created_at) as date'),
             DB::raw('COUNT(id) as total_transactions')
@@ -45,26 +43,50 @@ class LaporanController extends Controller
         $chartLabels = [];
         $chartData = [];
 
-        // Looping presisi: Membangun kerangka waktu 7 hari ke belakang tanpa ada yang terlewat
         for ($i = 6; $i >= 0; $i--) {
             $tanggal = Carbon::now()->subDays($i)->format('Y-m-d');
-            $labelHari = Carbon::now()->subDays($i)->format('d M'); // Format misal: 21 Jul
+            $labelHari = Carbon::now()->subDays($i)->format('d M');
 
             $chartLabels[] = $labelHari;
 
-            // Cocokkan data database dengan kerangka hari (isi 0 jika tidak ada transaksi)
             $transaksiHariIni = $salesData->firstWhere('date', $tanggal);
             $chartData[] = $transaksiHariIni ? $transaksiHariIni->total_transactions : 0;
         }
 
-        // Lempar semua variabel ke view laporan, termasuk data array grafik
+        // ====================================================================
+        // DATA GRAFIK: 30 HARI (MONTHLY)
+        // ====================================================================
+        $monthlySalesData = Order::select(
+            DB::raw('DATE(created_at) as date'),
+            DB::raw('COUNT(id) as total_transactions')
+        )
+            ->where('created_at', '>=', Carbon::now()->subDays(29)->startOfDay())
+            ->groupBy('date')
+            ->get();
+
+        $chartLabelsMonthly = [];
+        $chartDataMonthly = [];
+
+        for ($i = 29; $i >= 0; $i--) {
+            $tanggal = Carbon::now()->subDays($i)->format('Y-m-d');
+            $labelHari = Carbon::now()->subDays($i)->format('d M');
+
+            $chartLabelsMonthly[] = $labelHari;
+
+            $transaksiHariIni = $monthlySalesData->firstWhere('date', $tanggal);
+            $chartDataMonthly[] = $transaksiHariIni ? $transaksiHariIni->total_transactions : 0;
+        }
+
+        // Lempar SEMUA variabel ke view (Inilah yang tadi bikin sistem lu error karena gak ada)
         return view('laporan.index', compact(
             'ingredients',
             'totalOrders',
             'milkStock',
             'oatStock',
             'chartLabels',
-            'chartData'
+            'chartData',
+            'chartLabelsMonthly', // Solusi Error Lu
+            'chartDataMonthly'    // Solusi Error Lu
         ));
     }
 
