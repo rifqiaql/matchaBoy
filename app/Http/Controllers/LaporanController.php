@@ -23,8 +23,6 @@ class LaporanController extends Controller
         // 2. DATA MASTER
         $ingredients = BahanBaku::all();
         $totalOrders = Order::count();
-        $milkStock = BahanBaku::where('nama_bahan', 'like', '%susu%')->orWhere('nama_bahan', 'like', '%milk%')->first();
-        $oatStock = BahanBaku::where('nama_bahan', 'like', '%oat%')->first();
 
         // 3. LOGIKA SMA UNTUK TABEL AUDIT (14 HARI HISTORIS)
         $historisDemand = DB::table('order_items')
@@ -136,8 +134,6 @@ class LaporanController extends Controller
         return view('laporan.index', compact(
             'ingredients',
             'totalOrders',
-            'milkStock',
-            'oatStock',
             'n',
             'analisisSma',
             'chartSmaLabels',

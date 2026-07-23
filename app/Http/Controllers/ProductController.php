@@ -47,7 +47,8 @@ class ProductController extends Controller
             'name' => 'required|string|max:255',
             'price' => 'required|numeric|min:0',
             'category' => 'required|string',
-            // 'image' => 'nullable|image|max:5120',
+            // Buka komentar validasi image dan pastikan format & ukurannya valid
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:' . self::MAX_IMAGE_SIZE_KB,
 
             // Validasi Resep
             'ingredients' => 'required|array|min:1',
@@ -55,15 +56,24 @@ class ProductController extends Controller
             'ingredients.*.quantity_needed' => 'required|numeric|min:0.01',
         ]);
 
-        // 2. Simpan Produk Dulu
-        $product = Product::create([
-            'name' => $request->name,
-            'price' => $request->price,
-            'category' => $request->category,
-            // 'image' => $imagePath, // Sesuaikan dengan logika upload gambar lu
-        ]);
+        // 2. Inisiasi Objek Produk Baru
+        $product = new Product();
+        $product->name = $request->name;
+        $product->price = $request->price;
+        $product->category = $request->category;
 
-        // 3. Eksekusi Resep (Menggunakan logika lu yang sudah benar)
+        // 3. Logika Penanganan Upload Gambar Baru (PERBAIKAN BUG)
+        if ($request->hasFile('image')) {
+            $imageName = time() . '.' . $request->image->extension();
+            // Simpan gambar secara fisik ke folder storage/app/public/products
+            $request->image->storeAs('products', $imageName, 'public');
+            // Catat nama filenya saja ke kolom database
+            $product->image = $imageName;
+        }
+
+        $product->save();
+
+        // 4. Eksekusi Resep (Menggunakan logika lu yang sudah benar)
         $syncData = [];
         foreach ($request->ingredients as $item) {
             $syncData[$item['bahan_baku_id']] = [
@@ -95,7 +105,7 @@ class ProductController extends Controller
             'name' => 'required|string|max:255',
             'price' => 'required|numeric',
             'category' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:' . self::MAX_IMAGE_SIZE_KB,
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:' . self::MAX_IMAGE_SIZE_KB,
             'ingredients' => 'nullable|array',
             'ingredients.*.bahan_baku_id' => 'required|exists:bahan_baku,id',
             'ingredients.*.quantity_needed' => 'required|numeric|min:0.01',
@@ -104,6 +114,9 @@ class ProductController extends Controller
         $product->name = $request->name;
         $product->price = $request->price;
         // Pastikan kategori ikut terupdate
+        if ($request->has('category')) {
+            $product->category = $request->category;
+        }
 
         if ($request->hasFile('image')) {
             // Hapus gambar lama jika ada di storage

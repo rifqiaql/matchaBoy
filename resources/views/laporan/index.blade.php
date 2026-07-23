@@ -119,42 +119,6 @@
                     </div>
                 </div>
 
-                <!-- Perishable Focus -->
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-md font-bold text-gray-800">Perishable Focus</h3>
-                    </div>
-                    <div class="space-y-3">
-                        @if ($milkStock)
-                            <div class="p-3 bg-red-50 rounded-xl border border-red-100 flex justify-between items-center">
-                                <div>
-                                    <h4 class="text-xs font-bold text-gray-800">{{ $milkStock->nama_bahan }}</h4>
-                                    <p class="text-[10px] text-red-500">Prioritas Pemakaian</p>
-                                </div>
-                                <span class="font-bold text-xs text-gray-700">{{ $milkStock->stok_saat_ini }}
-                                    {{ $milkStock->satuan }}</span>
-                            </div>
-                        @endif
-
-                        @if ($oatStock)
-                            <div class="p-3 bg-gray-50 rounded-xl border border-gray-200 flex justify-between items-center">
-                                <div>
-                                    <h4 class="text-xs font-bold text-gray-800">{{ $oatStock->nama_bahan }}</h4>
-                                    <p class="text-[10px] text-gray-400">Pantau Stok</p>
-                                </div>
-                                <span class="font-bold text-xs text-gray-700">{{ $oatStock->stok_saat_ini }}
-                                    {{ $oatStock->satuan }}</span>
-                            </div>
-                        @endif
-
-                        @if (!$milkStock && !$oatStock)
-                            <div class="p-3 bg-gray-50 rounded-xl flex justify-center items-center">
-                                <span class="text-xs text-gray-400 italic">Belum ada data susu/oat terdaftar.</span>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-
                 <!-- Restock Priority -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
                     <h3 class="text-md font-bold text-gray-800 mb-1">Restock Priority</h3>
@@ -250,13 +214,13 @@
             </div>
         </div>
 
-        <!-- NEW BLOCK: TABEL AUDIT PEMBUKTIAN SMA -->
+        <!-- TABEL AUDIT PEMBUKTIAN SMA -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mt-6 w-full">
             <div class="mb-6 flex justify-between items-center">
                 <div>
                     <h3 class="text-xl font-bold text-[#2D5A34]">Tabel Pembuktian Algoritma SMA</h3>
                     <p class="text-sm text-gray-400 mt-1">Langkah matematis kalkulasi prediksi demand (n =
-                        {{ $n }} \text{ hari}$)</p>
+                        {{ $n }} Hari)</p>
                 </div>
             </div>
 
