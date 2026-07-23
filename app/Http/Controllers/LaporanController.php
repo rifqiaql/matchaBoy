@@ -17,28 +17,46 @@ class LaporanController extends Controller
         $endDate = $request->has('end_date') ? Carbon::parse($request->input('end_date')) : Carbon::now();
         $n = (int) $request->input('n', 3);
         if ($n < 1) {
-            $n = 3; // Fallback aman untuk mencegah division by zero
+            $n = 3;
         }
 
         // 2. DATA MASTER
         $ingredients = BahanBaku::all();
         $totalOrders = Order::count();
 
-        // 3. LOGIKA SMA UNTUK TABEL AUDIT (14 HARI HISTORIS)
-        $historisDemand = DB::table('order_items')
+        // 3. LOGIKA SMA DENGAN ZERO-FILLING (MENAMBAL TANGGAL KOSONG)
+        $startDate = $endDate->copy()->subDays($n + 13)->startOfDay();
+
+        // Ambil raw data dari DB dan jadikan key-value (tanggal => total)
+        $rawData = DB::table('order_items')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
             ->select(
                 DB::raw('DATE(orders.created_at) as tanggal'),
                 DB::raw('SUM(order_items.quantity) as total_qty')
             )
             ->whereBetween('orders.created_at', [
-                $endDate->copy()->subDays($n + 13)->startOfDay(),
+                $startDate,
                 $endDate->copy()->endOfDay()
             ])
             ->groupBy('tanggal')
-            ->orderBy('tanggal', 'asc')
-            ->get();
+            ->pluck('total_qty', 'tanggal')
+            ->toArray();
 
+        // Generate deret tanggal berurutan tanpa putus
+        $historisDemand = [];
+        $currentIterDate = $startDate->copy();
+        $endIterDate = $endDate->copy()->startOfDay();
+
+        while ($currentIterDate->lessThanOrEqualTo($endIterDate)) {
+            $dateString = $currentIterDate->format('Y-m-d');
+            $historisDemand[] = (object) [
+                'tanggal'   => $dateString,
+                'total_qty' => $rawData[$dateString] ?? 0, // Jika nol/kosong, paksa jadi 0
+            ];
+            $currentIterDate->addDay();
+        }
+
+        // 4. KALKULASI SMA
         $analisisSma = [];
         foreach ($historisDemand as $index => $data) {
             $prediksi = null;
@@ -69,7 +87,7 @@ class LaporanController extends Controller
             }
         }
 
-        // 4. HITUNG PREDIKSI UNTUK H+1 (BESOK DARI TANGGAL FILTER)
+        // 5. HITUNG PREDIKSI UNTUK H+1 (BESOK DARI TANGGAL FILTER)
         $totalBesok = 0;
         $totalData = count($historisDemand);
 
@@ -84,7 +102,7 @@ class LaporanController extends Controller
 
         $aktualTerakhir = $totalData > 0 ? $historisDemand[$totalData - 1]->total_qty : 0;
 
-        // 5. TENTUKAN TREN UNTUK KOTAK AI SUMMARY
+        // 6. TENTUKAN TREN UNTUK KOTAK AI SUMMARY
         if ($prediksiBesok > $aktualTerakhir) {
             $trendStatus = 'Lonjakan';
             $trendColor = 'text-yellow-400';
@@ -99,7 +117,7 @@ class LaporanController extends Controller
             $trendAdvice = 'Pertahankan ritme operasional normal.';
         }
 
-        // 6. SIAPKAN GRAFIK 8 HARI (7 Historis + 1 Besok)
+        // 7. SIAPKAN GRAFIK 8 HARI (7 Historis + 1 Besok)
         $chartSmaLabels = [];
         $chartSmaAktual = [];
         $chartSmaPrediksi = [];
@@ -107,6 +125,7 @@ class LaporanController extends Controller
         $grafik7Hari = array_slice($analisisSma, -7);
 
         foreach ($grafik7Hari as $row) {
+            // Ubah format label agar lebih bersih di chart
             $chartSmaLabels[] = Carbon::parse($row->tanggal)->isoFormat('D MMM');
             $chartSmaAktual[] = $row->aktual;
             $chartSmaPrediksi[] = $row->prediksi;
@@ -146,9 +165,13 @@ class LaporanController extends Controller
         ));
     }
 
-    public function exportCSV()
+    public function exportCSV(Request $request)
     {
-        $filename = "Laporan_Penjualan_MatchaBoy_" . date('Ymd_His') . ".csv";
+        // 1. Tangkap Parameter (Default: Bulan dan Tahun saat ini)
+        $month = $request->input('month', Carbon::now()->format('m'));
+        $year = $request->input('year', Carbon::now()->format('Y'));
+
+        $filename = "Laporan_Penjualan_MatchaBoy_{$year}_{$month}.csv";
 
         $headers = [
             "Content-type"        => "text/csv",
@@ -158,28 +181,55 @@ class LaporanController extends Controller
             "Expires"             => "0"
         ];
 
-        $columns = ['No. Invoice', 'Tanggal Transaksi', 'Kasir', 'Subtotal', 'Pajak', 'Total Bayar', 'Status'];
+        $columns = [
+            'No. Invoice',
+            'Tanggal Transaksi',
+            'Kasir',
+            'Detail Pesanan',
+            'Total Qty (Cup)',
+            'Subtotal',
+            'Pajak',
+            'Total Bayar',
+            'Metode Pembayaran',
+            'Status'
+        ];
 
-        $callback = function () use ($columns) {
+        // Gunakan parameter 'use' untuk melempar variabel ke dalam scope Closure
+        $callback = function () use ($columns, $month, $year) {
             $file = fopen('php://output', 'w');
             fputcsv($file, $columns, ";");
 
-            // Menggunakan cursor() untuk efisiensi memori tingkat tinggi
-            $orders = Order::with(['user'])->latest()->cursor();
+            // 2. Filter data berdasarkan Bulan dan Tahun
+            $orders = Order::with(['user', 'orderItems.product'])
+                ->whereMonth('created_at', $month)
+                ->whereYear('created_at', $year)
+                ->latest()
+                ->cursor();
 
             foreach ($orders as $order) {
+                $detailPesanan = $order->orderItems->map(function ($item) {
+                    $namaProduk = $item->product ? $item->product->nama_produk ?? $item->product->name : 'Produk Dihapus';
+                    return $item->quantity . 'x ' . $namaProduk;
+                })->implode(', ');
+
+                $totalQty = $order->orderItems->sum('quantity');
+
                 fputcsv($file, [
                     $order->invoice_number,
                     $order->created_at->format('Y-m-d H:i:s'),
                     $order->user->name ?? 'Sistem',
+                    $detailPesanan,
+                    $totalQty,
                     $order->subtotal,
                     $order->tax,
                     $order->total_price,
+                    $order->payment_method ?? 'Cash',
                     $order->status
                 ], ";");
             }
             fclose($file);
         };
+
         return response()->stream($callback, 200, $headers);
     }
 }

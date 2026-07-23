@@ -10,7 +10,9 @@
                 <p class="text-sm text-gray-500">Predictive insights and artisanal inventory management</p>
             </div>
             <div class="flex flex-col items-end gap-3">
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-3">
+
+                    <!-- FORM 1: FILTER TAMPILAN GRAFIK (SMA) -->
                     <form action="{{ route('laporan.index') }}" method="GET" id="filterForm"
                         class="m-0 p-0 flex items-center gap-2">
                         <input type="date" name="end_date"
@@ -29,10 +31,48 @@
                         </select>
                     </form>
 
-                    <a href="{{ route('laporan.export') }}"
-                        class="bg-[#2E4F4F] text-white px-4 py-1.5 rounded-lg shadow-sm text-sm font-semibold hover:bg-opacity-90 transition inline-block text-center">
-                        Export Excel
-                    </a>
+                    <!-- PEMBATAS VISUAL -->
+                    <div class="h-8 border-l border-gray-300 mx-1"></div>
+
+                    <!-- FORM 2: EXPORT EXCEL DINAMIS -->
+                    <form action="{{ route('laporan.export') }}" method="GET" class="m-0 p-0 flex items-center gap-2">
+                        <!-- Dropdown Bulan -->
+                        <select name="month"
+                            class="bg-white border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-[#2E4F4F] focus:border-[#2E4F4F] block px-3 py-1.5 cursor-pointer shadow-sm hover:border-gray-300 transition-colors">
+                            <option value="01" {{ date('m') == '01' ? 'selected' : '' }}>Januari</option>
+                            <option value="02" {{ date('m') == '02' ? 'selected' : '' }}>Februari</option>
+                            <option value="03" {{ date('m') == '03' ? 'selected' : '' }}>Maret</option>
+                            <option value="04" {{ date('m') == '04' ? 'selected' : '' }}>April</option>
+                            <option value="05" {{ date('m') == '05' ? 'selected' : '' }}>Mei</option>
+                            <option value="06" {{ date('m') == '06' ? 'selected' : '' }}>Juni</option>
+                            <option value="07" {{ date('m') == '07' ? 'selected' : '' }}>Juli</option>
+                            <option value="08" {{ date('m') == '08' ? 'selected' : '' }}>Agustus</option>
+                            <option value="09" {{ date('m') == '09' ? 'selected' : '' }}>September</option>
+                            <option value="10" {{ date('m') == '10' ? 'selected' : '' }}>Oktober</option>
+                            <option value="11" {{ date('m') == '11' ? 'selected' : '' }}>November</option>
+                            <option value="12" {{ date('m') == '12' ? 'selected' : '' }}>Desember</option>
+                        </select>
+
+                        <!-- Dropdown Tahun -->
+                        <select name="year"
+                            class="bg-white border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-[#2E4F4F] focus:border-[#2E4F4F] block px-3 py-1.5 cursor-pointer shadow-sm hover:border-gray-300 transition-colors">
+                            @php $currentYear = date('Y'); @endphp
+                            @for ($y = $currentYear; $y >= $currentYear - 2; $y--)
+                                <option value="{{ $y }}">{{ $y }}</option>
+                            @endfor
+                        </select>
+
+                        <button type="submit"
+                            class="bg-[#2E4F4F] text-white px-4 py-1.5 rounded-lg shadow-sm text-sm font-semibold hover:bg-opacity-90 transition flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                </path>
+                            </svg>
+                            Export
+                        </button>
+                    </form>
+
                 </div>
             </div>
         </div>
