@@ -15,14 +15,15 @@
             <span class="text-sm font-semibold">Keranjang</span>
         </a>
 
-        <!-- GUDANG & LAPORAN (HANYA ADMIN) -->
-        @if (auth()->check() && auth()->user()->role === 'admin')
-            <a href="{{ route('inventory.index') }}"
-                class="flex flex-col items-center justify-center w-24 h-24 rounded-2xl transition-all duration-300 {{ request()->routeIs('inventory.*') ? 'bg-[#86A789] text-white shadow-lg transform -translate-y-1' : 'text-black hover:bg-[#86A789] hover:text-white hover:-translate-y-1' }}">
-                <x-icon name="archive-box" class="w-7 h-7 mb-1 stroke-current" />
-                <span class="text-sm font-semibold">Gudang</span>
-            </a>
+        <!-- GUDANG (Admin & Karyawan Bisa Lihat) -->
+        <a href="{{ route('inventory.index') }}"
+            class="flex flex-col items-center justify-center w-24 h-24 rounded-2xl transition-all duration-300 {{ request()->routeIs('inventory.*') ? 'bg-[#86A789] text-white shadow-lg transform -translate-y-1' : 'text-black hover:bg-[#86A789] hover:text-white hover:-translate-y-1' }}">
+            <x-icon name="archive-box" class="w-7 h-7 mb-1 stroke-current" />
+            <span class="text-sm font-semibold">Gudang</span>
+        </a>
 
+        <!-- LAPORAN (HANYA ADMIN) -->
+        @if (auth()->check() && auth()->user()->role === 'admin')
             <a href="{{ route('laporan.index') }}"
                 class="flex flex-col items-center justify-center w-24 h-24 rounded-2xl transition-all duration-300 {{ request()->routeIs('laporan.*') ? 'bg-[#86A789] text-white shadow-lg transform -translate-y-1' : 'text-black hover:bg-[#86A789] hover:text-white hover:-translate-y-1' }}">
                 <x-icon name="chart-bar" class="w-7 h-7 mb-1 stroke-current" />

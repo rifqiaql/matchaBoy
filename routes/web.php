@@ -24,7 +24,7 @@ Route::middleware('guest')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| ZONA 2: OPERASIONAL KASIR (Admin & Karyawan)
+| ZONA 2: OPERASIONAL HARIAN (Admin & Karyawan)
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth')->group(function () {
@@ -32,30 +32,32 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Keranjang & Transaksi (Menggunakan ProductController untuk load UI kasir)
+    // Keranjang & Transaksi Kasir
     Route::get('/keranjang', [ProductController::class, 'index'])->name('keranjang.index');
-
-    // Proses Checkout AJAX
     Route::post('/checkout', [OrderController::class, 'checkout'])->name('checkout.process');
+
+    // Gudang Operasional: Karyawan BISA Lihat Stok & Input Barang Masuk (Restock)
+    Route::prefix('inventory')->name('inventory.')->group(function () {
+        Route::get('/', [InventoryController::class, 'index'])->name('index');
+        Route::post('/{id}/tambah-stok', [InventoryController::class, 'tambahStok'])->name('tambah-stok');
+    });
 });
 
 /*
 |--------------------------------------------------------------------------
-| ZONA 3: MANAJEMEN ENTERPRISE (KHUSUS ADMIN)
+| ZONA 3: MANAJEMEN ENTERPRISE & MASTER DATA (KHUSUS ADMIN)
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'role:admin'])->group(function () {
 
-    // Manajemen Inventaris & Gudang
+    // Gudang Akses Dewa: Tambah Bahan Baku Baru, Edit, & Hapus (Dilarang untuk Karyawan)
     Route::prefix('inventory')->name('inventory.')->group(function () {
-        Route::get('/', [InventoryController::class, 'index'])->name('index');
         Route::get('/add', [InventoryController::class, 'create'])->name('create');
         Route::post('/', [InventoryController::class, 'store'])->name('store');
         Route::get('/{id}/edit', [InventoryController::class, 'edit'])->name('edit');
         Route::put('/{id}', [InventoryController::class, 'update'])->name('update');
         Route::delete('/{id}', [InventoryController::class, 'destroy'])->name('destroy');
         Route::get('/export', [InventoryController::class, 'export'])->name('export');
-        Route::post('/{id}/tambah-stok', [InventoryController::class, 'tambahStok'])->name('tambah-stok');
     });
 
     // Manajemen Katalog Produk & Resep (BOM)
@@ -65,7 +67,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::delete('/{id}', [ProductController::class, 'destroy'])->name('destroy');
     });
 
-    // Analitik & Pelaporan
+    // Analitik & Pelaporan Omzet/Moving Average
     Route::prefix('laporan')->name('laporan.')->group(function () {
         Route::get('/', [LaporanController::class, 'index'])->name('index');
         Route::get('/export', [LaporanController::class, 'exportCSV'])->name('export');
