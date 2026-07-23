@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\BahanBaku;
-use App\Models\StokMasuk; // Tambahan untuk memanggil model riwayat stok
+use App\Models\StokMasuk;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use Illuminate\Support\Facades\DB; // Tambahan untuk Database Transaction
-use Illuminate\Support\Facades\Auth; // Tambahan untuk mengambil ID Kasir/Admin
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class InventoryController extends Controller
@@ -51,26 +51,56 @@ class InventoryController extends Controller
         }
 
         $bahanBaku = $query->get();
-        $filename = 'inventory-export-' . now()->format('YmdHis') . '.csv';
+        $filename = 'Laporan_Gudang_MatchaBoy_' . now()->format('Ymd_His') . '.csv';
 
         return response()->streamDownload(function () use ($bahanBaku) {
             $handle = fopen('php://output', 'w');
-            fputcsv($handle, ['Nama Bahan', 'Kategori', 'Stok Saat Ini', 'Satuan', 'Batas Limit']);
+
+            // 1. Definisi Header yang Komprehensif
+            $columns = [
+                'ID Bahan',
+                'Nama Bahan',
+                'Kategori',
+                'Stok Awal (Kapasitas)',
+                'Stok Saat Ini',
+                'Satuan',
+                'Batas Minimum',
+                'Status Kondisi',
+                'Terakhir Diupdate'
+            ];
+
+            // 2. Gunakan Titik Koma (;) agar rapi di Microsoft Excel
+            fputcsv($handle, $columns, ';');
 
             foreach ($bahanBaku as $item) {
+                // 3. Penentuan Status Kondisi Otomatis
+                $status = 'Aman';
+                if ($item->stok_saat_ini <= 0) {
+                    $status = 'Habis / Defisit';
+                } elseif ($item->stok_saat_ini <= $item->stok_minimum) {
+                    $status = 'Kritis (Segera Restock)';
+                }
+
                 fputcsv($handle, [
+                    $item->id,
                     $item->nama_bahan,
                     $item->kategori,
+                    $item->stok_awal,
                     $item->stok_saat_ini,
                     $item->satuan,
                     $item->stok_minimum,
-                ]);
+                    $status,
+                    $item->updated_at ? $item->updated_at->format('Y-m-d H:i:s') : '-'
+                ], ';');
             }
 
             fclose($handle);
         }, $filename, [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0'
         ]);
     }
 
@@ -98,7 +128,6 @@ class InventoryController extends Controller
         ]);
 
         // 2. Kalkulasi cerdas di belakang layar
-        // Kalikan jumlah kemasan dengan isi per kemasan
         $totalStok = $request->jumlah_kemasan * $request->isi_per_kemasan;
 
         // 3. Simpan ke database
@@ -106,7 +135,6 @@ class InventoryController extends Controller
             'nama_bahan'    => $request->nama_bahan,
             'kategori'      => $request->kategori,
             'satuan'        => $request->satuan,
-            // Hasil perkalian tadi disuntikkan ke stok_awal dan stok_saat_ini
             'stok_awal'     => $totalStok,
             'stok_saat_ini' => $totalStok,
             'stok_minimum'  => $request->stok_minimum,
@@ -153,7 +181,6 @@ class InventoryController extends Controller
      */
     public function tambahStok(Request $request, $id): RedirectResponse
     {
-        // Validasi diubah: minta jumlah kemasan dan isi per kemasan
         $request->validate([
             'jumlah_kemasan' => 'required|numeric|min:0.1',
             'isi_per_kemasan' => 'required|numeric|min:0.1',
@@ -172,7 +199,7 @@ class InventoryController extends Controller
                 StokMasuk::create([
                     'bahan_baku_id' => $bahan->id,
                     'user_id' => Auth::id(),
-                    'jumlah_tambah' => $total_masuk, // Simpan total mililiter/gram-nya
+                    'jumlah_tambah' => $total_masuk,
                     'tanggal_kedaluwarsa' => $request->tanggal_kedaluwarsa,
                     'catatan' => $request->catatan,
                 ]);
