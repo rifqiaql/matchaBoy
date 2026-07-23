@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\BahanBaku;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -15,11 +16,14 @@ class ProductController extends Controller
      */
     public function index()
     {
-        // Mengambil semua data produk dari database
-        $products = Product::all();
+        // 1. Ambil data produk (diurutkan dari yang paling baru)
+        $products = Product::latest()->get();
 
-        // Mengirim data produk ke file index.blade.php di folder keranjang
-        return view('keranjang.index', compact('products'));
+        // 2. Ambil data bahan baku (KRUSIAL UNTUK MODAL TAMBAH/EDIT RESEP)
+        $all_ingredients = BahanBaku::all();
+
+        // 3. Kirim kedua data ke view
+        return view('keranjang.index', compact('products', 'all_ingredients'));
     }
 
     /**
@@ -47,7 +51,6 @@ class ProductController extends Controller
             'name' => 'required|string|max:255',
             'price' => 'required|numeric|min:0',
             'category' => 'required|string',
-            // Buka komentar validasi image dan pastikan format & ukurannya valid
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:' . self::MAX_IMAGE_SIZE_KB,
 
             // Validasi Resep
@@ -62,18 +65,16 @@ class ProductController extends Controller
         $product->price = $request->price;
         $product->category = $request->category;
 
-        // 3. Logika Penanganan Upload Gambar Baru (PERBAIKAN BUG)
+        // 3. Logika Penanganan Upload Gambar Baru
         if ($request->hasFile('image')) {
             $imageName = time() . '.' . $request->image->extension();
-            // Simpan gambar secara fisik ke folder storage/app/public/products
             $request->image->storeAs('products', $imageName, 'public');
-            // Catat nama filenya saja ke kolom database
             $product->image = $imageName;
         }
 
         $product->save();
 
-        // 4. Eksekusi Resep (Menggunakan logika lu yang sudah benar)
+        // 4. Eksekusi Resep (Bill of Materials)
         $syncData = [];
         foreach ($request->ingredients as $item) {
             $syncData[$item['bahan_baku_id']] = [
@@ -113,13 +114,12 @@ class ProductController extends Controller
 
         $product->name = $request->name;
         $product->price = $request->price;
-        // Pastikan kategori ikut terupdate
+
         if ($request->has('category')) {
             $product->category = $request->category;
         }
 
         if ($request->hasFile('image')) {
-            // Hapus gambar lama jika ada di storage
             if ($product->image && Storage::disk('public')->exists('products/' . $product->image)) {
                 Storage::disk('public')->delete('products/' . $product->image);
             }
@@ -131,7 +131,7 @@ class ProductController extends Controller
 
         $product->save();
 
-        // PROSES UTAMA EDIT: Update resep dinamis (resep lama dihapus, diganti yang baru)
+        // PROSES UTAMA EDIT: Update resep dinamis
         if ($request->has('ingredients')) {
             $syncData = [];
             foreach ($request->ingredients as $item) {
@@ -141,7 +141,6 @@ class ProductController extends Controller
             }
             $product->ingredients()->sync($syncData);
         } else {
-            // Jika semua baris resep dihapus saat edit, kosongkan tabel pivot
             $product->ingredients()->detach();
         }
 
@@ -162,15 +161,12 @@ class ProductController extends Controller
             return response()->json(['success' => false, 'message' => 'Produk tidak ditemukan.'], 404);
         }
 
-        // Hapus file gambar dari storage disk jika ada
         if ($product->image && Storage::disk('public')->exists('products/' . $product->image)) {
             Storage::disk('public')->delete('products/' . $product->image);
         }
 
-        // Hapus relasi resep di tabel pivot dulu agar tidak terjadi data yatim (foreign key constraint)
         $product->ingredients()->detach();
-
-        Product::destroy($id);
+        $product->delete();
 
         return response()->json([
             'success' => true,

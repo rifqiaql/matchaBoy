@@ -19,7 +19,7 @@ class RegisterController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        // 1. Validasi Hrus Menyertakan Username
+        // 1. Validasi Input (Termasuk Username)
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:users', // Username wajib unik
@@ -27,14 +27,16 @@ class RegisterController extends Controller
             'password' => 'required|string|min:8|confirmed',
         ]);
 
-        // 2. Simpan Username ke Database
+        // 2. Simpan Data ke Database (Dengan Hardcode Role)
         $user = User::create([
             'name' => $validated['name'],
-            'username' => $validated['username'], // Ini yang bikin error kalau lu skip
+            'username' => $validated['username'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
+            'role' => 'karyawan', // GEMBOK KEAMANAN: Memaksa pendaftar publik menjadi Karyawan
         ]);
 
+        // 3. Autentikasi dan Arahkan ke Dashboard
         Auth::login($user);
 
         return redirect()->route('dashboard')->with('success', 'Registration successful. Welcome to MatchaBoy!');

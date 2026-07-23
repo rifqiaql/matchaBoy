@@ -5,93 +5,100 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Models\ProductIngredient;
-use App\Models\BahanBaku; // Memanggil model bahan baku milik teman lo
+use App\Models\Product;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 
 class OrderController extends Controller
 {
-
-
+    /**
+     * Memproses transaksi (Checkout) dari Keranjang
+     */
     public function checkout(Request $request)
     {
-        // 1. Validasi input data keranjang yang dikirim oleh JavaScript (Front-End)
+        // 1. Validasi input: JANGAN PERNAH menerima harga (price) dari Frontend!
         $request->validate([
             'cart' => 'required|array',
-            'cart.*.id' => 'required|integer',
+            'cart.*.id' => 'required|exists:products,id',
             'cart.*.quantity' => 'required|integer|min:1',
-            'cart.*.price' => 'required|integer',
         ]);
 
-        // Mulai Database Transaction demi keamanan data
+        // Mulai Database Transaction demi keamanan data (Jika 1 gagal, semua dibatalkan)
         DB::beginTransaction();
 
         try {
-            // 2. Hitung Total Uang di Sisi Backend (Biar gak bisa di-hack lewat browser)
             $subtotal = 0;
+            $orderItemsData = []; // Wadah sementara
+
+            // 2. Loop Pertama: Hitung Total Uang dengan Harga Asli dari Database
             foreach ($request->cart as $item) {
-                $subtotal += $item['price'] * $item['quantity'];
+                // Tarik data produk beserta resepnya langsung dari DB
+                $product = Product::with('ingredients')->findOrFail($item['id']);
+
+                if ($product->ingredients->isEmpty()) {
+                    throw new \Exception("Sistem Gagal: Produk '{$product->name}' belum memiliki resep (BOM) di gudang.");
+                }
+
+                // Kalkulasi harga AMAN
+                $itemTotalPrice = $product->price * $item['quantity'];
+                $subtotal += $itemTotalPrice;
+
+                // Simpan struktur item untuk dieksekusi setelah order induk dibuat
+                $orderItemsData[] = [
+                    'product'  => $product,
+                    'quantity' => $item['quantity'],
+                    'price'    => $product->price // Harga asli
+                ];
             }
-            $tax = $subtotal * 0.10; // Pajak 10% sesuai tampilan kasir lo
+
+            // Hitung Pajak dan Total Akhir
+            $tax = $subtotal * 0.10; // Pajak 10%
             $totalPrice = $subtotal + $tax;
 
-            // 3. Generate Nomor Invoice Otomatis (Contoh: INV-20260706-A1B2)
+            // 3. Generate Nomor Invoice
             $invoiceNumber = 'INV-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(2)));
 
             // 4. Simpan Data ke Tabel `orders` (Kepala Struk)
             $order = Order::create([
                 'invoice_number' => $invoiceNumber,
-                'user_id' => Auth::id() ?? 1, // Memakai ID kasir yang login (default 1 jika belum buat sistem login)
+                'user_id' => Auth::id() ?? 1,
                 'subtotal' => $subtotal,
                 'tax' => $tax,
                 'total_price' => $totalPrice,
+                'status' => 'completed',
+                'payment_method' => $request->payment_method ?? 'cash'
             ]);
 
-            // 5. Looping Isi Keranjang: Simpan Detail & Potong Stok Gudang Teman Lo
-            foreach ($request->cart as $item) {
+            // 5. Loop Kedua: Simpan Detail Transaksi & Potong Stok Gudang
+            foreach ($orderItemsData as $data) {
+                $product = $data['product'];
+                $qty = $data['quantity'];
 
                 // Simpan tiap baris produk ke tabel `order_items`
                 OrderItem::create([
                     'order_id' => $order->id,
-                    'product_id' => $item['id'],
-                    'quantity' => $item['quantity'],
-                    'price' => $item['price']
+                    'product_id' => $product->id,
+                    'quantity' => $qty,
+                    'price' => $data['price']
                 ]);
 
-                // Ambil daftar resep komplit menggunakan DB builder
-                $recipes = DB::table('product_ingredients')
-                    ->where('product_id', '=', $item['id'])
-                    ->get();
+                // POTONG STOK OTOMATIS BERDASARKAN RESEP (BOM)
+                foreach ($product->ingredients as $ingredient) {
+                    // Hitung total kebutuhan bahan (takaran resep x jumlah cup pesanan)
+                    $totalNeeded = $ingredient->pivot->quantity_needed * $qty;
 
-                foreach ($recipes as $recipe) {
-                    // Hitung total kebutuhan bahan (takaran resep x jumlah cup)
-                    $totalNeeded = $recipe->quantity_needed * $item['quantity'];
-
-                    // Cari data bahan mentah di tabel gudang menggunakan DB builder
-                    $bahan = DB::table('bahan_baku')
-                        ->where('id', '=', $recipe->ingredient_id)
-                        ->first();
-
-                    // Validasi: Jika bahan gak ketemu atau stok di gudang tidak cukup
-                    if (!$bahan || $bahan->stok_saat_ini < $totalNeeded) {
-                        // Batalkan semua operasi database
-                        DB::rollBack();
-                        return response()->json([
-                            'success' => false,
-                            'message' => "Stok bahan '" . ($bahan ? $bahan->nama_bahan : 'Tidak Diketahui') . "' di gudang tidak cukup!"
-                        ], 400);
+                    // Validasi: Jika stok di gudang tidak cukup
+                    if ($ingredient->stok_saat_ini < $totalNeeded) {
+                        throw new \Exception("Stok bahan '{$ingredient->nama_bahan}' tidak cukup untuk memproses '{$product->name}'! Butuh: {$totalNeeded}, Sisa: {$ingredient->stok_saat_ini}");
                     }
 
-                    // POTONG STOK OTOMATIS langsung ke tabel menggunakan query builder
-                    DB::table('bahan_baku')
-                        ->where('id', '=', $recipe->ingredient_id)
-                        ->decrement('stok_saat_ini', $totalNeeded);
+                    // Kurangi stok dan simpan
+                    $ingredient->stok_saat_ini -= $totalNeeded;
+                    $ingredient->save();
                 }
             }
 
-            // Jika semua baris produk aman dan stok cukup, kunci perubahan ke database
+            // 6. Jika semua baris produk aman dan stok cukup, kunci perubahan ke database
             DB::commit();
 
             return response()->json([
@@ -100,54 +107,12 @@ class OrderController extends Controller
                 'invoice_number' => $order->invoice_number
             ], 200);
         } catch (\Exception $e) {
-            // Jika ada error/bug codingan di tengah jalan, batalkan semua data biar gak berantakan
+            // Batalkan semua operasi database jika ada 1 saja yang melanggar rule
             DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan sistem: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    public function storeProduct(Request $request)
-    {
-        // 1. Validasi input form secara ketat sesuai gambar modal lo
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'price' => 'required|integer|min:0',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:5120', // Batasan maks 5MB
-        ]);
-
-        try {
-            $imageName = null;
-
-            // 2. Proses upload gambar jika admin memilih file foto produk
-            if ($request->hasFile('image')) {
-                $imageFile = $request->file('image');
-                // Beri nama unik berdasarkan waktu agar tidak bentrok (contoh: 171983012.png)
-                $imageName = time() . '.' . $imageFile->getClientOriginalExtension();
-                // Simpan fisik file ke dalam folder publik agar bisa diakses dari browser
-                Storage::disk('public')->putFileAs('products', $imageFile, $imageName);
-            }
-
-            // 3. Masukkan data ke tabel `products` menggunakan Query Builder murni
-            DB::table('products')->insert([
-                'name' => $request->name,
-                'price' => $request->price,
-                'image' => $imageName,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Produk baru berhasil ditambahkan ke katalog!'
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal menyimpan produk: ' . $e->getMessage()
-            ], 500);
+                'message' => $e->getMessage()
+            ], 400);
         }
     }
 }

@@ -28,7 +28,8 @@
             </div>
             <div>
                 <p class="font-semibold text-sm">{{ Auth::user()->name ?? 'Guest' }}</p>
-                <p class="text-xs opacity-90">{{ Auth::user()->role ?? 'Admin' }}</p>
+                <!-- REVISI: ucfirst agar huruf depan role otomatis kapital (Admin / Karyawan) -->
+                <p class="text-xs opacity-90">{{ ucfirst(Auth::user()->role ?? 'Admin') }}</p>
             </div>
             <form method="POST" action="{{ route('logout') }}" class="ml-2">
                 @csrf
@@ -41,6 +42,7 @@
     </header>
 
     <div class="flex flex-1 overflow-hidden min-h-0">
+        <!-- INI ADALAH KOMPONEN SIDEBAR ASLINYA -->
         <x-sidebar />
 
         <main class="flex-1 min-h-0 overflow-y-auto p-8">
@@ -48,6 +50,7 @@
         </main>
     </div>
 
+    <!-- NOTIFICATION SYSTEM -->
     <div x-data="{ show: false, message: '', type: 'success' }"
         x-on:notify.window="show = true; message = $event.detail.message; type = $event.detail.type; setTimeout(() => show = false, 3000)"
         class="fixed top-20 left-0 right-0 z-50 flex justify-center pointer-events-none">

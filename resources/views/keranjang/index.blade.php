@@ -445,7 +445,8 @@
                         this.disabled = true;
                         this.innerHTML = '<span class="font-medium">Memproses Transaksi...</span>';
 
-                        fetch("{{ route('keranjang.store') }}", {
+                        // PERBAIKAN FATAL: Arahkan ke checkout.process, bukan keranjang.store
+                        fetch("{{ route('checkout.process') }}", {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
