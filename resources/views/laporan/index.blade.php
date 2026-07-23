@@ -10,49 +10,29 @@
                 <p class="text-sm text-gray-500">Predictive insights and artisanal inventory management</p>
             </div>
             <div class="flex flex-col items-end gap-3">
-                <div class="flex items-center space-x-3">
-                    <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2">
+                    <form action="{{ route('laporan.index') }}" method="GET" id="filterForm"
+                        class="m-0 p-0 flex items-center gap-2">
+                        <input type="date" name="end_date"
+                            value="{{ request('end_date', \Carbon\Carbon::now()->format('Y-m-d')) }}"
+                            class="bg-white border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-[#2E4F4F] focus:border-[#2E4F4F] block px-3 py-1.5 cursor-pointer shadow-sm hover:border-gray-300 transition-colors"
+                            onchange="this.form.submit();" max="{{ \Carbon\Carbon::now()->format('Y-m-d') }}">
 
-                        <!-- Form Filter Dinamis (Tanggal & Window SMA) -->
-                        <form action="{{ route('laporan.index') }}" method="GET" id="filterForm"
-                            class="m-0 p-0 flex items-center gap-2">
-                            <input type="date" name="end_date"
-                                value="{{ request('end_date', \Carbon\Carbon::now()->format('Y-m-d')) }}"
-                                class="bg-white border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-[#2E4F4F] focus:border-[#2E4F4F] block px-3 py-1.5 cursor-pointer shadow-sm hover:border-gray-300 transition-colors"
-                                onchange="this.form.submit();" max="{{ \Carbon\Carbon::now()->format('Y-m-d') }}">
+                        <select name="n" onchange="this.form.submit();"
+                            class="bg-white border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-[#2E4F4F] focus:border-[#2E4F4F] block px-3 py-1.5 cursor-pointer shadow-sm hover:border-gray-300 transition-colors">
+                            <option value="3" {{ request('n', 3) == 3 ? 'selected' : '' }}>SMA: n = 3 Hari (Reaktif)
+                            </option>
+                            <option value="5" {{ request('n', 3) == 5 ? 'selected' : '' }}>SMA: n = 5 Hari (Moderat)
+                            </option>
+                            <option value="7" {{ request('n', 3) == 7 ? 'selected' : '' }}>SMA: n = 7 Hari (Stabil)
+                            </option>
+                        </select>
+                    </form>
 
-                            <select name="n" onchange="this.form.submit();"
-                                class="bg-white border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-[#2E4F4F] focus:border-[#2E4F4F] block px-3 py-1.5 cursor-pointer shadow-sm hover:border-gray-300 transition-colors">
-                                <option value="3" {{ request('n', 3) == 3 ? 'selected' : '' }}>SMA: n = 3 Hari
-                                    (Reaktif)</option>
-                                <option value="5" {{ request('n', 3) == 5 ? 'selected' : '' }}>SMA: n = 5 Hari
-                                    (Moderat)</option>
-                                <option value="7" {{ request('n', 3) == 7 ? 'selected' : '' }}>SMA: n = 7 Hari (Stabil)
-                                </option>
-                            </select>
-                        </form>
-
-                        <a href="{{ route('laporan.export') }}"
-                            class="bg-[#2E4F4F] text-white px-4 py-1.5 rounded-lg shadow-sm text-sm font-semibold hover:bg-opacity-90 transition inline-block text-center">
-                            Export Excel
-                        </a>
-                    </div>
-
-                    <div x-data="{ activeTab: 'weekly' }"
-                        class="flex items-center bg-gray-50 p-1 rounded-lg border border-gray-200 text-xs font-semibold">
-                        <button @click="activeTab = 'monthly'; switchChartMode('monthly')"
-                            :class="activeTab === 'monthly' ? 'bg-white text-gray-800 shadow-sm border-gray-100' :
-                                'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-200/50'"
-                            class="px-4 py-1 rounded-md border transition-all duration-300 ease-in-out">
-                            Monthly
-                        </button>
-                        <button @click="activeTab = 'weekly'; switchChartMode('weekly')"
-                            :class="activeTab === 'weekly' ? 'bg-white text-gray-800 shadow-sm border-gray-100' :
-                                'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-200/50'"
-                            class="px-4 py-1 rounded-md border transition-all duration-300 ease-in-out">
-                            Weekly
-                        </button>
-                    </div>
+                    <a href="{{ route('laporan.export') }}"
+                        class="bg-[#2E4F4F] text-white px-4 py-1.5 rounded-lg shadow-sm text-sm font-semibold hover:bg-opacity-90 transition inline-block text-center">
+                        Export Excel
+                    </a>
                 </div>
             </div>
         </div>
@@ -74,29 +54,7 @@
                     </div>
                 </div>
 
-                <!-- WIDGET STOCK FLUCTUATION DIHAPUS DARI SINI -->
-
-                <!-- AI Summary Prediction Box (100% DINAMIS DENGAN PERKONDISIAN) -->
-                @php
-                    $latestSma = collect($analisisSma)->last();
-                    $prediksiBesok = $latestSma->prediksi ?? 0;
-                    $aktualTerakhir = $latestSma->aktual ?? 0;
-
-                    // Logika Perkondisian Arah Tren
-                    if ($prediksiBesok > $aktualTerakhir) {
-                        $trendStatus = 'Lonjakan';
-                        $trendColor = 'text-yellow-400';
-                        $trendAdvice = 'Siapkan stok ekstra untuk mengantisipasi potensi kekurangan bahan baku.';
-                    } elseif ($prediksiBesok < $aktualTerakhir) {
-                        $trendStatus = 'Penurunan';
-                        $trendColor = 'text-blue-300';
-                        $trendAdvice = 'Tahan restock berlebih untuk meminimalisir risiko bahan baku terbuang (waste).';
-                    } else {
-                        $trendStatus = 'Stabil';
-                        $trendColor = 'text-green-300';
-                        $trendAdvice = 'Pertahankan ritme operasional normal.';
-                    }
-                @endphp
+                <!-- AI Summary Prediction Box -->
                 <div class="bg-dark-matcha text-white p-6 rounded-2xl shadow-sm flex items-start space-x-4 w-full"
                     style="background-color: #2D5A34;">
                     <div class="p-2.5 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
@@ -222,7 +180,7 @@
             </div>
         </div>
 
-        <!-- BOTTOM BLOCK: RESTOCK PLANNING (100% DINAMIS DARI SMA) -->
+        <!-- BOTTOM BLOCK: RESTOCK PLANNING -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mt-6 w-full">
             <div class="mb-6">
                 <h3 class="text-xl font-bold text-[#2D5A34]">Rencana Produksi & Restock</h3>
@@ -245,7 +203,6 @@
                     <tbody class="text-sm align-top">
                         @forelse($ingredients as $ing)
                             @php
-                                // Asumsi sementara sebelum wawancara BOM
                                 $takaranResep = str_contains(strtolower($ing->nama_bahan), 'susu') ? 150 : 20;
                                 $estimasiPenyusutan = $prediksiBesok * $takaranResep;
                                 $proyeksiSisa = $ing->stok_saat_ini - $estimasiPenyusutan;
@@ -298,7 +255,7 @@
             <div class="mb-6 flex justify-between items-center">
                 <div>
                     <h3 class="text-xl font-bold text-[#2D5A34]">Tabel Pembuktian Algoritma SMA</h3>
-                    <p class="text-sm text-gray-400 mt-1">Langkah matematis kalkulasi prediksi demand ($n =
+                    <p class="text-sm text-gray-400 mt-1">Langkah matematis kalkulasi prediksi demand (n =
                         {{ $n }} \text{ hari}$)</p>
                 </div>
             </div>
@@ -356,31 +313,16 @@
     <!-- SCRIPT CHART.JS -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        const dataGrafik = {
-            weekly: {
-                labels: @json($chartSmaLabels),
-                actual: @json($chartSmaAktual),
-                forecast: @json($chartSmaPrediksi)
-            },
-            monthly: {
-                labels: @json($chartLabelsMonthly),
-                actual: @json($chartDataMonthly),
-                forecast: Array.from({
-                    length: 30
-                }, () => Math.floor(Math.random() * (20 - 5 + 1)) + 5)
-            }
-        };
-
         document.addEventListener('DOMContentLoaded', function() {
             const ctx = document.getElementById('demandChart').getContext('2d');
             window.demandChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: dataGrafik.weekly.labels,
+                    labels: @json($chartSmaLabels),
                     datasets: [{
                             type: 'line',
                             label: 'Forecast',
-                            data: dataGrafik.weekly.forecast,
+                            data: @json($chartSmaPrediksi),
                             borderColor: '#E53E3E',
                             borderDash: [5, 5],
                             backgroundColor: 'transparent',
@@ -391,7 +333,7 @@
                         {
                             type: 'bar',
                             label: 'Actual',
-                            data: dataGrafik.weekly.actual,
+                            data: @json($chartSmaAktual),
                             backgroundColor: '#2D5A34',
                             borderRadius: 6,
                             borderSkipped: false
@@ -427,14 +369,5 @@
                 }
             });
         });
-
-        window.switchChartMode = function(mode) {
-            if (window.demandChart) {
-                window.demandChart.data.labels = dataGrafik[mode].labels;
-                window.demandChart.data.datasets[0].data = dataGrafik[mode].forecast;
-                window.demandChart.data.datasets[1].data = dataGrafik[mode].actual;
-                window.demandChart.update();
-            }
-        };
     </script>
 @endsection

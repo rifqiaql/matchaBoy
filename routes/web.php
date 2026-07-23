@@ -41,9 +41,13 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{id}', [InventoryController::class, 'destroy'])->name('destroy');
         Route::get('/export', [InventoryController::class, 'export'])->name('export');
     });
-});
 
-Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
+    // Rute untuk Laporan & Analytics
+    Route::prefix('laporan')->name('laporan.')->group(function () {
+        Route::get('/', [LaporanController::class, 'index'])->name('index');
+        Route::get('/export', [LaporanController::class, 'exportCSV'])->name('export');
+    });
+});
 
 // Jalur untuk memproses checkout dari tombol Bayar Sekarang
 Route::post('/checkout', [OrderController::class, 'checkout'])->name('checkout');
@@ -69,15 +73,6 @@ Route::post('/keranjang', [CartController::class, 'store'])->name('keranjang.sto
 // Pastikan ditaruh di dalam middleware admin jika lu pakai
 Route::post('/products/{product}/ingredients', [IngredientController::class, 'store'])->name('products.ingredients.store');
 
-
-
-// Ganti rute laporan lu menjadi dua baris ini:
-Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
-Route::get('/laporan/export', [LaporanController::class, 'exportCSV'])->name('laporan.export');
-
-
 // RUTE BARU: Untuk memproses Restock / Barang Masuk (POST)
 Route::post('/inventory/{id}/tambah-stok', [InventoryController::class, 'tambahStok'])->name('inventory.tambah-stok');
 
-Route::get('/laporan', [\App\Http\Controllers\LaporanController::class, 'index'])->name('laporan.index');
-Route::get('/laporan/export-csv', [\App\Http\Controllers\LaporanController::class, 'exportCSV'])->name('laporan.export');
