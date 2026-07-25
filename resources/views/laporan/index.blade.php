@@ -120,16 +120,22 @@
             <!-- RIGHT COLUMN: PERFORMANCE METRICS & WASTES -->
             <div class="col-span-1 space-y-6">
                 @php
+                    // PERBAIKAN 1: Filter kritis murni dari perbandingan stok_minimum di Database, BUKAN 20%
                     $kritisCount = $ingredients
                         ->filter(function ($item) {
-                            return ($item->stok_awal > 0 ? ($item->stok_saat_ini / $item->stok_awal) * 100 : 0) <= 20;
+                            return $item->stok_saat_ini <= $item->stok_minimum;
                         })
                         ->count();
 
+                    // PERBAIKAN 2: Mapping item kritis dan persentase
                     $priorityItems = $ingredients
                         ->map(function ($item) {
+                            // Persentase hanya untuk visualisasi lebar progress bar
                             $item->persentase =
                                 $item->stok_awal > 0 ? round(($item->stok_saat_ini / $item->stok_awal) * 100) : 0;
+
+                            // Penentu status merah harus berdasarkan database
+                            $item->is_kritis = $item->stok_saat_ini <= $item->stok_minimum;
                             return $item;
                         })
                         ->sortBy('persentase')
@@ -169,10 +175,10 @@
                                 <div class="flex justify-between text-xs font-medium mb-1">
                                     <span class="text-gray-700">{{ $prod->nama_bahan }}</span>
                                     <span
-                                        class="{{ $prod->persentase <= 20 ? 'text-red-600 font-bold' : 'text-gray-600' }}">{{ $prod->persentase }}%</span>
+                                        class="{{ $prod->is_kritis ? 'text-red-600 font-bold' : 'text-gray-600' }}">{{ $prod->persentase }}%</span>
                                 </div>
                                 <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
-                                    <div class="{{ $prod->persentase <= 20 ? 'bg-red-500' : 'bg-[#2E4F4F]' }} h-2 rounded-full transition-all duration-500"
+                                    <div class="{{ $prod->is_kritis ? 'bg-red-500' : 'bg-[#2E4F4F]' }} h-2 rounded-full transition-all duration-500"
                                         style="width: {{ $prod->persentase }}%"></div>
                                 </div>
                             </div>
@@ -207,10 +213,29 @@
                     <tbody class="text-sm align-top">
                         @forelse($ingredients as $ing)
                             @php
-                                $takaranResep = str_contains(strtolower($ing->nama_bahan), 'susu') ? 150 : 20;
+                                $namaBahan = strtolower($ing->nama_bahan);
+
+                                // Logika Pemetaan Takaran Resep Asli (Base Unit)
+                                if (str_contains($namaBahan, 'matcha')) {
+                                    $takaranResep = 8; // 8 Gram
+                                } elseif (str_contains($namaBahan, 'full cream')) {
+                                    $takaranResep = 100; // 100 Mililiter
+                                } elseif (str_contains($namaBahan, 'skm') || str_contains($namaBahan, 'kental manis')) {
+                                    $takaranResep = 30; // 30 Gram
+                                } elseif (
+                                    str_contains($namaBahan, 'strawberry') ||
+                                    str_contains($namaBahan, 'caramel')
+                                ) {
+                                    $takaranResep = 15; // 15 Gram
+                                } else {
+                                    $takaranResep = 0; // Fallback jika bahan tidak dikenali
+                                }
+
                                 $estimasiPenyusutan = $prediksiBesok * $takaranResep;
                                 $proyeksiSisa = $ing->stok_saat_ini - $estimasiPenyusutan;
-                                $batasKritis = $ing->stok_awal * 0.2;
+
+                                // Ambil batas kritis murni dari database
+                                $batasKritis = $ing->stok_minimum;
                                 $butuhRestock = $proyeksiSisa <= $batasKritis;
                             @endphp
                             <tr class="border-b border-gray-50">

@@ -18,8 +18,16 @@ class OrderSeeder extends Seeder
         Schema::enableForeignKeyConstraints();
 
         $totalHari = 60; // Mundur 2 bulan ke belakang
-        $produkSampleId = 1; // Pastikan ID 1 adalah "Matcha Original" di database lu
-        $hargaSatuan = 15000;
+
+        // ---------------------------------------------------------
+        // PERHATIAN: Sesuaikan ID dan Harga ini dengan tabel `products` lu!
+        // Asumsi: 1 = Matcha OG, 2 = Matcha Caramel, 3 = Matcha Strawberry
+        // ---------------------------------------------------------
+        $katalogProduk = [
+            ['id' => 1, 'price' => 15000],
+            ['id' => 2, 'price' => 18000], // Sesuaikan harga Caramel lu
+            ['id' => 3, 'price' => 18000], // Sesuaikan harga Strawberry lu
+        ];
 
         for ($i = $totalHari; $i >= 0; $i--) {
             $tanggal = Carbon::now()->subDays($i);
@@ -30,12 +38,10 @@ class OrderSeeder extends Seeder
                 $tanggal->isDayOfWeek(Carbon::SUNDAY);
 
             if ($hariWeekend) {
-                // Target: 18 - 26 cup per hari
-                // Kita buat 10 sampai 14 transaksi, rata-rata beli 1-2 cup per transaksi
+                // Target: 18 - 26 cup per hari (Dibagi dalam 10-14 transaksi)
                 $jumlahOrder = rand(10, 14);
             } else {
-                // Target Weekday: 8 - 12 cup per hari (Sepi)
-                // Kita buat 6 sampai 8 transaksi, rata-rata beli 1-2 cup per transaksi
+                // Target Weekday: 8 - 12 cup per hari (Dibagi dalam 6-8 transaksi)
                 $jumlahOrder = rand(6, 8);
             }
 
@@ -47,9 +53,13 @@ class OrderSeeder extends Seeder
                 $nomorUrut = str_pad($j + 1, 3, '0', STR_PAD_LEFT);
                 $invoiceNumber = 'INV-' . $jamAcak->format('Ymd') . '-' . $nomorUrut;
 
-                // Dinamisasi Finansial (Jumlah Beli Acak 1 atau 2 cup saja biar realistis)
+                // ACAK PRODUK DAN QUANTITY
+                // Pilih satu produk secara acak dari Array $katalogProduk
+                $produkTerpilih = $katalogProduk[array_rand($katalogProduk)];
                 $qtyBeli = rand(1, 2);
-                $subtotal = $hargaSatuan * $qtyBeli;
+
+                // Kalkulasi Dinamis Berdasarkan Produk yang Terpilih
+                $subtotal = $produkTerpilih['price'] * $qtyBeli;
                 $tax = $subtotal * 0.10; // Pajak 10%
                 $totalPrice = $subtotal + $tax;
 
@@ -60,7 +70,7 @@ class OrderSeeder extends Seeder
                     'subtotal' => $subtotal,
                     'tax' => $tax,
                     'total_price' => $totalPrice,
-                    'status' => 'completed', // <--- KRUSIAL: Jangan pakai 'paid'
+                    'status' => 'completed',
                     'created_at' => $jamAcak,
                     'updated_at' => $jamAcak,
                 ]);
@@ -68,9 +78,9 @@ class OrderSeeder extends Seeder
                 // 2. Insert ke tabel order_items (Detail Barang)
                 DB::table('order_items')->insert([
                     'order_id' => $orderId,
-                    'product_id' => $produkSampleId,
+                    'product_id' => $produkTerpilih['id'],
                     'quantity' => $qtyBeli,
-                    'price' => $hargaSatuan,
+                    'price' => $produkTerpilih['price'], // Gunakan harga dari produk terpilih
                     'created_at' => $jamAcak,
                     'updated_at' => $jamAcak,
                 ]);
