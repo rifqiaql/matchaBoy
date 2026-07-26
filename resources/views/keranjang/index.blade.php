@@ -10,17 +10,9 @@
         <!-- KIRI: KATALOG PRODUK -->
         <div class="col-span-9">
             <div class="flex items-center justify-between mb-6">
-                <div class="flex items-center gap-3">
-                    <button
-                        class="px-4 py-1.5 bg-gray-800 text-white font-medium border border-transparent rounded-lg text-sm transition-colors">All
-                        items</button>
-                    <button
-                        class="px-4 py-1.5 bg-white text-gray-600 font-medium border border-gray-200 rounded-lg text-sm hover:bg-gray-50 transition-colors">Signature</button>
-                    <button
-                        class="px-4 py-1.5 bg-white text-gray-600 font-medium border border-gray-200 rounded-lg text-sm hover:bg-gray-50 transition-colors">Milk-based</button>
-                    <button
-                        class="px-4 py-1.5 bg-white text-gray-600 font-medium border border-gray-200 rounded-lg text-sm hover:bg-gray-50 transition-colors">Strawberry</button>
-                </div>
+                <!-- TOMBOL KATEGORI SUDAH DIMUSNAHKAN DARI SINI -->
+                <div class="flex items-center gap-3"></div>
+
                 <div>
                     @if (auth()->user() && auth()->user()->role === 'admin')
                         <button
@@ -136,14 +128,11 @@
                 </div>
 
                 <div class="border-t border-dashed border-gray-200 pt-4 pb-4">
-                    <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center justify-between">
                         <span class="text-sm font-medium text-gray-500">Subtotal</span>
                         <span class="text-sm font-bold text-gray-800" id="subtotal">Rp 0</span>
                     </div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm font-medium text-gray-500">Tax (10%)</span>
-                        <span class="text-sm font-bold text-gray-800" id="tax">Rp 0</span>
-                    </div>
+                    <!-- BARIS PAJAK SUDAH DIMUSNAHKAN DARI SINI -->
                 </div>
 
                 <div class="border-t border-gray-100 pt-4 mb-5">
@@ -309,7 +298,6 @@
                 let cart = [];
                 const cartContainer = document.getElementById('cart-items-container');
                 const subtotalEl = document.getElementById('subtotal');
-                const taxEl = document.getElementById('tax');
                 const totalEl = document.getElementById('total');
                 const checkoutBtn = document.getElementById('checkout-btn');
 
@@ -329,7 +317,6 @@
                                 <p class="text-sm font-medium text-gray-400">Keranjang masih kosong</p>
                             </div>`;
                         subtotalEl.innerText = 'Rp 0';
-                        taxEl.innerText = 'Rp 0';
                         totalEl.innerText = 'Rp 0';
                         checkoutBtn.disabled = true;
                         return;
@@ -369,11 +356,10 @@
                         cartContainer.appendChild(itemEl);
                     });
 
-                    const tax = subtotal * 0.1;
-                    const total = subtotal + tax;
+                    // PAJAK SUDAH DIMUSNAHKAN DARI PERHITUNGAN JAVASCRIPT
+                    const total = subtotal;
 
                     subtotalEl.innerText = formatRupiah(subtotal);
-                    taxEl.innerText = formatRupiah(tax);
                     totalEl.innerText = formatRupiah(total);
                     checkoutBtn.disabled = false;
                 }
@@ -445,7 +431,6 @@
                         this.disabled = true;
                         this.innerHTML = '<span class="font-medium">Memproses Transaksi...</span>';
 
-                        // PERBAIKAN FATAL: Arahkan ke checkout.process, bukan keranjang.store
                         fetch("{{ route('checkout.process') }}", {
                                 method: 'POST',
                                 headers: {

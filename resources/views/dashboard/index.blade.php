@@ -6,6 +6,36 @@
         <!-- ======================================================= -->
         <!-- ROW 1: KUMPULAN CARD STOK BAHAN BAKU -->
         <!-- ======================================================= -->
+        @php
+            // Bulletproof Data Fetching: Tarik data langsung dan kebal typo
+            $semuaBahan = \App\Models\BahanBaku::all();
+
+            function findBahanDinamis($collection, $keyword)
+            {
+                return $collection
+                    ->filter(function ($item) use ($keyword) {
+                        return str_contains(strtolower($item->nama_bahan), strtolower($keyword));
+                    })
+                    ->first();
+            }
+
+            $matcha = findBahanDinamis($semuaBahan, 'matcha');
+            $fullCream = findBahanDinamis($semuaBahan, 'full cream');
+            $strawberry = findBahanDinamis($semuaBahan, 'strawberry');
+            // Ganti Es Batu menjadi SKM yang merupakan aset krusial HPP
+            $skm = findBahanDinamis($semuaBahan, 'skm') ?? findBahanDinamis($semuaBahan, 'kental manis');
+
+            // Kalkulator Lebar Progress Bar Maksimal 100%
+            function getLebarBar($item)
+            {
+                if (!$item || $item->stok_awal <= 0) {
+                    return 0;
+                }
+                $pct = ($item->stok_saat_ini / $item->stok_awal) * 100;
+                return min(100, max(0, $pct)); // Kunci di rentang 0-100%
+            }
+        @endphp
+
         <div class="grid grid-cols-4 gap-6 mb-8">
             <!-- CARD 1: BUBUK MATCHA -->
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
@@ -13,9 +43,13 @@
                     <span class="text-sm font-semibold text-gray-500">Bubuk Matcha</span>
                     <div class="relative flex items-center justify-center w-10 h-10">
                         <div class="absolute inset-0 bg-dark-matcha opacity-20 blur-md rounded-xl"></div>
-                        <div class="relative flex items-center justify-center w-full h-full bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 shadow-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-leaf-icon lucide-leaf">
-                                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+                        <div
+                            class="relative flex items-center justify-center w-full h-full bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="lucide lucide-leaf-icon lucide-leaf">
+                                <path
+                                    d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
                                 <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
                             </svg>
                         </div>
@@ -26,8 +60,9 @@
                     <span class="text-lg">{{ $matcha ? $matcha->satuan : '' }}</span>
                 </p>
                 <p class="text-xs text-gray-400 mt-2">Premium Grade</p>
-                <div class="w-full bg-gray-100 rounded-full h-2 mt-3">
-                    <div class="bg-dark-matcha h-2 rounded-full w-3/4"></div>
+                <div class="w-full bg-gray-100 rounded-full h-2 mt-3 overflow-hidden">
+                    <div class="bg-dark-matcha h-full rounded-full transition-all duration-1000"
+                        style="width: {{ getLebarBar($matcha) }}%;"></div>
                 </div>
             </div>
 
@@ -37,10 +72,14 @@
                     <span class="text-sm font-semibold text-gray-500">Full Cream</span>
                     <div class="relative flex items-center justify-center w-10 h-10">
                         <div class="absolute inset-0 bg-dark-matcha opacity-20 blur-md rounded-xl"></div>
-                        <div class="relative flex items-center justify-center w-full h-full bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 shadow-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-milk-icon lucide-milk">
+                        <div
+                            class="relative flex items-center justify-center w-full h-full bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="lucide lucide-milk-icon lucide-milk">
                                 <path d="M8 2h8" />
-                                <path d="M9 2v2.789a4 4 0 0 1-.672 2.219l-.656.984A4 4 0 0 0 7 10.212V20a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-9.789a4 4 0 0 0-.672-2.219l-.656-.984A4 4 0 0 1 15 4.788V2" />
+                                <path
+                                    d="M9 2v2.789a4 4 0 0 1-.672 2.219l-.656.984A4 4 0 0 0 7 10.212V20a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-9.789a4 4 0 0 0-.672-2.219l-.656-.984A4 4 0 0 1 15 4.788V2" />
                                 <path d="M7 15a6.472 6.472 0 0 1 5 0 6.47 6.47 0 0 0 5 0" />
                             </svg>
                         </div>
@@ -51,8 +90,9 @@
                     <span class="text-lg">{{ $fullCream ? $fullCream->satuan : '' }}</span>
                 </p>
                 <p class="text-xs text-gray-400 mt-2">Stock Supplier</p>
-                <div class="w-full bg-gray-100 rounded-full h-2 mt-3">
-                    <div class="bg-yellow-500 h-2 rounded-full w-1/2"></div>
+                <div class="w-full bg-gray-100 rounded-full h-2 mt-3 overflow-hidden">
+                    <div class="bg-yellow-500 h-full rounded-full transition-all duration-1000"
+                        style="width: {{ getLebarBar($fullCream) }}%;"></div>
                 </div>
             </div>
 
@@ -62,8 +102,11 @@
                     <span class="text-sm font-semibold text-gray-500">Selai Strawberry</span>
                     <div class="relative flex items-center justify-center w-10 h-10">
                         <div class="absolute inset-0 bg-dark-matcha opacity-20 blur-md rounded-xl"></div>
-                        <div class="relative flex items-center justify-center w-full h-full bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 shadow-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-vegan-icon lucide-vegan">
+                        <div
+                            class="relative flex items-center justify-center w-full h-full bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="lucide lucide-vegan-icon lucide-vegan">
                                 <path d="M16 8q6 0 6-6-6 0-6 6" />
                                 <path d="M17.41 3.59a10 10 0 1 0 3 3" />
                                 <path d="M2 2a26.6 26.6 0 0 1 10 20c.9-6.82 1.5-9.5 4-14" />
@@ -75,37 +118,38 @@
                     {{ $strawberry ? $strawberry->stok_saat_ini : 0 }}
                     <span class="text-lg">{{ $strawberry ? $strawberry->satuan : '' }}</span>
                 </p>
-                <p class="text-xs text-gray-400 mt-2">Tersedia</p>
-                <div class="w-full bg-gray-100 rounded-full h-2 mt-3">
-                    <div class="bg-pink-400 h-2 rounded-full w-2/3"></div>
+                <p class="text-xs text-gray-400 mt-2">Topping Tersedia</p>
+                <div class="w-full bg-gray-100 rounded-full h-2 mt-3 overflow-hidden">
+                    <div class="bg-pink-400 h-full rounded-full transition-all duration-1000"
+                        style="width: {{ getLebarBar($strawberry) }}%;"></div>
                 </div>
             </div>
 
-            <!-- CARD 4: ES BATU -->
+            <!-- CARD 4: SUSU KENTAL MANIS (Menggantikan Es Batu) -->
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                 <div class="flex items-center justify-between mb-4">
-                    <span class="text-sm font-semibold text-gray-500">Es Batu</span>
+                    <span class="text-sm font-semibold text-gray-500">SKM</span>
                     <div class="relative flex items-center justify-center w-10 h-10">
                         <div class="absolute inset-0 bg-dark-matcha opacity-20 blur-md rounded-xl"></div>
-                        <div class="relative flex items-center justify-center w-full h-full bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 shadow-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-cookie-icon lucide-cookie">
-                                <path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5" />
-                                <path d="M8.5 8.5v.01" />
-                                <path d="M16 15.5v.01" />
-                                <path d="M12 12v.01" />
-                                <path d="M11 17v.01" />
-                                <path d="M7 14v.01" />
+                        <div
+                            class="relative flex items-center justify-center w-full h-full bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="lucide lucide-glass-water">
+                                <path d="M15.2 22H8.8a2 2 0 0 1-2-1.79L5 3h14l-1.81 17.21A2 2 0 0 1 15.2 22Z" />
+                                <path d="M6 12h12" />
                             </svg>
                         </div>
                     </div>
                 </div>
-                <p class="text-3xl font-bold text-green-500">
-                    {{ $esBatu ? $esBatu->stok_saat_ini : 0 }}
-                    <span class="text-lg">{{ $esBatu ? $esBatu->satuan : '' }}</span>
+                <p class="text-3xl font-bold text-blue-500">
+                    {{ $skm ? $skm->stok_saat_ini : 0 }}
+                    <span class="text-lg">{{ $skm ? $skm->satuan : '' }}</span>
                 </p>
-                <p class="text-xs text-gray-400 mt-2">In Stock</p>
-                <div class="w-full bg-gray-100 rounded-full h-2 mt-3">
-                    <div class="bg-green-500 h-2 rounded-full w-4/5"></div>
+                <p class="text-xs text-gray-400 mt-2">Base Manis</p>
+                <div class="w-full bg-gray-100 rounded-full h-2 mt-3 overflow-hidden">
+                    <div class="bg-blue-500 h-full rounded-full transition-all duration-1000"
+                        style="width: {{ getLebarBar($skm) }}%;"></div>
                 </div>
             </div>
         </div>
@@ -115,7 +159,7 @@
         <!-- ROW 2: GRAFIK TRANSAKSI & URGENT WARNING -->
         <!-- ======================================================= -->
         <div class="grid grid-cols-3 gap-6 mb-8">
-            
+
             <!-- GRAFIK CHART.JS (DINAMIS 7 HARI) -->
             <div class="col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                 <h3 class="text-lg font-bold mb-1 text-gray-800">Demand Analysis</h3>
@@ -151,54 +195,64 @@
                     </div>
                 </div>
 
-                <!-- URGENT WARNING DINAMIS (Batas < 20%) -->
+                <!-- URGENT WARNING DINAMIS (Berdasarkan stok_minimum) -->
                 @php
                     $allBahan = \App\Models\BahanBaku::all();
-                    $kritisItems = $allBahan->filter(function($item) {
-                        return ($item->stok_awal > 0 ? ($item->stok_saat_ini / $item->stok_awal) * 100 : 0) <= 20;
+                    $kritisItems = $allBahan->filter(function ($item) {
+                        // FIX: Baca stok_minimum langsung, jangan hardcode 20%
+                        return $item->stok_saat_ini <= $item->stok_minimum;
                     });
                     $lowStockCount = $kritisItems->count();
                 @endphp
 
-                @if($lowStockCount > 0)
-                <div class="bg-red-50 rounded-2xl p-5 border border-red-100 shadow-sm flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="text-red-600">⚠️</span>
-                            <p class="text-sm font-bold text-red-700">Peringatan Kritis ({{ $lowStockCount }} Item)</p>
+                @if ($lowStockCount > 0)
+                    <div class="bg-red-50 rounded-2xl p-5 border border-red-100 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="text-red-600">⚠️</span>
+                                <p class="text-sm font-bold text-red-700">Peringatan Kritis ({{ $lowStockCount }} Item)
+                                </p>
+                            </div>
+                            <p class="text-xs text-gray-800 mt-2 font-medium">Bahan baku berikut berstatus KRITIS (Di bawah
+                                minimum):</p>
+
+                            <ul class="mt-3 space-y-2">
+                                @foreach ($kritisItems->take(3) as $item)
+                                    <li
+                                        class="flex items-center justify-between text-xs bg-white/60 p-2 rounded border border-red-100">
+                                        <span class="font-semibold text-gray-700">{{ $item->nama_bahan }}</span>
+                                        <span class="font-bold text-red-600">{{ $item->stok_saat_ini }}
+                                            {{ $item->satuan }}</span>
+                                    </li>
+                                @endforeach
+                            </ul>
+
+                            @if ($lowStockCount > 3)
+                                <p class="text-[10px] text-gray-500 mt-2 italic font-medium">+ {{ $lowStockCount - 3 }}
+                                    item lainnya menipis...</p>
+                            @endif
                         </div>
-                        <p class="text-xs text-gray-800 mt-2 font-medium">Bahan baku berikut berstatus KRITIS (Stok ≤ 20%):</p>
-                        
-                        <ul class="mt-3 space-y-2">
-                            @foreach($kritisItems->take(3) as $item)
-                                <li class="flex items-center justify-between text-xs bg-white/60 p-2 rounded border border-red-100">
-                                    <span class="font-semibold text-gray-700">{{ $item->nama_bahan }}</span>
-                                    <span class="font-bold text-red-600">{{ $item->stok_saat_ini }} {{ $item->satuan }}</span>
-                                </li>
-                            @endforeach
-                        </ul>
-                        
-                        @if($lowStockCount > 3)
-                            <p class="text-[10px] text-gray-500 mt-2 italic font-medium">+ {{ $lowStockCount - 3 }} item lainnya menipis...</p>
-                        @endif
+                        <a href="{{ route('inventory.index') }}"
+                            class="mt-5 w-full block text-center bg-red-600 text-white text-xs font-bold py-2.5 rounded-lg hover:bg-red-700 transition-colors shadow-sm">
+                            Periksa Detail Gudang
+                        </a>
                     </div>
-                    <a href="{{ route('inventory.index') }}" class="mt-5 w-full block text-center bg-red-600 text-white text-xs font-bold py-2.5 rounded-lg hover:bg-red-700 transition-colors shadow-sm">
-                        Periksa Detail Gudang
-                    </a>
-                </div>
                 @else
-                <div class="bg-green-50 rounded-2xl p-5 border border-green-100 shadow-sm flex flex-col justify-between h-full">
-                    <div>
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="text-green-600">✅</span>
-                            <p class="text-sm font-bold text-green-700">Status Gudang Aman</p>
+                    <div
+                        class="bg-green-50 rounded-2xl p-5 border border-green-100 shadow-sm flex flex-col justify-between h-full">
+                        <div>
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="text-green-600">✅</span>
+                                <p class="text-sm font-bold text-green-700">Status Gudang Aman</p>
+                            </div>
+                            <p class="text-xs text-gray-600 mt-3 leading-relaxed">Seluruh bahan baku saat ini berada di
+                                atas batas minimum persediaan.</p>
                         </div>
-                        <p class="text-xs text-gray-600 mt-3 leading-relaxed">Seluruh bahan baku saat ini berada dalam kondisi persentase yang aman (> 20%).</p>
+                        <a href="{{ route('inventory.index') }}"
+                            class="mt-4 w-full block text-center bg-[#365E3F] text-white text-xs font-bold py-2.5 rounded-lg hover:bg-[#2a4a31] transition-colors shadow-sm">
+                            Buka Modul Gudang
+                        </a>
                     </div>
-                    <a href="{{ route('inventory.index') }}" class="mt-4 w-full block text-center bg-[#365E3F] text-white text-xs font-bold py-2.5 rounded-lg hover:bg-[#2a4a31] transition-colors shadow-sm">
-                        Buka Modul Gudang
-                    </a>
-                </div>
                 @endif
             </div>
         </div>
@@ -223,19 +277,26 @@
                         </thead>
                         <tbody class="divide-y divide-gray-50">
                             @php
-                                $inventoryStatus = \App\Models\BahanBaku::all()->map(function($item) {
-                                    $persentase = $item->stok_awal > 0 ? ($item->stok_saat_ini / $item->stok_awal) * 100 : 0;
-                                    $item->persentase = round($persentase);
-                                    return $item;
-                                })->sortBy('persentase')->take(4);
+                                $inventoryStatus = \App\Models\BahanBaku::all()
+                                    ->map(function ($item) {
+                                        $item->is_kritis = $item->stok_saat_ini <= $item->stok_minimum;
+                                        // Hitung persentase hanya untuk diurutkan (yang paling sedikit di atas)
+                                        $persentase =
+                                            $item->stok_awal > 0 ? ($item->stok_saat_ini / $item->stok_awal) * 100 : 0;
+                                        $item->persentase = round($persentase);
+                                        return $item;
+                                    })
+                                    ->sortBy('persentase')
+                                    ->take(4);
                             @endphp
 
                             @forelse($inventoryStatus as $item)
                                 @php
-                                    if($item->persentase <= 20) {
+                                    // FIX: Penentuan indikator wajib merujuk ke status is_kritis
+                                    if ($item->is_kritis) {
                                         $badgeClass = 'bg-red-50 text-red-600';
                                         $badgeText = 'KRITIS';
-                                    } elseif($item->persentase <= 50) {
+                                    } elseif ($item->persentase <= 50) {
                                         $badgeClass = 'bg-yellow-50 text-yellow-600';
                                         $badgeText = 'MENIPIS';
                                     } else {
@@ -246,17 +307,20 @@
                                 <tr>
                                     <td class="py-4 font-semibold text-gray-700">{{ $item->nama_bahan }}</td>
                                     <td class="py-4 text-gray-600 font-medium">
-                                        {{ $item->stok_saat_ini }} <span class="text-xs text-gray-400">{{ $item->satuan }}</span>
+                                        {{ $item->stok_saat_ini }} <span
+                                            class="text-xs text-gray-400">{{ $item->satuan }}</span>
                                     </td>
                                     <td class="py-4">
-                                        <span class="px-3 py-1.5 {{ $badgeClass }} rounded-md text-[10px] tracking-wider uppercase font-bold">
+                                        <span
+                                            class="px-3 py-1.5 {{ $badgeClass }} rounded-md text-[10px] tracking-wider uppercase font-bold">
                                             {{ $badgeText }}
                                         </span>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="3" class="py-6 text-center text-gray-400 italic font-medium">Data bahan baku kosong.</td>
+                                    <td colspan="3" class="py-6 text-center text-gray-400 italic font-medium">Data
+                                        bahan baku kosong.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -275,12 +339,14 @@
 
                     @forelse($recentOrders as $order)
                         <div class="flex gap-4">
-                            <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 border border-blue-100">
+                            <div
+                                class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 border border-blue-100">
                                 <span class="text-sm">🧾</span>
                             </div>
                             <div class="flex-1">
                                 <div class="flex justify-between items-start">
-                                    <p class="text-sm font-bold text-gray-800">Pesanan Masuk #{{ $order->invoice_number }}</p>
+                                    <p class="text-sm font-bold text-gray-800">Pesanan Masuk #{{ $order->invoice_number }}
+                                    </p>
                                     <span class="text-xs font-bold text-[#365E3F]">
                                         Rp {{ number_format($order->total_price, 0, ',', '.') }}
                                     </span>
@@ -311,14 +377,14 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const ctx = document.getElementById('dashboardDemandChart').getContext('2d');
-            
+
             new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: @json($chartLabels), // Variabel dari DashboardController
                     datasets: [{
                         label: 'Total Transaksi',
-                        data: @json($chartData),     // Variabel dari DashboardController
+                        data: @json($chartData), // Variabel dari DashboardController
                         backgroundColor: '#2D5A34',
                         borderRadius: 6,
                         borderSkipped: false,
@@ -329,16 +395,24 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: false } // Sembunyikan tulisan legend karena cuma 1 dataset
+                        legend: {
+                            display: false
+                        } // Sembunyikan tulisan legend karena cuma 1 dataset
                     },
                     scales: {
                         y: {
                             beginAtZero: true,
-                            grid: { display: false },
-                            ticks: { stepSize: 1 } // Paksa agar y-axis bulat
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                stepSize: 1
+                            } // Paksa agar y-axis bulat
                         },
                         x: {
-                            grid: { display: false }
+                            grid: {
+                                display: false
+                            }
                         }
                     }
                 }
