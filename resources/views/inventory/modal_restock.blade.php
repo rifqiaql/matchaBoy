@@ -20,8 +20,8 @@
                 <form id="restockForm" method="POST" action="">
                     @csrf
 
-                    <!-- Header Modal - REVISI: Diubah menjadi warna Hijau MatchaBoy -->
-                    <div class="bg-[#365E3F] px-8 py-6 relative">
+                    <!-- Header Modal - REVISI: Diubah menjadi warna Hijau standar Matchaboy -->
+                    <div class="bg-[#84A07F] px-8 py-6 relative">
                         <div class="flex items-center gap-4">
                             <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center shrink-0">
                                 <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor"
@@ -32,8 +32,8 @@
                             </div>
                             <div class="pr-8"> <!-- Padding right agar teks tidak tertimpa tombol X -->
                                 <h3 class="text-xl font-bold text-white">Catat Barang Masuk</h3>
-                                <p class="text-sm text-green-100 mt-1">Menambah stok untuk: <span id="restockNamaBahan"
-                                        class="font-semibold text-white"></span></p>
+                                <p class="text-sm text-green-50 mt-1">Menambah stok untuk: <span id="restockNamaBahan"
+                                        class="font-bold text-white underline"></span></p>
                             </div>
                         </div>
                     </div>
@@ -78,22 +78,13 @@
                             </svg>
                             <p class="text-sm text-green-800 leading-relaxed">
                                 Sistem otomatis mengalikan jumlah kemasan dengan isinya. Stok utama akan bertambah dalam
-                                satuan <span id="labelSatuan2" class="font-bold">Unit</span>.
+                                satuan <strong id="labelSatuan2">Unit</strong>.
                             </p>
                         </div>
 
-                        <!-- 2. Input Expired Date -->
-                        <div>
-                            <label for="tanggal_kedaluwarsa"
-                                class="block text-sm font-semibold text-gray-700 mb-2">Tanggal Kedaluwarsa <span
-                                    class="text-gray-400 font-normal">(Opsional)</span></label>
-                            <input type="date" name="tanggal_kedaluwarsa" id="tanggal_kedaluwarsa"
-                                class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#365E3F] focus:border-transparent bg-white transition-all text-gray-800">
-                            <p class="text-xs text-gray-500 mt-2">Kosongkan jika barang tidak memiliki masa kedaluwarsa
-                                (misal: Paper Cup, Sedotan).</p>
-                        </div>
+                        <!-- TANGGAL KEDALUWARSA SUDAH DIHAPUS DARI SINI -->
 
-                        <!-- 3. Input Catatan -->
+                        <!-- 2. Input Catatan -->
                         <div>
                             <label for="catatan" class="block text-sm font-semibold text-gray-700 mb-2">Referensi /
                                 Catatan <span class="text-gray-400 font-normal">(Opsional)</span></label>
@@ -105,7 +96,8 @@
                     </div>
 
                     <!-- Footer Modal -->
-                    <div class="bg-gray-50/50 px-8 py-5 border-t border-gray-100 flex items-center justify-end gap-3">
+                    <div
+                        class="bg-gray-50/50 px-8 py-5 border-t border-gray-100 flex items-center justify-end gap-3 rounded-b-2xl">
                         <button type="button" onclick="closeRestockModal()"
                             class="px-6 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-200">
                             Batal
