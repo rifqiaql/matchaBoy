@@ -4,10 +4,11 @@
     <div id="editModalContent"
         class="bg-white rounded-2xl shadow-xl w-full max-w-4xl mx-4 overflow-hidden transform transition-all scale-95 opacity-0">
 
-        <div class="flex justify-between items-center px-8 py-5 border-b border-gray-100">
-            <h2 class="text-xl font-bold text-gray-800">Edit Bahan Baku</h2>
+        <!-- HEADER DIREVISI: Menggunakan warna hijau tema aplikasi -->
+        <div class="flex justify-between items-center px-8 py-5 bg-[#84A07F]">
+            <h2 class="text-xl font-bold text-white">Edit Bahan Baku</h2>
             <button type="button" onclick="closeEditModal()"
-                class="text-gray-400 hover:text-gray-700 transition-colors bg-gray-50 hover:bg-gray-100 p-2 rounded-full">
+                class="text-white/80 hover:text-white transition-colors bg-transparent hover:bg-white/10 p-2 rounded-full mt-1">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
                     </path>
@@ -39,14 +40,17 @@
                         <label for="edit_kategori"
                             class="block text-sm font-semibold text-gray-700 mb-1.5">Kategori</label>
                         <div class="relative">
+                            <!-- KATEGORI DIREVISI: UI disamakan (bg-white) & state old() ditambahkan -->
                             <select name="kategori" id="edit_kategori"
-                                class="w-full px-4 py-2.5 text-sm border border-[#E8E1D9] bg-[#FAF7F2] text-gray-800 rounded-lg focus:ring-2 focus:ring-[#365E3F] outline-none transition-all appearance-none cursor-pointer"
+                                class="w-full px-4 py-2.5 text-sm border border-gray-200 bg-white text-gray-800 rounded-lg focus:ring-2 focus:ring-[#365E3F] focus:border-[#365E3F] outline-none transition-all appearance-none cursor-pointer"
                                 required>
-                                <option value="" disabled selected>Pilih Kategori...</option>
-                                <option value="Bubuk">Bubuk</option>
-                                <option value="Cair">Cair</option>
-                                <option value="Sirup">Sirup</option>
-                                <option value="Toping">Toping</option>
+                                <option value="" disabled {{ old('kategori') ? '' : 'selected' }}>Pilih
+                                    Kategori...</option>
+                                <option value="Bubuk" {{ old('kategori') == 'Bubuk' ? 'selected' : '' }}>Bubuk</option>
+                                <option value="Cair" {{ old('kategori') == 'Cair' ? 'selected' : '' }}>Cair</option>
+                                <option value="Sirup" {{ old('kategori') == 'Sirup' ? 'selected' : '' }}>Sirup</option>
+                                <option value="Toping" {{ old('kategori') == 'Toping' ? 'selected' : '' }}>Toping
+                                </option>
                             </select>
                             <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none"
                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -63,14 +67,16 @@
                         <label for="edit_satuan" class="block text-sm font-semibold text-gray-700 mb-1.5">Satuan</label>
                         <div class="relative">
                             <select name="satuan" id="edit_satuan"
-                                class="w-full px-4 py-2.5 text-sm border border-gray-200 bg-white text-gray-800 rounded-lg focus:ring-2 focus:ring-[#365E3F] outline-none transition-all appearance-none cursor-pointer"
+                                class="w-full px-4 py-2.5 text-sm border border-gray-200 bg-white text-gray-800 rounded-lg focus:ring-2 focus:ring-[#365E3F] focus:border-[#365E3F] outline-none transition-all appearance-none cursor-pointer"
                                 required>
                                 <option value="" disabled {{ old('satuan') ? '' : 'selected' }}>Pilih Satuan...
                                 </option>
-                                <option value="Gram" {{ old('satuan') == 'Gram' ? 'selected' : '' }}>Gram (g)</option>
+                                <option value="Gram" {{ old('satuan') == 'Gram' ? 'selected' : '' }}>Gram (g)
+                                </option>
                                 <option value="Kg" {{ old('satuan') == 'Kg' ? 'selected' : '' }}>Kilogram (Kg)
                                 </option>
-                                <option value="Mililiter" {{ old('satuan') == 'Mililiter' ? 'selected' : '' }}>Mililiter
+                                <option value="Mililiter" {{ old('satuan') == 'Mililiter' ? 'selected' : '' }}>
+                                    Mililiter
                                     (ml)</option>
                                 <option value="Liter" {{ old('satuan') == 'Liter' ? 'selected' : '' }}>Liter (L)
                                 </option>
