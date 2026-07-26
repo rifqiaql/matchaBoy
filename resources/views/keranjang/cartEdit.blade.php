@@ -37,35 +37,15 @@
                         class="w-full rounded-xl border-0 bg-[#F6F4EE] px-4 py-3 text-sm text-gray-900 placeholder-gray-400 shadow-sm ring-1 ring-transparent transition focus:outline-none focus:ring-2 focus:ring-[#8FA88B]">
                 </div>
 
-                <!-- Grid Kategori & Harga -->
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label for="edit_item_category"
-                            class="mb-1.5 block text-[13px] font-medium text-gray-600">Kategori</label>
-                        <div class="relative">
-                            <select id="edit_item_category" name="category" required
-                                class="w-full appearance-none rounded-xl border-0 bg-[#F6F4EE] px-4 py-3 text-sm text-gray-900 shadow-sm ring-1 ring-transparent transition focus:outline-none focus:ring-2 focus:ring-[#8FA88B]">
-                                <option value="">Select category</option>
-                                <option value="Signature">Signature</option>
-                                <option value="Milk Based">Milk Based</option>
-                                <option value="Strawberry">Strawberry</option>
-                            </select>
-                            <div
-                                class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M19 9l-7 7-7-7"></path>
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
+                <!-- KATEGORI DIUBAH JADI HIDDEN AGAR DATABASE TIDAK ERROR -->
+                <input type="hidden" id="edit_item_category" name="category">
 
-                    <div>
-                        <label for="edit_item_price"
-                            class="mb-1.5 block text-[13px] font-medium text-gray-600">Harga</label>
-                        <input type="number" id="edit_item_price" name="price" required placeholder="Rp ......"
-                            class="w-full rounded-xl border-0 bg-[#F6F4EE] px-4 py-3 text-sm text-gray-900 placeholder-gray-400 shadow-sm ring-1 ring-transparent transition focus:outline-none focus:ring-2 focus:ring-[#8FA88B]">
-                    </div>
+                <!-- Harga (Dibuat Full Width karena Kategori dihilangkan dari UI) -->
+                <div>
+                    <label for="edit_item_price"
+                        class="mb-1.5 block text-[13px] font-medium text-gray-600">Harga</label>
+                    <input type="number" id="edit_item_price" name="price" required placeholder="Rp ......"
+                        class="w-full rounded-xl border-0 bg-[#F6F4EE] px-4 py-3 text-sm text-gray-900 placeholder-gray-400 shadow-sm ring-1 ring-transparent transition focus:outline-none focus:ring-2 focus:ring-[#8FA88B]">
                 </div>
 
                 <!-- SECTION EDIT RESEP DINAMIS -->
@@ -156,7 +136,8 @@
         // 2. Isi value form dasar
         document.getElementById('edit_item_id').value = id;
         document.getElementById('edit_item_name').value = name;
-        document.getElementById('edit_item_category').value = category;
+        // Tetap simpan nilai kategori lama atau default ke 'Umum' secara diam-diam
+        document.getElementById('edit_item_category').value = category || 'Umum';
         document.getElementById('edit_item_price').value = price;
 
         // 3. Render ulang daftar bahan baku
