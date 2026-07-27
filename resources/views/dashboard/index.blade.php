@@ -162,8 +162,8 @@
 
             <!-- GRAFIK CHART.JS (DINAMIS 7 HARI) -->
             <div class="col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <h3 class="text-lg font-bold mb-1 text-gray-800">Demand Analysis</h3>
-                <p class="text-sm text-gray-400 mb-6">Tren transaksi kasir 7 hari terakhir</p>
+                <h3 class="text-lg font-bold mb-1 text-gray-800">Grafik Jumlah Transaksi Dalam 7 Hari Terakhir</h3>
+                <p class="text-sm text-gray-400 mb-6"></p>
 
                 <!-- Wadah Canvas untuk Chart.js (Menggantikan balok HTML palsu) -->
                 <div class="w-full h-64 mt-4 relative">

@@ -105,19 +105,12 @@ class InventoryController extends Controller
     }
 
     /**
-     * Show the form for creating a new bahan baku.
-     */
-    public function create(): View
-    {
-        return view('inventory.create');
-    }
-
-    /**
      * Store a newly created bahan baku in storage.
+     * (Fungsi create() dihapus karena sudah menggunakan UI Modal)
      */
     public function store(Request $request)
     {
-        // 1. Validasi input yang masuk dari form baru
+        // 1. Validasi input yang masuk dari form modal baru
         $request->validate([
             'nama_bahan'      => 'required|string|max:255',
             'kategori'        => 'required|string',
@@ -181,10 +174,10 @@ class InventoryController extends Controller
      */
     public function tambahStok(Request $request, $id): RedirectResponse
     {
+        // Validasi kedaluwarsa dicabut sesuai perubahan UI
         $request->validate([
             'jumlah_kemasan' => 'required|numeric|min:0.1',
             'isi_per_kemasan' => 'required|numeric|min:0.1',
-            'tanggal_kedaluwarsa' => 'nullable|date',
             'catatan' => 'nullable|string|max:255'
         ]);
 
@@ -195,12 +188,11 @@ class InventoryController extends Controller
                 // Kalkulasi total yang masuk (Kemasan x Isi)
                 $total_masuk = $request->jumlah_kemasan * $request->isi_per_kemasan;
 
-                // Catat ke tabel riwayat (Audit Trail)
+                // Catat ke tabel riwayat (Audit Trail) tanpa tanggal_kedaluwarsa
                 StokMasuk::create([
                     'bahan_baku_id' => $bahan->id,
                     'user_id' => Auth::id(),
                     'jumlah_tambah' => $total_masuk,
-                    'tanggal_kedaluwarsa' => $request->tanggal_kedaluwarsa,
                     'catatan' => $request->catatan,
                 ]);
 
