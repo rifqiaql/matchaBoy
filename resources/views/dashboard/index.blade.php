@@ -163,9 +163,10 @@
             <!-- GRAFIK CHART.JS (DINAMIS 7 HARI) -->
             <div class="col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                 <h3 class="text-lg font-bold mb-1 text-gray-800">Grafik Jumlah Transaksi Dalam 7 Hari Terakhir</h3>
-                <p class="text-sm text-gray-400 mb-6"></p>
+                <p class="text-sm text-gray-400 mb-6">Berikut adalah grafik yang menunjukkan jumlah transaksi dalam 7 hari
+                    terakhir.</p>
 
-                <!-- Wadah Canvas untuk Chart.js (Menggantikan balok HTML palsu) -->
+                <!-- Wadah Canvas untuk Chart.js -->
                 <div class="w-full h-64 mt-4 relative">
                     <canvas id="dashboardDemandChart"></canvas>
                 </div>
@@ -199,7 +200,6 @@
                 @php
                     $allBahan = \App\Models\BahanBaku::all();
                     $kritisItems = $allBahan->filter(function ($item) {
-                        // FIX: Baca stok_minimum langsung, jangan hardcode 20%
                         return $item->stok_saat_ini <= $item->stok_minimum;
                     });
                     $lowStockCount = $kritisItems->count();
@@ -292,7 +292,6 @@
 
                             @forelse($inventoryStatus as $item)
                                 @php
-                                    // FIX: Penentuan indikator wajib merujuk ke status is_kritis
                                     if ($item->is_kritis) {
                                         $badgeClass = 'bg-red-50 text-red-600';
                                         $badgeText = 'KRITIS';
@@ -401,6 +400,13 @@
                     },
                     scales: {
                         y: {
+                            title: {
+                                display: true,
+                                text: 'Jumlah Transaksi (Struk)',
+                                font: {
+                                    weight: 'bold'
+                                }
+                            },
                             beginAtZero: true,
                             grid: {
                                 display: false
@@ -410,6 +416,13 @@
                             } // Paksa agar y-axis bulat
                         },
                         x: {
+                            title: {
+                                display: true,
+                                text: 'Tanggal Operasional',
+                                font: {
+                                    weight: 'bold'
+                                }
+                            },
                             grid: {
                                 display: false
                             }

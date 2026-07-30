@@ -381,6 +381,13 @@
                     },
                     scales: {
                         y: {
+                            title: {
+                                display: true,
+                                text: 'Volume Produk Terjual (Porsi)',
+                                font: {
+                                    weight: 'bold'
+                                }
+                            },
                             beginAtZero: true,
                             grid: {
                                 display: false
@@ -390,6 +397,13 @@
                             }
                         },
                         x: {
+                            title: {
+                                display: true,
+                                text: 'Timeline (Tanggal)',
+                                font: {
+                                    weight: 'bold'
+                                }
+                            },
                             grid: {
                                 display: false
                             }
