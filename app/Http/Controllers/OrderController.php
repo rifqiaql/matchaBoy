@@ -6,13 +6,14 @@ use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\BahanBaku;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class OrderController extends Controller
 {
     /**
-     * Memproses transaksi (Checkout) dari Keranjang
+     * Memproses transaksi (Checkout) dari Keranjang & Pemotongan Stok BOM Presisi
      */
     public function checkout(Request $request)
     {
@@ -28,26 +29,20 @@ class OrderController extends Controller
 
         try {
             $subtotal = 0;
-            $orderItemsData = []; // Wadah sementara
+            $orderItemsData = []; // Wadah sementara untuk eksekusi item
 
             // 2. Loop Pertama: Hitung Total Uang dengan Harga Asli dari Database
             foreach ($request->cart as $item) {
-                // Tarik data produk beserta resepnya langsung dari DB
-                $product = Product::with('ingredients')->findOrFail($item['id']);
+                $product = Product::findOrFail($item['id']);
 
-                if ($product->ingredients->isEmpty()) {
-                    throw new \Exception("Sistem Gagal: Produk '{$product->name}' belum memiliki resep (BOM) di gudang.");
-                }
-
-                // Kalkulasi harga AMAN
+                // Kalkulasi harga AMAN (Menggunakan harga asli DB)
                 $itemTotalPrice = $product->price * $item['quantity'];
                 $subtotal += $itemTotalPrice;
 
-                // Simpan struktur item untuk dieksekusi setelah order induk dibuat
                 $orderItemsData[] = [
                     'product'  => $product,
                     'quantity' => $item['quantity'],
-                    'price'    => $product->price // Harga asli
+                    'price'    => $product->price
                 ];
             }
 
@@ -69,7 +64,10 @@ class OrderController extends Controller
                 'payment_method' => $request->payment_method ?? 'cash'
             ]);
 
-            // 5. Loop Kedua: Simpan Detail Transaksi & Potong Stok Gudang
+            // Ambil semua data bahan baku dari database sekaligus untuk performa & validasi
+            $semuaBahan = BahanBaku::all();
+
+            // 5. Loop Kedua: Simpan Detail Transaksi & Potong Stok Gudang Secara Presisi
             foreach ($orderItemsData as $data) {
                 $product = $data['product'];
                 $qty = $data['quantity'];
@@ -82,19 +80,24 @@ class OrderController extends Controller
                     'price' => $data['price']
                 ]);
 
-                // POTONG STOK OTOMATIS BERDASARKAN RESEP (BOM)
-                foreach ($product->ingredients as $ingredient) {
-                    // Hitung total kebutuhan bahan (takaran resep x jumlah cup pesanan)
-                    $totalNeeded = $ingredient->pivot->quantity_needed * $qty;
+                // POTONG STOK OTOMATIS BERDASARKAN RESEP BAKU (BOM) MATCHA BOY
+                $namaMenu = strtolower($product->name);
 
-                    // Validasi: Jika stok di gudang tidak cukup
-                    if ($ingredient->stok_saat_ini < $totalNeeded) {
-                        throw new \Exception("Stok bahan '{$ingredient->nama_bahan}' tidak cukup untuk memproses '{$product->name}'! Butuh: {$totalNeeded}, Sisa: {$ingredient->stok_saat_ini}");
-                    }
+                // Semua minuman wajib menggunakan 3 bahan dasar ini (Base BOM):
+                // 1. Bubuk Matcha = 8 Gram / Cup
+                $this->potongStokBahan($semuaBahan, 'matcha', 8 * $qty);
+                // 2. Susu Full Cream = 100 Mililiter / Cup
+                $this->potongStokBahan($semuaBahan, 'full cream', 100 * $qty);
+                // 3. Susu Kental Manis (SKM) = 30 Gram / Cup
+                $this->potongStokBahan($semuaBahan, ['skm', 'kental manis'], 30 * $qty);
 
-                    // Kurangi stok dan simpan
-                    $ingredient->stok_saat_ini -= $totalNeeded;
-                    $ingredient->save();
+                // Tambahan Toping Khusus untuk menu tertentu:
+                if (str_contains($namaMenu, 'strawberry')) {
+                    // Selai Strawberry = 15 Gram / Cup
+                    $this->potongStokBahan($semuaBahan, 'strawberry', 15 * $qty);
+                } elseif (str_contains($namaMenu, 'caramel')) {
+                    // Sirup Caramel = 15 Gram / Cup
+                    $this->potongStokBahan($semuaBahan, 'caramel', 15 * $qty);
                 }
             }
 
@@ -106,13 +109,43 @@ class OrderController extends Controller
                 'message' => 'Transaksi Berhasil, Stok Gudang Otomatis Berkurang!',
                 'invoice_number' => $order->invoice_number
             ], 200);
+
         } catch (\Exception $e) {
-            // Batalkan semua operasi database jika ada 1 saja yang melanggar rule
+            // Batalkan semua operasi database jika ada 1 saja yang melanggar rule / stok kurang
             DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()
             ], 400);
         }
+    }
+
+    /**
+     * Helper privat untuk memotong stok dengan pencarian kebal typo & validasi minus
+     */
+    private function potongStokBahan($collectionBahan, $keyword, $totalKurang)
+    {
+        $keywords = is_array($keyword) ? $keyword : [$keyword];
+
+        $bahan = $collectionBahan->first(function ($item) use ($keywords) {
+            foreach ($keywords as $kw) {
+                if (str_contains(strtolower($item->nama_bahan), strtolower($kw))) {
+                    return true;
+                }
+            }
+            return false;
+        });
+
+        if (!$bahan) {
+            $namaDicari = is_array($keyword) ? implode(' / ', $keyword) : $keyword;
+            throw new \Exception("Sistem Gagal: Bahan baku '{$namaDicari}' tidak ditemukan di Gudang.");
+        }
+
+        if ($bahan->stok_saat_ini < $totalKurang) {
+            throw new \Exception("Stok bahan '{$bahan->nama_bahan}' tidak cukup! Butuh: {$totalKurang} {$bahan->satuan}, Sisa: {$bahan->stok_saat_ini} {$bahan->satuan}");
+        }
+
+        $bahan->stok_saat_ini -= $totalKurang;
+        $bahan->save();
     }
 }

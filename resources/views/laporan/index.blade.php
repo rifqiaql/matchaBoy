@@ -6,8 +6,8 @@
         <!-- HEADER & ACTIONS -->
         <div class="flex justify-between items-center border-b border-gray-200 pb-4">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900">Analytics & Stock Report</h1>
-                <p class="text-sm text-gray-500">Predictive insights and artisanal inventory management</p>
+                <h1 class="text-2xl font-bold text-gray-900">Laporan Analitis & Analisis Stok</h1>
+                <p class="text-sm text-gray-500">Wawasan prediksi permintaan dan manajemen persediaan bahan baku</p>
             </div>
             <div class="flex flex-col items-end gap-3">
                 <div class="flex items-center gap-3">
@@ -85,9 +85,9 @@
                 <!-- Demand Analysis -->
                 <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                     <div class="flex justify-between items-center mb-1">
-                        <h3 class="text-lg font-bold text-gray-800">Demand Analysis</h3>
+                        <h3 class="text-lg font-bold text-gray-800">Grafik Perbandingan Volume Penjualan Aktual vs. Prediksi</h3>
                     </div>
-                    <p class="text-sm text-gray-400 mb-6">Actual vs. Forecasted consumption</p>
+                    <p class="text-sm text-gray-400 mb-6">Berikut adalah grafik perbandingan antara volume penjualan aktual dan hasil prediksi peramalan permintaan (SMA).</p>
 
                     <div class="w-full h-64 mt-4 relative">
                         <canvas id="demandChart"></canvas>
@@ -120,21 +120,16 @@
             <!-- RIGHT COLUMN: PERFORMANCE METRICS & WASTES -->
             <div class="col-span-1 space-y-6">
                 @php
-                    // PERBAIKAN 1: Filter kritis murni dari perbandingan stok_minimum di Database, BUKAN 20%
                     $kritisCount = $ingredients
                         ->filter(function ($item) {
                             return $item->stok_saat_ini <= $item->stok_minimum;
                         })
                         ->count();
 
-                    // PERBAIKAN 2: Mapping item kritis dan persentase
                     $priorityItems = $ingredients
                         ->map(function ($item) {
-                            // Persentase hanya untuk visualisasi lebar progress bar
                             $item->persentase =
                                 $item->stok_awal > 0 ? round(($item->stok_saat_ini / $item->stok_awal) * 100) : 0;
-
-                            // Penentu status merah harus berdasarkan database
                             $item->is_kritis = $item->stok_saat_ini <= $item->stok_minimum;
                             return $item;
                         })
@@ -215,26 +210,24 @@
                             @php
                                 $namaBahan = strtolower($ing->nama_bahan);
 
-                                // Logika Pemetaan Takaran Resep Asli (Base Unit)
                                 if (str_contains($namaBahan, 'matcha')) {
-                                    $takaranResep = 8; // 8 Gram
+                                    $takaranResep = 8;
                                 } elseif (str_contains($namaBahan, 'full cream')) {
-                                    $takaranResep = 100; // 100 Mililiter
+                                    $takaranResep = 100;
                                 } elseif (str_contains($namaBahan, 'skm') || str_contains($namaBahan, 'kental manis')) {
-                                    $takaranResep = 30; // 30 Gram
+                                    $takaranResep = 30;
                                 } elseif (
                                     str_contains($namaBahan, 'strawberry') ||
                                     str_contains($namaBahan, 'caramel')
                                 ) {
-                                    $takaranResep = 15; // 15 Gram
+                                    $takaranResep = 15;
                                 } else {
-                                    $takaranResep = 0; // Fallback jika bahan tidak dikenali
+                                    $takaranResep = 0;
                                 }
 
                                 $estimasiPenyusutan = $prediksiBesok * $takaranResep;
                                 $proyeksiSisa = $ing->stok_saat_ini - $estimasiPenyusutan;
 
-                                // Ambil batas kritis murni dari database
                                 $batasKritis = $ing->stok_minimum;
                                 $butuhRestock = $proyeksiSisa <= $batasKritis;
                             @endphp
@@ -317,12 +310,24 @@
                                 </td>
                                 <td class="py-4 px-4 text-right">
                                     @if ($row->error !== null)
-                                        <span
-                                            class="px-2.5 py-1 rounded-md text-xs font-bold {{ $row->error > 0 ? 'bg-red-50 text-red-600' : ($row->error < 0 ? 'bg-blue-50 text-blue-600' : 'bg-green-50 text-green-600') }}">
+                                        @php
+                                            // LOGIKA KOREKSI WARNA INDIKATOR ERROR:
+                                            // Error > 0  -> Hijau/Emerald (Penjualan melampaui prediksi / Positif)
+                                            // Error < 0  -> Merah/Rose (Penjualan di bawah prediksi / Penurunan)
+                                            // Error == 0 -> Abu-abu/Netral (Akurat / Pas)
+                                            if ($row->error > 0) {
+                                                $badgeErrorClass = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+                                            } elseif ($row->error < 0) {
+                                                $badgeErrorClass = 'bg-rose-50 text-rose-600 border border-rose-200';
+                                            } else {
+                                                $badgeErrorClass = 'bg-gray-100 text-gray-700 border border-gray-300';
+                                            }
+                                        @endphp
+                                        <span class="px-2.5 py-1 rounded-md text-xs font-bold {{ $badgeErrorClass }}">
                                             {{ $row->error > 0 ? '+' : '' }}{{ $row->error }}
                                         </span>
                                     @else
-                                        -
+                                        <span class="text-gray-300">-</span>
                                     @endif
                                 </td>
                             </tr>
