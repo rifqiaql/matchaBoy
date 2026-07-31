@@ -272,6 +272,72 @@
             </div>
         </div>
 
+        <!-- EVALUASI AKURASI MODEL PREDIKSI (MAPE) - REVISI TA DOSBING -->
+        @php
+            $totalMape = 0;
+            $dataValidMapeCount = 0;
+
+            foreach ($analisisSma as $row) {
+                // Hitung APE hanya untuk baris yang memiliki nilai aktual > 0 dan prediksi sudah terbentuk
+                if ($row->prediksi !== null && $row->aktual > 0 && $row->error !== null) {
+                    $ape = (abs($row->error) / $row->aktual) * 100;
+                    $totalMape += $ape;
+                    $dataValidMapeCount++;
+                }
+            }
+
+            $nilaiMape = $dataValidMapeCount > 0 ? round($totalMape / $dataValidMapeCount, 2) : 0;
+
+            // Kriteria Standar Akademis MAPE (Lewis, 1982)
+            if ($dataValidMapeCount === 0) {
+                $statusMape = 'Belum Ada Evaluasi';
+                $badgeMapeColor = 'bg-gray-100 text-gray-700 border-gray-300';
+                $penjelasanMape = 'Sistem belum memiliki cukup data historis untuk mengukur tingkat error peramalan.';
+            } elseif ($nilaiMape < 10) {
+                $statusMape = 'Sangat Akurat (High Accuracy)';
+                $badgeMapeColor = 'bg-emerald-50 text-emerald-700 border-emerald-300';
+                $penjelasanMape = 'Model peramalan ini memiliki tingkat error di bawah 10%, sehingga sangat layak dijadikan acuan utama pengadaan stok harian.';
+            } elseif ($nilaiMape <= 20) {
+                $statusMape = 'Akurat (Good Forecasting)';
+                $badgeMapeColor = 'bg-blue-50 text-blue-700 border-blue-300';
+                $penjelasanMape = 'Akurasi model berada dalam batas wajar industri F&B. Sistem mampu mengantisipasi fluktuasi permintaan standar dengan baik.';
+            } elseif ($nilaiMape <= 50) {
+                $statusMape = 'Cukup Akurat (Fair Forecasting)';
+                $badgeMapeColor = 'bg-amber-50 text-amber-700 border-amber-300';
+                $penjelasanMape = 'Tingkat penyimpangan berada dalam level moderat. Disarankan untuk membandingkan opsi parameter n lain untuk hasil lebih optimal.';
+            } else {
+                $statusMape = 'Kurang Akurat (Inaccurate)';
+                $badgeMapeColor = 'bg-rose-50 text-rose-700 border-rose-300';
+                $penjelasanMape = 'Tingkat error melebihi 50% akibat lonjakan permintaan ekstrem atau minimnya data historis. Gunakan prediksi sebagai referensi sekunder.';
+            }
+        @endphp
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mt-6 w-full">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                <div>
+                    <h3 class="text-xl font-bold text-[#2D5A34]">Evaluasi Akurasi Model Prediksi (MAPE)</h3>
+                    <p class="text-sm text-gray-400 mt-1">Pengujian ilmiah tingkat penyimpangan error peramalan SMA (n = {{ $n }} Hari)</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-xs font-semibold text-gray-500">Tingkat Kesalahan (MAPE):</span>
+                    <span class="px-3 py-1.5 rounded-lg text-sm font-bold border {{ $badgeMapeColor }}">
+                        {{ $nilaiMape }}% &mdash; {{ $statusMape }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="p-4 bg-gray-50 rounded-xl border border-gray-100 flex items-start gap-3">
+                <svg class="w-5 h-5 text-[#2D5A34] shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div class="text-xs text-gray-600 leading-relaxed">
+                    <span class="font-bold text-gray-800">Catatan Evaluasi Sistem:</span> 
+                    {{ $penjelasanMape }}
+                    Perhitungan didasarkan pada <span class="font-bold text-gray-800">{{ $dataValidMapeCount }} hari operasional</span> yang telah memiliki nilai aktual dan prediksi (menggunakan standar evaluasi <em>Mean Absolute Percentage Error</em>).
+                </div>
+            </div>
+        </div>
+
         <!-- TABEL AUDIT PEMBUKTIAN SMA -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mt-6 w-full">
             <div class="mb-6 flex justify-between items-center">
