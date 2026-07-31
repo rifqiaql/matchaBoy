@@ -59,7 +59,7 @@
                     {{ $matcha ? $matcha->stok_saat_ini : 0 }}
                     <span class="text-lg">{{ $matcha ? $matcha->satuan : '' }}</span>
                 </p>
-                <p class="text-xs text-gray-400 mt-2">Premium Grade</p>
+                <p class="text-xs text-gray-400 mt-2">Kualitas Premium</p>
                 <div class="w-full bg-gray-100 rounded-full h-2 mt-3 overflow-hidden">
                     <div class="bg-dark-matcha h-full rounded-full transition-all duration-1000"
                         style="width: {{ getLebarBar($matcha) }}%;"></div>
@@ -89,7 +89,7 @@
                     {{ $fullCream ? $fullCream->stok_saat_ini : 0 }}
                     <span class="text-lg">{{ $fullCream ? $fullCream->satuan : '' }}</span>
                 </p>
-                <p class="text-xs text-gray-400 mt-2">Stock Supplier</p>
+                <p class="text-xs text-gray-400 mt-2">Stok Pemasok</p>
                 <div class="w-full bg-gray-100 rounded-full h-2 mt-3 overflow-hidden">
                     <div class="bg-yellow-500 h-full rounded-full transition-all duration-1000"
                         style="width: {{ getLebarBar($fullCream) }}%;"></div>
@@ -118,7 +118,7 @@
                     {{ $strawberry ? $strawberry->stok_saat_ini : 0 }}
                     <span class="text-lg">{{ $strawberry ? $strawberry->satuan : '' }}</span>
                 </p>
-                <p class="text-xs text-gray-400 mt-2">Topping Tersedia</p>
+                <p class="text-xs text-gray-400 mt-2">Toping Tersedia</p>
                 <div class="w-full bg-gray-100 rounded-full h-2 mt-3 overflow-hidden">
                     <div class="bg-pink-400 h-full rounded-full transition-all duration-1000"
                         style="width: {{ getLebarBar($strawberry) }}%;"></div>
@@ -146,7 +146,7 @@
                     {{ $skm ? $skm->stok_saat_ini : 0 }}
                     <span class="text-lg">{{ $skm ? $skm->satuan : '' }}</span>
                 </p>
-                <p class="text-xs text-gray-400 mt-2">Base Manis</p>
+                <p class="text-xs text-gray-400 mt-2">Bahan Dasar Manis</p>
                 <div class="w-full bg-gray-100 rounded-full h-2 mt-3 overflow-hidden">
                     <div class="bg-blue-500 h-full rounded-full transition-all duration-1000"
                         style="width: {{ getLebarBar($skm) }}%;"></div>
@@ -174,9 +174,9 @@
 
             <!-- KOLOM KANAN: TOP PRODUCTS & WARNING -->
             <div class="flex flex-col gap-6">
-                <!-- TOP 3 PRODUCTS -->
+                <!-- 3 PRODUK TERLARIS (Revisi Bahasa Baku) -->
                 <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex-1">
-                    <h3 class="text-lg font-bold mb-6 text-gray-800">Top 3 Products</h3>
+                    <h3 class="text-lg font-bold mb-6 text-gray-800">3 Produk Terlaris</h3>
                     <div class="space-y-5">
                         @forelse ($topProducts as $top)
                             <div>
@@ -327,7 +327,7 @@
                 </div>
             </div>
 
-            <!-- KANAN: AKTIVITAS TERBARU (ORDER KASIR) -->
+            <!-- KANAN: AKTIVITAS TERBARU (ORDER KASIR - LOGIKA WAKTU MURNI) -->
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                 <h3 class="text-lg font-bold mb-6 text-gray-800">Aktivitas Transaksi Terbaru</h3>
                 <div class="space-y-6">
@@ -353,8 +353,9 @@
                                 <p class="text-xs text-gray-500 mt-1">
                                     Diproses oleh Kasir: {{ $order->user->name ?? 'Admin' }}
                                 </p>
+                                <!-- WAKTU TRANSAKSI DINAMIS MURNI DALAM BAHASA INDONESIA -->
                                 <p class="text-[10px] font-semibold text-gray-400 mt-2 uppercase tracking-wider">
-                                    {{ $order->created_at->diffForHumans() }}
+                                    {{ $order->created_at->locale('id')->diffForHumans() }}
                                 </p>
                             </div>
                         </div>

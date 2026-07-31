@@ -9,7 +9,6 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class InventoryController extends Controller
 {
@@ -36,9 +35,9 @@ class InventoryController extends Controller
     }
 
     /**
-     * Export filtered inventory to CSV.
+     * Export filtered inventory to Microsoft Excel Asli (.xls) berformat Profesional.
      */
-    public function export(Request $request): StreamedResponse
+    public function export(Request $request)
     {
         $query = BahanBaku::query();
 
@@ -51,57 +50,156 @@ class InventoryController extends Controller
         }
 
         $bahanBaku = $query->get();
-        $filename = 'Laporan_Gudang_MatchaBoy_' . now()->format('Ymd_His') . '.csv';
+        $tanggalCetak = \Carbon\Carbon::now('Asia/Jakarta')->translatedFormat('d F Y - H:i') . ' WIB';
+        $filename = 'Laporan_Stok_Gudang_MatchaBoy_' . date('Y-m-d_H-i') . '.xls';
 
-        return response()->streamDownload(function () use ($bahanBaku) {
-            $handle = fopen('php://output', 'w');
+        header("Content-Type: application/vnd.ms-excel; charset=utf-8");
+        header("Content-Disposition: attachment; filename=\"$filename\"");
+        header("Pragma: no-cache");
+        header("Expires: 0");
 
-            // 1. Definisi Header yang Komprehensif
-            $columns = [
-                'ID Bahan',
-                'Nama Bahan',
-                'Kategori',
-                'Stok Awal (Kapasitas)',
-                'Stok Saat Ini',
-                'Satuan',
-                'Batas Minimum',
-                'Status Kondisi',
-                'Terakhir Diupdate'
-            ];
-
-            // 2. Gunakan Titik Koma (;) agar rapi di Microsoft Excel
-            fputcsv($handle, $columns, ';');
-
-            foreach ($bahanBaku as $item) {
-                // 3. Penentuan Status Kondisi Otomatis
-                $status = 'Aman';
-                if ($item->stok_saat_ini <= 0) {
-                    $status = 'Habis / Defisit';
-                } elseif ($item->stok_saat_ini <= $item->stok_minimum) {
-                    $status = 'Kritis (Segera Restock)';
+        echo '
+        <html xmlns:o="urn:schemas-microsoft-com:office:office"
+              xmlns:x="urn:schemas-microsoft-com:office:excel"
+              xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+            <!--[if gte mso 9]>
+            <xml>
+                <x:ExcelWorkbook>
+                    <x:ExcelWorksheets>
+                        <x:ExcelWorksheet>
+                            <x:Name>Stok Gudang</x:Name>
+                            <x:WorksheetOptions>
+                                <x:DisplayGridlines/>
+                            </x:WorksheetOptions>
+                        </x:ExcelWorksheet>
+                    </x:ExcelWorksheets>
+                </x:ExcelWorkbook>
+            </xml>
+            <![endif]-->
+            <style>
+                table {
+                    border-collapse: collapse;
+                    width: 100%;
+                    font-family: Arial, sans-serif;
                 }
+                .title {
+                    font-size: 16pt;
+                    font-weight: bold;
+                    color: #2D5A34;
+                    text-align: left;
+                }
+                .subtitle {
+                    font-size: 11pt;
+                    color: #555555;
+                    font-style: italic;
+                    text-align: left;
+                }
+                th {
+                    background-color: #2D5A34;
+                    color: #FFFFFF;
+                    font-weight: bold;
+                    border: 1px solid #1f3d24;
+                    padding: 8px;
+                    text-align: center;
+                    vertical-align: middle;
+                }
+                td {
+                    border: 1px solid #dcdcdc;
+                    padding: 6px 8px;
+                    vertical-align: middle;
+                }
+                .text-center { text-align: center; }
+                .text-right { text-align: right; }
+                .text-left { text-align: left; }
+                .status-kritis {
+                    background-color: #ffe6e6;
+                    color: #c00000;
+                    font-weight: bold;
+                    text-align: center;
+                }
+                .status-aman {
+                    background-color: #e6f7ec;
+                    color: #2d5a34;
+                    font-weight: bold;
+                    text-align: center;
+                }
+                /* FORMAT RIBUAN EXCEL SECARA NATIVE */
+                .num-fmt {
+                    mso-number-format: "\#\,\#\#0";
+                }
+            </style>
+        </head>
+        <body>
+            <table>
+                <tr>
+                    <td colspan="9" class="title">LAPORAN MONITORING STOK GUDANG - MATCHA BOY</td>
+                </tr>
+                <tr>
+                    <td colspan="9" class="subtitle">Waktu Cetak: ' . $tanggalCetak . '</td>
+                </tr>
+                <tr><td colspan="9"></td></tr>
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>ID Bahan</th>
+                        <th>Nama Bahan Baku</th>
+                        <th>Kategori</th>
+                        <th>Stok Awal (Kapasitas)</th>
+                        <th>Stok Saat Ini</th>
+                        <th>Satuan</th>
+                        <th>Batas Minimum</th>
+                        <th>Status Kondisi</th>
+                    </tr>
+                </thead>
+                <tbody>';
 
-                fputcsv($handle, [
-                    $item->id,
-                    $item->nama_bahan,
-                    $item->kategori,
-                    $item->stok_awal,
-                    $item->stok_saat_ini,
-                    $item->satuan,
-                    $item->stok_minimum,
-                    $status,
-                    $item->updated_at ? $item->updated_at->format('Y-m-d H:i:s') : '-'
-                ], ';');
+        $no = 1;
+        $countKritis = 0;
+
+        foreach ($bahanBaku as $item) {
+            $isKritis = (float)$item->stok_saat_ini <= (float)$item->stok_minimum;
+            if ($isKritis) {
+                $countKritis++;
+                $statusClass = 'status-kritis';
+                $statusText  = 'KRITIS (SEGERA RESTOCK)';
+            } else {
+                $statusClass = 'status-aman';
+                $statusText  = 'AMAN';
             }
 
-            fclose($handle);
-        }, $filename, [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-            'Pragma' => 'no-cache',
-            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
-            'Expires' => '0'
-        ]);
+            // KITA KIRIM ANGKA MURNI TERGABUNG DENGAN CLASS .num-fmt
+            // Biar Excel yang bikin titik/komanya secara otomatis tanpa menghapus angka NOL!
+            echo '
+                    <tr>
+                        <td class="text-center">' . $no++ . '</td>
+                        <td class="text-center">' . $item->id . '</td>
+                        <td class="text-left"><b>' . ucwords($item->nama_bahan) . '</b></td>
+                        <td class="text-center">' . ($item->kategori ?? 'Umum') . '</td>
+                        <td class="text-right num-fmt">' . (float)$item->stok_awal . '</td>
+                        <td class="text-right num-fmt"><b>' . (float)$item->stok_saat_ini . '</b></td>
+                        <td class="text-center">' . $item->satuan . '</td>
+                        <td class="text-right num-fmt">' . (float)$item->stok_minimum . '</td>
+                        <td class="' . $statusClass . '">' . $statusText . '</td>
+                    </tr>';
+        }
+
+        $totalItem = $bahanBaku->count();
+
+        echo '
+                    <tr style="background-color: #f2f2f2; font-weight: bold;">
+                        <td colspan="4" class="text-right" style="padding: 10px;">TOTAL ITEM TERDAFTAR:</td>
+                        <td colspan="2" class="text-center">' . $totalItem . ' Jenis Bahan</td>
+                        <td colspan="2" class="text-right">TOTAL STATUS KRITIS:</td>
+                        <td class="text-center" style="color: ' . ($countKritis > 0 ? '#c00000' : '#2d5a34') . ';">' . $countKritis . ' Item</td>
+                    </tr>
+                </tbody>
+            </table>
+        </body>
+        </html>';
+
+        exit;
     }
 
     /**

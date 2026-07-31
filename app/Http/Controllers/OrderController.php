@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Auth;
 class OrderController extends Controller
 {
     /**
-     * Memproses transaksi (Checkout) dari Keranjang & Pemotongan Stok BOM Presisi
+     * Memproses transaksi (Checkout) dari Keranjang & Pemotongan Stok BOM Presisi (Tanpa Pajak)
      */
     public function checkout(Request $request)
     {
@@ -46,14 +46,14 @@ class OrderController extends Controller
                 ];
             }
 
-            // Hitung Pajak dan Total Akhir
-            $tax = $subtotal * 0.10; // Pajak 10%
-            $totalPrice = $subtotal + $tax;
+            // REVISI: Pajak ditiadakan (Set 0), total harga murni dari subtotal keranjang
+            $tax = 0;
+            $totalPrice = $subtotal;
 
             // 3. Generate Nomor Invoice
             $invoiceNumber = 'INV-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(2)));
 
-            // 4. Simpan Data ke Tabel `orders` (Kepala Struk)
+            // 4. Simpan Data ke Tabel `orders` (Kepala Struk) tanpa Pajak
             $order = Order::create([
                 'invoice_number' => $invoiceNumber,
                 'user_id' => Auth::id() ?? 1,
