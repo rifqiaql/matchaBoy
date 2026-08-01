@@ -13,29 +13,93 @@ use Illuminate\Support\Facades\Auth;
 class OrderController extends Controller
 {
     /**
-     * Memproses transaksi (Checkout) dari Keranjang & Pemotongan Stok BOM Presisi (Tanpa Pajak)
+     * Menampilkan Halaman Riwayat Transaksi (Filter per Bulan)
+     */
+    public function history(Request $request)
+    {
+        // Tangkap input filter bulan/tahun, default: bulan dan tahun ini
+        $month = $request->input('month', date('m'));
+        $year = $request->input('year', date('Y'));
+
+        // Kueri data transaksi berdasarkan filter
+        $transactions = Order::whereMonth('created_at', $month)
+                             ->whereYear('created_at', $year)
+                             ->orderBy('created_at', 'desc')
+                             ->get();
+
+        return view('riwayat.index', compact('transactions', 'month', 'year'));
+    }
+
+    /**
+     * Membatalkan Transaksi (Void) dan Mengembalikan Stok Gudang
+     */
+    public function voidTransaction($id)
+    {
+        DB::beginTransaction();
+
+        try {
+            $order = Order::findOrFail($id);
+            $orderItems = OrderItem::where('order_id', $order->id)->get();
+            $semuaBahan = BahanBaku::all();
+
+            // 1. Loop Detail Transaksi untuk mengembalikan stok
+            foreach ($orderItems as $item) {
+                $product = Product::find($item->product_id);
+                if (!$product) continue;
+
+                $qty = $item->quantity;
+                $namaMenu = strtolower($product->name);
+
+                // KEMBALIKAN STOK OTOMATIS BERDASARKAN RESEP BAKU (BOM) MATCHA BOY
+                // (Mirroring dari method checkout)
+                
+                // Base BOM:
+                $this->kembalikanStokBahan($semuaBahan, 'matcha', 8 * $qty);
+                $this->kembalikanStokBahan($semuaBahan, 'full cream', 100 * $qty);
+                $this->kembalikanStokBahan($semuaBahan, ['skm', 'kental manis'], 30 * $qty);
+
+                // Tambahan Toping Khusus:
+                if (str_contains($namaMenu, 'strawberry')) {
+                    $this->kembalikanStokBahan($semuaBahan, 'strawberry', 15 * $qty);
+                } elseif (str_contains($namaMenu, 'caramel')) {
+                    $this->kembalikanStokBahan($semuaBahan, 'caramel', 15 * $qty);
+                }
+            }
+
+            // 2. Hapus detail pesanan dan transaksi utama
+            OrderItem::where('order_id', $order->id)->delete();
+            $order->delete();
+
+            DB::commit();
+            return redirect()->back()->with('success', 'Transaksi berhasil dibatalkan. Stok bahan baku telah dikembalikan ke Gudang.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Gagal membatalkan transaksi: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Memproses transaksi (Checkout) dari Keranjang & Pemotongan Stok BOM Presisi
      */
     public function checkout(Request $request)
     {
-        // 1. Validasi input: JANGAN PERNAH menerima harga (price) dari Frontend!
+        // 1. Validasi input
         $request->validate([
             'cart' => 'required|array',
             'cart.*.id' => 'required|exists:products,id',
             'cart.*.quantity' => 'required|integer|min:1',
         ]);
 
-        // Mulai Database Transaction demi keamanan data (Jika 1 gagal, semua dibatalkan)
         DB::beginTransaction();
 
         try {
             $subtotal = 0;
-            $orderItemsData = []; // Wadah sementara untuk eksekusi item
+            $orderItemsData = []; 
 
             // 2. Loop Pertama: Hitung Total Uang dengan Harga Asli dari Database
             foreach ($request->cart as $item) {
                 $product = Product::findOrFail($item['id']);
-
-                // Kalkulasi harga AMAN (Menggunakan harga asli DB)
                 $itemTotalPrice = $product->price * $item['quantity'];
                 $subtotal += $itemTotalPrice;
 
@@ -46,14 +110,13 @@ class OrderController extends Controller
                 ];
             }
 
-            // REVISI: Pajak ditiadakan (Set 0), total harga murni dari subtotal keranjang
             $tax = 0;
             $totalPrice = $subtotal;
 
             // 3. Generate Nomor Invoice
             $invoiceNumber = 'INV-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(2)));
 
-            // 4. Simpan Data ke Tabel `orders` (Kepala Struk) tanpa Pajak
+            // 4. Simpan Data ke Tabel `orders`
             $order = Order::create([
                 'invoice_number' => $invoiceNumber,
                 'user_id' => Auth::id() ?? 1,
@@ -64,15 +127,13 @@ class OrderController extends Controller
                 'payment_method' => $request->payment_method ?? 'cash'
             ]);
 
-            // Ambil semua data bahan baku dari database sekaligus untuk performa & validasi
             $semuaBahan = BahanBaku::all();
 
-            // 5. Loop Kedua: Simpan Detail Transaksi & Potong Stok Gudang Secara Presisi
+            // 5. Loop Kedua: Simpan Detail Transaksi & Potong Stok Gudang
             foreach ($orderItemsData as $data) {
                 $product = $data['product'];
                 $qty = $data['quantity'];
 
-                // Simpan tiap baris produk ke tabel `order_items`
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $product->id,
@@ -80,28 +141,20 @@ class OrderController extends Controller
                     'price' => $data['price']
                 ]);
 
-                // POTONG STOK OTOMATIS BERDASARKAN RESEP BAKU (BOM) MATCHA BOY
+                // POTONG STOK OTOMATIS BERDASARKAN RESEP BAKU
                 $namaMenu = strtolower($product->name);
 
-                // Semua minuman wajib menggunakan 3 bahan dasar ini (Base BOM):
-                // 1. Bubuk Matcha = 8 Gram / Cup
                 $this->potongStokBahan($semuaBahan, 'matcha', 8 * $qty);
-                // 2. Susu Full Cream = 100 Mililiter / Cup
                 $this->potongStokBahan($semuaBahan, 'full cream', 100 * $qty);
-                // 3. Susu Kental Manis (SKM) = 30 Gram / Cup
                 $this->potongStokBahan($semuaBahan, ['skm', 'kental manis'], 30 * $qty);
 
-                // Tambahan Toping Khusus untuk menu tertentu:
                 if (str_contains($namaMenu, 'strawberry')) {
-                    // Selai Strawberry = 15 Gram / Cup
                     $this->potongStokBahan($semuaBahan, 'strawberry', 15 * $qty);
                 } elseif (str_contains($namaMenu, 'caramel')) {
-                    // Sirup Caramel = 15 Gram / Cup
                     $this->potongStokBahan($semuaBahan, 'caramel', 15 * $qty);
                 }
             }
 
-            // 6. Jika semua baris produk aman dan stok cukup, kunci perubahan ke database
             DB::commit();
 
             return response()->json([
@@ -111,7 +164,6 @@ class OrderController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            // Batalkan semua operasi database jika ada 1 saja yang melanggar rule / stok kurang
             DB::rollBack();
             return response()->json([
                 'success' => false,
@@ -121,7 +173,7 @@ class OrderController extends Controller
     }
 
     /**
-     * Helper privat untuk memotong stok dengan pencarian kebal typo & validasi minus
+     * Helper privat untuk MEMOTONG stok (Digunakan saat Checkout)
      */
     private function potongStokBahan($collectionBahan, $keyword, $totalKurang)
     {
@@ -147,5 +199,28 @@ class OrderController extends Controller
 
         $bahan->stok_saat_ini -= $totalKurang;
         $bahan->save();
+    }
+
+    /**
+     * Helper privat untuk MENGEMBALIKAN stok (Digunakan saat Void/Batal Transaksi)
+     */
+    private function kembalikanStokBahan($collectionBahan, $keyword, $totalTambah)
+    {
+        $keywords = is_array($keyword) ? $keyword : [$keyword];
+
+        $bahan = $collectionBahan->first(function ($item) use ($keywords) {
+            foreach ($keywords as $kw) {
+                if (str_contains(strtolower($item->nama_bahan), strtolower($kw))) {
+                    return true;
+                }
+            }
+            return false;
+        });
+
+        // Jika bahan ditemukan, kembalikan (increment) stoknya
+        if ($bahan) {
+            $bahan->stok_saat_ini += $totalTambah;
+            $bahan->save();
+        }
     }
 }

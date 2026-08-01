@@ -14,7 +14,6 @@ use App\Http\Controllers\ProductController;
 | ZONA 1: GUEST (Belum Login)
 |--------------------------------------------------------------------------
 */
-
 Route::middleware('guest')->group(function () {
     Route::get('/', [LoginController::class, 'create'])->name('login');
     Route::post('/login', [LoginController::class, 'store'])->name('login.store');
@@ -36,12 +35,18 @@ Route::middleware('auth')->group(function () {
     Route::get('/keranjang', [ProductController::class, 'index'])->name('keranjang.index');
     Route::post('/checkout', [OrderController::class, 'checkout'])->name('checkout.process');
 
+    // [BARU] Riwayat Transaksi & Pembatalan (Void)
+    // Diletakkan di Zona 2 agar kasir bisa langsung mengoreksi salah input (human-error)
+    Route::get('/riwayat-transaksi', [OrderController::class, 'history'])->name('riwayat.index');
+    Route::delete('/riwayat-transaksi/{id}/void', [OrderController::class, 'voidTransaction'])->name('riwayat.void');
+
     // Gudang Operasional: Karyawan BISA Lihat Stok & Input Barang Masuk (Restock)
     Route::prefix('inventory')->name('inventory.')->group(function () {
         Route::get('/', [InventoryController::class, 'index'])->name('index');
         Route::post('/{id}/tambah-stok', [InventoryController::class, 'tambahStok'])->name('tambah-stok');
     });
 });
+
 
 /*
 |--------------------------------------------------------------------------

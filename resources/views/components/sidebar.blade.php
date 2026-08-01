@@ -15,6 +15,13 @@
             <span class="text-sm font-semibold">Keranjang</span>
         </a>
 
+        <!-- RIWAYAT TRANSAKSI (Semua Bisa Akses buat koreksi human-error) -->
+        <a href="{{ route('riwayat.index') }}"
+            class="flex flex-col items-center justify-center w-24 h-24 rounded-2xl transition-all duration-300 {{ request()->routeIs('riwayat.*') ? 'bg-[#86A789] text-white shadow-lg transform -translate-y-1' : 'text-black hover:bg-[#86A789] hover:text-white hover:-translate-y-1' }}">
+            <x-icon name="clock" class="w-7 h-7 mb-1 stroke-current" />
+            <span class="text-sm font-semibold">Riwayat</span>
+        </a>
+
         <!-- GUDANG (Admin & Karyawan Bisa Lihat) -->
         <a href="{{ route('inventory.index') }}"
             class="flex flex-col items-center justify-center w-24 h-24 rounded-2xl transition-all duration-300 {{ request()->routeIs('inventory.*') ? 'bg-[#86A789] text-white shadow-lg transform -translate-y-1' : 'text-black hover:bg-[#86A789] hover:text-white hover:-translate-y-1' }}">
