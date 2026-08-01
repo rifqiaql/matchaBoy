@@ -36,6 +36,9 @@
 
                     <!-- FORM 2: EXPORT EXCEL DINAMIS -->
                     <form action="{{ route('laporan.export') }}" method="GET" class="m-0 p-0 flex items-center gap-2">
+                        <!-- PERBAIKAN: Kirim parameter n secara tersembunyi agar sinkron dengan pilihan SMA di layar -->
+                        <input type="hidden" name="n" value="{{ $n }}">
+                        
                         <!-- Dropdown Bulan -->
                         <select name="month"
                             class="bg-white border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-[#2E4F4F] focus:border-[#2E4F4F] block px-3 py-1.5 cursor-pointer shadow-sm hover:border-gray-300 transition-colors">
