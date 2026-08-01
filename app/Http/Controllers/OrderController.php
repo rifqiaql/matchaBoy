@@ -17,15 +17,15 @@ class OrderController extends Controller
      */
     public function history(Request $request)
     {
-        // Tangkap input filter bulan/tahun, default: bulan dan tahun ini
         $month = $request->input('month', date('m'));
         $year = $request->input('year', date('Y'));
 
-        // Kueri data transaksi berdasarkan filter
+        // Ubah get() menjadi paginate(), angka 50 artinya 50 baris per halaman
+        // withQueryString() wajib agar filter bulan/tahun tidak hilang saat pindah halaman
         $transactions = Order::whereMonth('created_at', $month)
                              ->whereYear('created_at', $year)
                              ->orderBy('created_at', 'desc')
-                             ->get();
+                             ->paginate(50)->withQueryString();
 
         return view('riwayat.index', compact('transactions', 'month', 'year'));
     }

@@ -68,7 +68,7 @@
                 <tbody class="divide-y divide-gray-100">
                     @forelse($transactions as $index => $t)
                         <tr class="hover:bg-gray-50/50 transition-colors">
-                            <td class="px-6 py-4 text-sm text-gray-600">{{ $index + 1 }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-600">{{ $transactions->firstItem() + $index }}</td>
                             <td class="px-6 py-4 text-sm text-gray-600">{{ \Carbon\Carbon::parse($t->created_at)->format('d M Y, H:i') }}</td>
                             <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $t->invoice_number }}</td>
                             <td class="px-6 py-4 text-sm text-gray-600">{{ $t->user->name ?? 'Kasir' }}</td>
@@ -99,6 +99,12 @@
                 </tbody>
             </table>
         </div>
+        <!-- [TAMBAHKAN INI] Pagination Section -->
+        @if($transactions->hasPages())
+        <div class="px-6 py-4 border-t border-gray-100 bg-white">
+            {{ $transactions->links() }}
+        </div>
+        @endif
     </div>
 </div>
 @endsection
