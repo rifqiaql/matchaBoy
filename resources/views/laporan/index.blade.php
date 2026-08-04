@@ -38,7 +38,7 @@
                     <form action="{{ route('laporan.export') }}" method="GET" class="m-0 p-0 flex items-center gap-2">
                         <!-- PERBAIKAN: Kirim parameter n secara tersembunyi agar sinkron dengan pilihan SMA di layar -->
                         <input type="hidden" name="n" value="{{ $n }}">
-                        
+
                         <!-- Dropdown Bulan -->
                         <select name="month"
                             class="bg-white border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-[#2E4F4F] focus:border-[#2E4F4F] block px-3 py-1.5 cursor-pointer shadow-sm hover:border-gray-300 transition-colors">
@@ -88,9 +88,11 @@
                 <!-- Demand Analysis -->
                 <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                     <div class="flex justify-between items-center mb-1">
-                        <h3 class="text-lg font-bold text-gray-800">Grafik Perbandingan Volume Penjualan Aktual vs. Prediksi</h3>
+                        <h3 class="text-lg font-bold text-gray-800">Grafik Perbandingan Volume Penjualan Aktual vs. Prediksi
+                        </h3>
                     </div>
-                    <p class="text-sm text-gray-400 mb-6">Berikut adalah grafik perbandingan antara volume penjualan aktual dan hasil prediksi peramalan permintaan (SMA).</p>
+                    <p class="text-sm text-gray-400 mb-6">Berikut adalah grafik perbandingan antara volume penjualan aktual
+                        dan hasil prediksi peramalan permintaan (SMA).</p>
 
                     <div class="w-full h-64 mt-4 relative">
                         <canvas id="demandChart"></canvas>
@@ -299,27 +301,32 @@
             } elseif ($nilaiMape < 10) {
                 $statusMape = 'Sangat Akurat (High Accuracy)';
                 $badgeMapeColor = 'bg-emerald-50 text-emerald-700 border-emerald-300';
-                $penjelasanMape = 'Model peramalan ini memiliki tingkat error di bawah 10%, sehingga sangat layak dijadikan acuan utama pengadaan stok harian.';
+                $penjelasanMape =
+                    'Model peramalan ini memiliki tingkat error di bawah 10%, sehingga sangat layak dijadikan acuan utama pengadaan stok harian.';
             } elseif ($nilaiMape <= 20) {
                 $statusMape = 'Akurat (Good Forecasting)';
                 $badgeMapeColor = 'bg-blue-50 text-blue-700 border-blue-300';
-                $penjelasanMape = 'Akurasi model berada dalam batas wajar industri F&B. Sistem mampu mengantisipasi fluktuasi permintaan standar dengan baik.';
+                $penjelasanMape =
+                    'Akurasi model berada dalam batas wajar industri F&B. Sistem mampu mengantisipasi fluktuasi permintaan standar dengan baik.';
             } elseif ($nilaiMape <= 50) {
                 $statusMape = 'Cukup Akurat (Fair Forecasting)';
                 $badgeMapeColor = 'bg-amber-50 text-amber-700 border-amber-300';
-                $penjelasanMape = 'Tingkat penyimpangan berada dalam level moderat. Disarankan untuk membandingkan opsi parameter n lain untuk hasil lebih optimal.';
+                $penjelasanMape =
+                    'Tingkat penyimpangan berada dalam level moderat. Disarankan untuk membandingkan opsi parameter n lain untuk hasil lebih optimal.';
             } else {
                 $statusMape = 'Kurang Akurat (Inaccurate)';
                 $badgeMapeColor = 'bg-rose-50 text-rose-700 border-rose-300';
-                $penjelasanMape = 'Tingkat error melebihi 50% akibat lonjakan permintaan ekstrem atau minimnya data historis. Gunakan prediksi sebagai referensi sekunder.';
+                $penjelasanMape =
+                    'Tingkat error melebihi 50% akibat lonjakan permintaan ekstrem atau minimnya data historis. Gunakan prediksi sebagai referensi sekunder.';
             }
         @endphp
 
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mt-6 w-full">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                 <div>
-                    <h3 class="text-xl font-bold text-[#2D5A34]">Evaluasi Akurasi Model Prediksi (MAPE)</h3>
-                    <p class="text-sm text-gray-400 mt-1">Pengujian ilmiah tingkat penyimpangan error peramalan SMA (n = {{ $n }} Hari)</p>
+                    <h3 class="text-xl font-bold text-[#2D5A34]">Evaluasi Model Prediksi (MAPE)</h3>
+                    <p class="text-sm text-gray-400 mt-1">Pengujian ilmiah tingkat penyimpangan error peramalan SMA (n =
+                        {{ $n }} Hari)</p>
                 </div>
                 <div class="flex items-center gap-3">
                     <span class="text-xs font-semibold text-gray-500">Tingkat Kesalahan (MAPE):</span>
@@ -330,13 +337,17 @@
             </div>
 
             <div class="p-4 bg-gray-50 rounded-xl border border-gray-100 flex items-start gap-3">
-                <svg class="w-5 h-5 text-[#2D5A34] shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                <svg class="w-5 h-5 text-[#2D5A34] shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
                 <div class="text-xs text-gray-600 leading-relaxed">
-                    <span class="font-bold text-gray-800">Catatan Evaluasi Sistem:</span> 
+                    <span class="font-bold text-gray-800">Catatan Evaluasi Sistem:</span>
                     {{ $penjelasanMape }}
-                    Perhitungan didasarkan pada <span class="font-bold text-gray-800">{{ $dataValidMapeCount }} hari operasional</span> yang telah memiliki nilai aktual dan prediksi (menggunakan standar evaluasi <em>Mean Absolute Percentage Error</em>).
+                    Perhitungan didasarkan pada <span class="font-bold text-gray-800">{{ $dataValidMapeCount }} hari
+                        operasional</span> yang telah memiliki nilai aktual dan prediksi (menggunakan standar evaluasi
+                    <em>Mean Absolute Percentage Error</em>).
                 </div>
             </div>
         </div>
@@ -385,7 +396,8 @@
                                             // Error < 0  -> Merah/Rose (Penjualan di bawah prediksi / Penurunan)
                                             // Error == 0 -> Abu-abu/Netral (Akurat / Pas)
                                             if ($row->error > 0) {
-                                                $badgeErrorClass = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+                                                $badgeErrorClass =
+                                                    'bg-emerald-50 text-emerald-700 border border-emerald-200';
                                             } elseif ($row->error < 0) {
                                                 $badgeErrorClass = 'bg-rose-50 text-rose-600 border border-rose-200';
                                             } else {
