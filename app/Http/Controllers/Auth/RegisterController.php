@@ -27,13 +27,13 @@ class RegisterController extends Controller
             'password' => 'required|string|min:8|confirmed',
         ]);
 
-        // 2. Simpan Data ke Database (Dengan Hardcode Role)
+        // 2. Simpan Data ke Database
         $user = User::create([
             'name' => $validated['name'],
             'username' => $validated['username'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'role' => 'karyawan', // GEMBOK KEAMANAN: Memaksa pendaftar publik menjadi Karyawan
+            'role' => 'karyawan', // SEKARANG SUDAH DI-ACC SAMA DATABASE
         ]);
         // dicek ulang terkait role yang di hardcode, jika ingin role lain bisa diubah disini
 
