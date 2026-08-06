@@ -35,6 +35,7 @@ class RegisterController extends Controller
             'password' => Hash::make($validated['password']),
             'role' => 'karyawan', // GEMBOK KEAMANAN: Memaksa pendaftar publik menjadi Karyawan
         ]);
+        // dicek ulang terkait role yang di hardcode, jika ingin role lain bisa diubah disini
 
         // 3. Autentikasi dan Arahkan ke Dashboard
         Auth::login($user);
