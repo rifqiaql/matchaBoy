@@ -24,34 +24,30 @@ class InventoryController extends Controller
         }
 
         if ($request->filled('kategori')) {
-            // REVISI (BACKEND BAND-AID): Kamus penerjemah salah ketik dari Frontend ke Database
             $kategoriMap = [
                 'Bahan Pokok' => 'Bubuk',
                 'Cair'        => 'Cairan',
                 'Syrup'       => 'Sirup',
-                // 'Toping' tidak perlu diterjemahkan jika di DB juga tertulis 'Toping'
             ];
             
             $kategoriValid = $kategoriMap[$request->kategori] ?? $request->kategori;
             $query->where('kategori', $kategoriValid);
         }
 
-        // Gunakan paginate() dan pertahankan query string parameter (search/kategori)
         $bahanBaku = $query->paginate(10)->withQueryString();
 
-        // REVISI DINAMIS: Menghitung total frekuensi aktivitas restock (stok masuk) bulan berjalan
         $monthlyRestockCount = StokMasuk::whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
             ->count();
 
         return view('inventory.index', [
             'bahanBaku'           => $bahanBaku,
-            'monthlyRestockCount' => $monthlyRestockCount, // Variabel dikirim ke View
+            'monthlyRestockCount' => $monthlyRestockCount,
         ]);
     }
 
     /**
-     * Export filtered inventory to Microsoft Excel Asli (.xls) berformat Profesional.
+     * Export filtered inventory to Microsoft Excel Asli (.xls) berformat Eksekutif & Prediktif.
      */
     public function export(Request $request)
     {
@@ -62,7 +58,6 @@ class InventoryController extends Controller
         }
 
         if ($request->filled('kategori')) {
-            // Samakan logika penerjemah dengan method index
             $kategoriMap = [
                 'Bahan Pokok' => 'Bubuk',
                 'Cair'        => 'Cairan',
@@ -73,10 +68,9 @@ class InventoryController extends Controller
             $query->where('kategori', $kategoriValid);
         }
 
-        // Biarkan get() untuk export agar semua data yang di-filter ikut terekspor
         $bahanBaku = $query->get();
         $tanggalCetak = \Carbon\Carbon::now('Asia/Jakarta')->translatedFormat('d F Y - H:i') . ' WIB';
-        $filename = 'Laporan_Stok_Gudang_MatchaBoy_' . date('Y-m-d_H-i') . '.xls';
+        $filename = 'Laporan_Monitoring_Gudang_MatchaBoy_' . date('Ymd_His') . '.xls';
 
         header("Content-Type: application/vnd.ms-excel; charset=utf-8");
         header("Content-Disposition: attachment; filename=\"$filename\"");
@@ -150,21 +144,23 @@ class InventoryController extends Controller
                     font-weight: bold;
                     text-align: center;
                 }
-                /* FORMAT RIBUAN EXCEL SECARA NATIVE */
                 .num-fmt {
                     mso-number-format: "\#\,\#\#0";
+                }
+                .percent-fmt {
+                    mso-number-format: "0\.0%";
                 }
             </style>
         </head>
         <body>
             <table>
                 <tr>
-                    <td colspan="9" class="title">LAPORAN MONITORING STOK GUDANG - MATCHA BOY</td>
+                    <td colspan="10" class="title">LAPORAN MONITORING STOK GUDANG & ANALISIS KAPASITAS - MATCHA BOY</td>
                 </tr>
                 <tr>
-                    <td colspan="9" class="subtitle">Waktu Cetak: ' . $tanggalCetak . '</td>
+                    <td colspan="10" class="subtitle">Waktu Cetak: ' . $tanggalCetak . '</td>
                 </tr>
-                <tr><td colspan="9"></td></tr>
+                <tr><td colspan="10"></td></tr>
                 <thead>
                     <tr>
                         <th>No</th>
@@ -174,8 +170,9 @@ class InventoryController extends Controller
                         <th>Stok Awal (Kapasitas)</th>
                         <th>Stok Saat Ini</th>
                         <th>Satuan</th>
+                        <th>Sisa Kapasitas (%)</th>
                         <th>Batas Minimum</th>
-                        <th>Status Kondisi</th>
+                        <th>Status Kondisi & Rekomendasi</th>
                     </tr>
                 </thead>
                 <tbody>';
@@ -184,14 +181,21 @@ class InventoryController extends Controller
         $countKritis = 0;
 
         foreach ($bahanBaku as $item) {
-            $isKritis = (float)$item->stok_saat_ini <= (float)$item->stok_minimum;
+            $stokAwal = (float) $item->stok_awal;
+            $stokSaatIni = (float) $item->stok_saat_ini;
+            $stokMin = (float) $item->stok_minimum;
+
+            // Hitung persentase sisa kapasitas
+            $persentaseSisa = $stokAwal > 0 ? ($stokSaatIni / $stokAwal) : 0;
+            
+            $isKritis = $stokSaatIni <= $stokMin;
             if ($isKritis) {
                 $countKritis++;
                 $statusClass = 'status-kritis';
                 $statusText  = 'KRITIS (SEGERA RESTOCK)';
             } else {
                 $statusClass = 'status-aman';
-                $statusText  = 'AMAN';
+                $statusText  = 'AMAN (OPERASIONAL NORMAL)';
             }
 
             echo '
@@ -200,23 +204,23 @@ class InventoryController extends Controller
                         <td class="text-center">' . $item->id . '</td>
                         <td class="text-left"><b>' . ucwords($item->nama_bahan) . '</b></td>
                         <td class="text-center">' . ($item->kategori ?? 'Umum') . '</td>
-                        <td class="text-right num-fmt">' . (float)$item->stok_awal . '</td>
-                        <td class="text-right num-fmt"><b>' . (float)$item->stok_saat_ini . '</b></td>
+                        <td class="text-right num-fmt">' . $stokAwal . '</td>
+                        <td class="text-right num-fmt"><b>' . $stokSaatIni . '</b></td>
                         <td class="text-center">' . $item->satuan . '</td>
-                        <td class="text-right num-fmt">' . (float)$item->stok_minimum . '</td>
+                        <td class="text-right percent-fmt">' . number_format($persentaseSisa * 100, 1) . '%</td>
+                        <td class="text-right num-fmt">' . $stokMin . '</td>
                         <td class="' . $statusClass . '">' . $statusText . '</td>
                     </tr>';
         }
 
         $totalItem = $bahanBaku->count();
 
-        // REVISI LAYOUT FOOTER EXCEL: Proporsional, rapi, dan mencakup informasi audit yang seimbang
         echo '
                     <tr style="background-color: #f2f2f2; font-weight: bold;">
-                        <td colspan="4" class="text-right" style="padding: 10px;">RINGKASAN INVENTORI:</td>
-                        <td colspan="2" class="text-center">' . $totalItem . ' Jenis Bahan Terdaftar</td>
+                        <td colspan="4" class="text-right" style="padding: 10px;">RINGKASAN EKSEKUTIF GUDANG:</td>
+                        <td colspan="3" class="text-center">' . $totalItem . ' Jenis Bahan Baku Terdaftar</td>
                         <td colspan="3" class="text-center" style="color: ' . ($countKritis > 0 ? '#c00000' : '#2d5a34') . ';">
-                            Total Kondisi Kritis: ' . $countKritis . ' Item
+                            Total Item Status Kritis: ' . $countKritis . ' Item
                         </td>
                     </tr>
                 </tbody>
@@ -229,7 +233,6 @@ class InventoryController extends Controller
 
     /**
      * Store a newly created bahan baku in storage.
-     * (Fungsi create() dihapus karena sudah menggunakan UI Modal)
      */
     public function store(Request $request)
     {
