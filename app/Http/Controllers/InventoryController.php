@@ -39,8 +39,14 @@ class InventoryController extends Controller
         // Gunakan paginate() dan pertahankan query string parameter (search/kategori)
         $bahanBaku = $query->paginate(10)->withQueryString();
 
+        // REVISI DINAMIS: Menghitung total frekuensi aktivitas restock (stok masuk) bulan berjalan
+        $monthlyRestockCount = StokMasuk::whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->count();
+
         return view('inventory.index', [
-            'bahanBaku' => $bahanBaku,
+            'bahanBaku'           => $bahanBaku,
+            'monthlyRestockCount' => $monthlyRestockCount, // Variabel dikirim ke View
         ]);
     }
 
@@ -204,12 +210,14 @@ class InventoryController extends Controller
 
         $totalItem = $bahanBaku->count();
 
+        // REVISI LAYOUT FOOTER EXCEL: Proporsional, rapi, dan mencakup informasi audit yang seimbang
         echo '
                     <tr style="background-color: #f2f2f2; font-weight: bold;">
-                        <td colspan="4" class="text-right" style="padding: 10px;">TOTAL ITEM TERDAFTAR:</td>
-                        <td colspan="2" class="text-center">' . $totalItem . ' Jenis Bahan</td>
-                        <td colspan="2" class="text-right">TOTAL STATUS KRITIS:</td>
-                        <td class="text-center" style="color: ' . ($countKritis > 0 ? '#c00000' : '#2d5a34') . ';">' . $countKritis . ' Item</td>
+                        <td colspan="4" class="text-right" style="padding: 10px;">RINGKASAN INVENTORI:</td>
+                        <td colspan="2" class="text-center">' . $totalItem . ' Jenis Bahan Terdaftar</td>
+                        <td colspan="3" class="text-center" style="color: ' . ($countKritis > 0 ? '#c00000' : '#2d5a34') . ';">
+                            Total Kondisi Kritis: ' . $countKritis . ' Item
+                        </td>
                     </tr>
                 </tbody>
             </table>
@@ -254,12 +262,12 @@ class InventoryController extends Controller
     public function update(Request $request, $id): RedirectResponse
     {
         $validated = $request->validate([
-            'nama_bahan' => 'required|string|max:255',
-            'kategori' => 'required|string|max:100',
-            'satuan' => 'required|string|max:100',
-            'stok_awal' => 'required|integer|min:0',
+            'nama_bahan'   => 'required|string|max:255',
+            'kategori'     => 'required|string|max:100',
+            'satuan'       => 'required|string|max:100',
+            'stok_awal'     => 'required|integer|min:0',
             'stok_saat_ini' => 'required|integer|min:0',
-            'stok_minimum' => 'required|integer|min:0',
+            'stok_minimum'  => 'required|integer|min:0',
         ]);
 
         $bahanBaku = BahanBaku::findOrFail($id);
@@ -287,9 +295,9 @@ class InventoryController extends Controller
     public function tambahStok(Request $request, $id): RedirectResponse
     {
         $request->validate([
-            'jumlah_kemasan' => 'required|numeric|min:0.1',
+            'jumlah_kemasan'  => 'required|numeric|min:0.1',
             'isi_per_kemasan' => 'required|numeric|min:0.1',
-            'catatan' => 'nullable|string|max:255'
+            'catatan'         => 'nullable|string|max:255'
         ]);
 
         try {
@@ -300,9 +308,9 @@ class InventoryController extends Controller
 
                 StokMasuk::create([
                     'bahan_baku_id' => $bahan->id,
-                    'user_id' => Auth::id(),
+                    'user_id'       => Auth::id(),
                     'jumlah_tambah' => $total_masuk,
-                    'catatan' => $request->catatan,
+                    'catatan'       => $request->catatan,
                 ]);
 
                 $bahan->stok_saat_ini += $total_masuk;

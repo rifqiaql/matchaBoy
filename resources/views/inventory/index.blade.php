@@ -37,26 +37,24 @@
                         class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#365E3F] focus:border-transparent transition-all bg-white text-gray-900 placeholder-gray-500">
                 </div>
 
-                
                 <select name="kategori" onchange="this.form.submit()"
-                class="px-4 py-2.5 rounded-lg border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors bg-white focus:outline-none focus:ring-2 focus:ring-[#365E3F] focus:border-transparent">
-                <option value="">Kategori</option>
-                <option value="Bahan Pokok" {{ request('kategori') == 'Bahan Pokok' ? 'selected' : '' }}>Bahan Pokok</option>
-                <option value="Cair" {{ request('kategori') == 'Cair' ? 'selected' : '' }}>Cair</option>
-                <option value="Syrup" {{ request('kategori') == 'Syrup' ? 'selected' : '' }}>Syrup</option>
-                <option value="Toping" {{ request('kategori') == 'Toping' ? 'selected' : '' }}>Toping</option>
-            </select>
-            
-            <button type="submit"
-                class="px-4 py-2.5 rounded-lg border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z">
-                    </path>
-                </svg>
-                <span class="text-sm">Search</span>
-            </button>
+                    class="px-4 py-2.5 rounded-lg border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors bg-white focus:outline-none focus:ring-2 focus:ring-[#365E3F] focus:border-transparent">
+                    <option value="">Kategori</option>
+                    <option value="Bahan Pokok" {{ request('kategori') == 'Bahan Pokok' ? 'selected' : '' }}>Bahan Pokok</option>
+                    <option value="Cair" {{ request('kategori') == 'Cair' ? 'selected' : '' }}>Cair</option>
+                    <option value="Syrup" {{ request('kategori') == 'Syrup' ? 'selected' : '' }}>Syrup</option>
+                    <option value="Toping" {{ request('kategori') == 'Toping' ? 'selected' : '' }}>Toping</option>
+                </select>
 
+                <button type="submit"
+                    class="px-4 py-2.5 rounded-lg border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z">
+                        </path>
+                    </svg>
+                    <span class="text-sm">Filter</span>
+                </button>
             </form>
 
             <div class="flex items-center gap-3">
@@ -130,7 +128,8 @@
                 <div class="flex items-center justify-between mb-4">
                     <div>
                         <p class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Monthly Restock</p>
-                        <p class="text-3xl font-bold text-gray-900 mt-2">12</p>
+                        <!-- REVISI DINAMIS: Menggunakan data asli dari Controller -->
+                        <p class="text-3xl font-bold text-gray-900 mt-2">{{ $monthlyRestockCount ?? 0 }}</p>
                     </div>
                     <div class="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center">
                         <x-icons.dropbox class="w-6 h-6 text-white" />
@@ -254,7 +253,7 @@
                     </table>
                 </div>
 
-                <!-- REVISI: Pagination Footer Dinamis -->
+                <!-- Pagination Footer Dinamis -->
                 <div class="px-6 py-4 border-t border-gray-100 bg-gray-50 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <p class="text-sm text-gray-600">
                         Menampilkan <span class="font-semibold">{{ $bahanBaku->firstItem() }}</span> 
