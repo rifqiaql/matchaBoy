@@ -24,10 +24,19 @@ class InventoryController extends Controller
         }
 
         if ($request->filled('kategori')) {
-            $query->where('kategori', $request->kategori);
+            // REVISI (BACKEND BAND-AID): Kamus penerjemah salah ketik dari Frontend ke Database
+            $kategoriMap = [
+                'Bahan Pokok' => 'Bubuk',
+                'Cair'        => 'Cairan',
+                'Syrup'       => 'Sirup',
+                // 'Toping' tidak perlu diterjemahkan jika di DB juga tertulis 'Toping'
+            ];
+            
+            $kategoriValid = $kategoriMap[$request->kategori] ?? $request->kategori;
+            $query->where('kategori', $kategoriValid);
         }
 
-        // REVISI: Gunakan paginate() dan pertahankan query string parameter (search/kategori)
+        // Gunakan paginate() dan pertahankan query string parameter (search/kategori)
         $bahanBaku = $query->paginate(10)->withQueryString();
 
         return view('inventory.index', [
@@ -47,7 +56,15 @@ class InventoryController extends Controller
         }
 
         if ($request->filled('kategori')) {
-            $query->where('kategori', $request->kategori);
+            // Samakan logika penerjemah dengan method index
+            $kategoriMap = [
+                'Bahan Pokok' => 'Bubuk',
+                'Cair'        => 'Cairan',
+                'Syrup'       => 'Sirup',
+            ];
+            
+            $kategoriValid = $kategoriMap[$request->kategori] ?? $request->kategori;
+            $query->where('kategori', $kategoriValid);
         }
 
         // Biarkan get() untuk export agar semua data yang di-filter ikut terekspor

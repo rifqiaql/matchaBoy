@@ -37,25 +37,26 @@
                         class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#365E3F] focus:border-transparent transition-all bg-white text-gray-900 placeholder-gray-500">
                 </div>
 
+                
                 <select name="kategori" onchange="this.form.submit()"
-                    class="px-4 py-2.5 rounded-lg border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors bg-white focus:outline-none focus:ring-2 focus:ring-[#365E3F] focus:border-transparent">
-                    <option value="">Kategori</option>
-                    <option value="bahan-pokok" {{ request('kategori') == 'bahan-pokok' ? 'selected' : '' }}>Bahan Pokok
-                    </option>
-                    <option value="Cair" {{ request('kategori') == 'Cair' ? 'selected' : '' }}>Cair</option>
-                    <option value="Syrup" {{ request('kategori') == 'Syrup' ? 'selected' : '' }}>Syrup</option>
-                    <option value="Toping" {{ request('kategori') == 'Toping' ? 'selected' : '' }}>Toping</option>
-                </select>
+                class="px-4 py-2.5 rounded-lg border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors bg-white focus:outline-none focus:ring-2 focus:ring-[#365E3F] focus:border-transparent">
+                <option value="">Kategori</option>
+                <option value="Bahan Pokok" {{ request('kategori') == 'Bahan Pokok' ? 'selected' : '' }}>Bahan Pokok</option>
+                <option value="Cair" {{ request('kategori') == 'Cair' ? 'selected' : '' }}>Cair</option>
+                <option value="Syrup" {{ request('kategori') == 'Syrup' ? 'selected' : '' }}>Syrup</option>
+                <option value="Toping" {{ request('kategori') == 'Toping' ? 'selected' : '' }}>Toping</option>
+            </select>
+            
+            <button type="submit"
+                class="px-4 py-2.5 rounded-lg border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z">
+                    </path>
+                </svg>
+                <span class="text-sm">Search</span>
+            </button>
 
-                <button type="submit"
-                    class="px-4 py-2.5 rounded-lg border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z">
-                        </path>
-                    </svg>
-                    <span class="text-sm">Filter</span>
-                </button>
             </form>
 
             <div class="flex items-center gap-3">
@@ -98,8 +99,6 @@
 
             <!-- Card 2: Low Stock -->
             @php
-                // Note: If paginated, calculating low stock this way only applies to the current page.
-                // It's better to calculate this in the controller across all records.
                 $lowStockCount = $bahanBaku
                     ->filter(function ($item) {
                         $persentase = $item->stok_awal > 0 ? round(($item->stok_saat_ini / $item->stok_awal) * 100) : 0;
