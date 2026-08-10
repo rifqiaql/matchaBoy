@@ -18,10 +18,13 @@ class OrderSeeder extends Seeder
 
         $totalHari = 60; 
 
+        // ---------------------------------------------------------
+        // Asumsi ID: 1 = Matcha OG, 2 = Matcha Caramel, 3 = Matcha Strawberry
+        // ---------------------------------------------------------
         $katalogProduk = [
-            ['id' => 1, 'price' => 15000],
-            ['id' => 2, 'price' => 18000], 
-            ['id' => 3, 'price' => 18000], 
+            ['id' => 1, 'price' => 12000],
+            ['id' => 2, 'price' => 14000], 
+            ['id' => 3, 'price' => 16000], 
         ];
 
         for ($i = $totalHari; $i >= 0; $i--) {
@@ -31,6 +34,7 @@ class OrderSeeder extends Seeder
                 $tanggal->isDayOfWeek(Carbon::SATURDAY) ||
                 $tanggal->isDayOfWeek(Carbon::SUNDAY);
 
+            // Constraint Target Produksi: Aman dan Sesuai Wawancara Owner
             $targetCups = $hariWeekend ? rand(20, 30) : rand(10, 15);
             
             $cupsGenerated = 0;
@@ -47,8 +51,9 @@ class OrderSeeder extends Seeder
                 $qtyBeli = ($sisaCups >= 2) ? rand(1, 2) : 1;
                 $cupsGenerated += $qtyBeli;
 
+                // REVISI LOGIKA KEUANGAN: Pajak di-set ke 0 secara absolut
                 $subtotal = $produkTerpilih['price'] * $qtyBeli;
-                $tax = $subtotal * 0.10; 
+                $tax = 0; 
                 $totalPrice = $subtotal + $tax;
 
                 $orderId = DB::table('orders')->insertGetId([
