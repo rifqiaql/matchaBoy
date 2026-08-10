@@ -31,8 +31,7 @@
 
                 <!-- Item Name -->
                 <div>
-                    <label for="edit_item_name" class="mb-1.5 block text-[13px] font-medium text-gray-600">Item
-                        Name</label>
+                    <label for="edit_item_name" class="mb-1.5 block text-[13px] font-medium text-gray-600">Item Name</label>
                     <input type="text" id="edit_item_name" name="name" required placeholder="Matcha Latte....."
                         class="w-full rounded-xl border-0 bg-[#F6F4EE] px-4 py-3 text-sm text-gray-900 placeholder-gray-400 shadow-sm ring-1 ring-transparent transition focus:outline-none focus:ring-2 focus:ring-[#8FA88B]">
                 </div>
@@ -146,23 +145,32 @@
         editRowIndex = 0;
 
         try {
-            const ingredients = JSON.parse(ingredientsData);
+            // Evaluasi jika ingredientsData kosong atau null
+            const ingredients = ingredientsData ? JSON.parse(ingredientsData) : [];
 
             if (ingredients && ingredients.length > 0) {
                 ingredients.forEach(item => {
-                    // Pastikan key object (bahan_baku_id / quantity_needed) sesuai dengan return JSON dari API/Controller lu
-                    const row = buatBarisResepEdit(item.bahan_baku_id, item.qty_dibutuhkan || item
-                        .quantity_needed);
-                    container.appendChild(row);
+                    // REVISI LOGIKA PARSING JSON: Menangani struktur 'pivot' bawaan Laravel
+                    // Jika data relasi Many-to-Many, Laravel menyimpannya di item.pivot
+                    const bahanId = item.pivot ? item.pivot.bahan_baku_id : (item.id || item.bahan_baku_id);
+                    const qtyNeeded = item.pivot ? item.pivot.quantity_needed : (item.quantity_needed || item.qty_dibutuhkan);
+                    
+                    if(bahanId && qtyNeeded) {
+                        const row = buatBarisResepEdit(bahanId, qtyNeeded);
+                        container.appendChild(row);
+                    }
                 });
-            } else {
+            } 
+            
+            // Jika setelah dilooping container masih kosong (misal data rusak/tidak lengkap)
+            if (container.children.length === 0) {
                 container.innerHTML =
                     '<div class="text-center py-4 text-xs text-gray-400 bg-[#F6F4EE] rounded-xl border border-dashed border-gray-300" id="edit-resep-loading">Belum ada resep terdaftar untuk produk ini.</div>';
             }
         } catch (error) {
             console.error("Gagal mem-parsing data resep: ", error);
             container.innerHTML =
-                '<div class="text-center py-4 text-xs text-red-500 bg-red-50 rounded-xl">Terjadi kesalahan memuat resep.</div>';
+                '<div class="text-center py-4 text-xs text-red-500 bg-red-50 rounded-xl">Terjadi kesalahan memuat resep. Silakan refresh halaman.</div>';
         }
 
         // 4. Buka Modal

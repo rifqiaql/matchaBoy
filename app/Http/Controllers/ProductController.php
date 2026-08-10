@@ -16,13 +16,11 @@ class ProductController extends Controller
      */
     public function index()
     {
-        // 1. Ambil data produk (diurutkan dari yang paling baru)
         $products = Product::latest()->get();
-
-        // 2. Ambil data bahan baku (KRUSIAL UNTUK MODAL TAMBAH/EDIT RESEP)
+        
+        // Data bahan baku dikirim untuk opsi dropdown di modal (Create/Edit)
         $all_ingredients = BahanBaku::all();
 
-        // 3. Kirim kedua data ke view
         return view('keranjang.index', compact('products', 'all_ingredients'));
     }
 
@@ -31,7 +29,8 @@ class ProductController extends Controller
      */
     public function edit($id)
     {
-        // Ambil produk beserta relasi ingredients/resepnya
+        // Kueri ini SUDAH BENAR menarik relasi resep. 
+        // Pastikan model Product lu punya: return $this->belongsToMany(...)->withPivot('quantity_needed');
         $product = Product::with('ingredients')->find($id);
 
         if (!$product) {
@@ -46,26 +45,21 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        // 1. Validasi Produk & Resep sekaligus
         $request->validate([
             'name' => 'required|string|max:255',
             'price' => 'required|numeric|min:0',
             'category' => 'required|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:' . self::MAX_IMAGE_SIZE_KB,
-
-            // Validasi Resep
             'ingredients' => 'required|array|min:1',
             'ingredients.*.bahan_baku_id' => 'required|exists:bahan_baku,id',
             'ingredients.*.quantity_needed' => 'required|numeric|min:0.01',
         ]);
 
-        // 2. Inisiasi Objek Produk Baru
         $product = new Product();
         $product->name = $request->name;
         $product->price = $request->price;
         $product->category = $request->category;
 
-        // 3. Logika Penanganan Upload Gambar Baru
         if ($request->hasFile('image')) {
             $imageName = time() . '.' . $request->image->extension();
             $request->image->storeAs('products', $imageName, 'public');
@@ -74,7 +68,6 @@ class ProductController extends Controller
 
         $product->save();
 
-        // 4. Eksekusi Resep (Bill of Materials)
         $syncData = [];
         foreach ($request->ingredients as $item) {
             $syncData[$item['bahan_baku_id']] = [
@@ -82,7 +75,6 @@ class ProductController extends Controller
             ];
         }
 
-        // Relasikan produk dengan bahan bakunya ke tabel pivot
         $product->ingredients()->sync($syncData);
 
         return response()->json([
@@ -96,7 +88,8 @@ class ProductController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $product = Product::query()->findOrFail($id);
+        // REVISI: Ubah findOrFail menjadi find agar blok if(!$product) bisa merespons JSON dengan benar
+        $product = Product::find($id);
 
         if (!$product) {
             return response()->json(['success' => false, 'message' => 'Produk tidak ditemukan.'], 404);
@@ -131,7 +124,6 @@ class ProductController extends Controller
 
         $product->save();
 
-        // PROSES UTAMA EDIT: Update resep dinamis
         if ($request->has('ingredients')) {
             $syncData = [];
             foreach ($request->ingredients as $item) {
@@ -155,7 +147,8 @@ class ProductController extends Controller
      */
     public function destroy($id)
     {
-        $product = Product::query()->findOrFail($id);
+        // REVISI: Ubah findOrFail menjadi find agar blok if(!$product) bisa merespons JSON dengan benar
+        $product = Product::find($id);
 
         if (!$product) {
             return response()->json(['success' => false, 'message' => 'Produk tidak ditemukan.'], 404);
