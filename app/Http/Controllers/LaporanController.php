@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 use App\Models\Order;
 use App\Models\BahanBaku;
+use App\Models\Product; // Pastikan model Product di-import
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -13,8 +14,15 @@ class LaporanController extends Controller
 {
     public function index(Request $request): View
     {
-        // 1. TANGKAP PARAMETER DARI URL
-        $endDate = $request->has('end_date') ? Carbon::parse($request->input('end_date')) : Carbon::now();
+        // 1. TANGKAP PARAMETER DARI URL (REVISI LOGIKA TANGGAL)
+        $reqDate = $request->input('end_date');
+        $endDate = $reqDate ? Carbon::parse($reqDate) : Carbon::today();
+        
+        // Paksa mundur ke H-1 agar angka 0 hari ini tidak merusak prediksi.
+        if ($endDate->greaterThanOrEqualTo(Carbon::today())) {
+            $endDate = Carbon::yesterday();
+        }
+
         $n = (int) $request->input('n', 3);
         if ($n < 1) {
             $n = 3;
@@ -27,7 +35,6 @@ class LaporanController extends Controller
         // 3. LOGIKA SMA DENGAN ZERO-FILLING (MENAMBAL TANGGAL KOSONG)
         $startDate = $endDate->copy()->subDays($n + 13)->startOfDay();
 
-        // Ambil raw data dari DB dan jadikan key-value (tanggal => total)
         $rawData = DB::table('order_items')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
             ->select(
@@ -42,7 +49,6 @@ class LaporanController extends Controller
             ->pluck('total_qty', 'tanggal')
             ->toArray();
 
-        // Generate deret tanggal berurutan tanpa putus
         $historisDemand = [];
         $currentIterDate = $startDate->copy();
         $endIterDate = $endDate->copy()->startOfDay();
@@ -87,7 +93,7 @@ class LaporanController extends Controller
             }
         }
 
-        // 5. HITUNG PREDIKSI UNTUK H+1 (BESOK DARI TANGGAL FILTER)
+        // 5. HITUNG PREDIKSI UNTUK H+1 (DARI TANGGAL FILTER)
         $totalBesok = 0;
         $totalData = count($historisDemand);
 
@@ -142,13 +148,51 @@ class LaporanController extends Controller
 
             $aktualBesok = (int) $aktualBesokDb;
         } else {
-            $labelBesok .= ' (Besok)';
+            $labelBesok .= ' (Prediksi H+1)';
         }
 
         $chartSmaLabels[] = $labelBesok;
         $chartSmaAktual[] = $aktualBesok;
         $chartSmaPrediksi[] = $prediksiBesok;
 
+        // 8. LOGIKA PROPORSI VARIAN UNTUK RENCANA PRODUKSI & RESTOCK (BARU)
+        $products = Product::with('ingredients')->get();
+        $thirtyDaysAgo = Carbon::now()->subDays(30)->startOfDay();
+        
+        // Ambil data historis 30 hari untuk mencari pangsa pasar tiap menu
+        $productSales = DB::table('order_items')
+            ->join('orders', 'order_items.order_id', '=', 'orders.id')
+            ->where('orders.created_at', '>=', $thirtyDaysAgo)
+            ->select('product_id', DB::raw('SUM(quantity) as total_sold'))
+            ->groupBy('product_id')
+            ->pluck('total_sold', 'product_id');
+
+        $totalSalesAllProducts = $productSales->sum();
+        $estimasiPenyusutan = [];
+
+        // Hitung estimasi penyusutan resep jika ada prediksi demand
+        if ($prediksiBesok > 0 && $totalSalesAllProducts > 0) {
+            foreach ($products as $product) {
+                $sold = $productSales[$product->id] ?? 0;
+                $proportion = $sold / $totalSalesAllProducts;
+                
+                // Distribusikan target H+1 ke masing-masing produk
+                $estimasiPorsiProduk = round($proportion * $prediksiBesok);
+
+                // Kalikan kebutuhan resep dari pivot table
+                foreach ($product->ingredients as $ingredient) {
+                    $bahanId = $ingredient->id;
+                    $kebutuhanResep = $ingredient->pivot->quantity_needed;
+                    
+                    if (!isset($estimasiPenyusutan[$bahanId])) {
+                        $estimasiPenyusutan[$bahanId] = 0;
+                    }
+                    $estimasiPenyusutan[$bahanId] += ($estimasiPorsiProduk * $kebutuhanResep);
+                }
+            }
+        }
+
+        // Kirim variabel baru $estimasiPenyusutan ke View
         return view('laporan.index', compact(
             'ingredients',
             'totalOrders',
@@ -160,7 +204,8 @@ class LaporanController extends Controller
             'prediksiBesok',
             'trendStatus',
             'trendColor',
-            'trendAdvice'
+            'trendAdvice',
+            'estimasiPenyusutan'
         ));
     }
 
@@ -180,10 +225,17 @@ class LaporanController extends Controller
         if ($month && $year) {
             $query->whereMonth('created_at', $month)->whereYear('created_at', $year);
             $namaBulan = Carbon::createFromDate($year, $month, 1)->locale('id')->translatedFormat('F Y');
-            $filterEnd = Carbon::createFromDate($year, $month, 1)->endOfMonth();
+            
+            $targetMonth = Carbon::createFromDate($year, $month, 1);
+            if ($targetMonth->isCurrentMonth()) {
+                $filterEnd = Carbon::yesterday(); 
+            } else {
+                $filterEnd = $targetMonth->copy()->endOfMonth();
+            }
         } else {
             $namaBulan = 'SEMUA PERIODE TRANSAKSI';
-            $filterEnd = Carbon::now();
+            $lastOrderDate = Order::whereDate('created_at', '<', Carbon::today())->latest('created_at')->value('created_at');
+            $filterEnd = $lastOrderDate ? Carbon::parse($lastOrderDate) : Carbon::yesterday();
         }
 
         $tanggalCetak = Carbon::now('Asia/Jakarta')->translatedFormat('d F Y - H:i') . ' WIB';
@@ -284,20 +336,6 @@ class LaporanController extends Controller
               xmlns="http://www.w3.org/TR/REC-html40">
         <head>
             <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-            <!--[if gte mso 9]>
-            <xml>
-                <x:ExcelWorkbook>
-                    <x:ExcelWorksheets>
-                        <x:ExcelWorksheet>
-                            <x:Name>Laporan Eksekutif</x:Name>
-                            <x:WorksheetOptions>
-                                <x:DisplayGridlines/>
-                            </x:WorksheetOptions>
-                        </x:ExcelWorksheet>
-                    </x:ExcelWorksheets>
-                </x:ExcelWorkbook>
-            </xml>
-            <![endif]-->
             <style>
                 table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; }
                 .title { font-size: 16pt; font-weight: bold; color: #2D5A34; text-align: left; }
@@ -349,7 +387,6 @@ class LaporanController extends Controller
                 </thead>
                 <tbody>';
 
-        // Tampilkan 7 hari terakhir analisis SMA di excel agar tidak terlalu panjang
         $recentSma = array_slice($analisisSma, -7);
         foreach ($recentSma as $row) {
             echo '

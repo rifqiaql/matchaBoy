@@ -36,7 +36,6 @@
 
                     <!-- FORM 2: EXPORT EXCEL DINAMIS -->
                     <form action="{{ route('laporan.export') }}" method="GET" class="m-0 p-0 flex items-center gap-2">
-                        <!-- PERBAIKAN: Kirim parameter n secara tersembunyi agar sinkron dengan pilihan SMA di layar -->
                         <input type="hidden" name="n" value="{{ $n }}">
 
                         <!-- Dropdown Bulan -->
@@ -213,26 +212,11 @@
                     <tbody class="text-sm align-top">
                         @forelse($ingredients as $ing)
                             @php
-                                $namaBahan = strtolower($ing->nama_bahan);
-
-                                if (str_contains($namaBahan, 'matcha')) {
-                                    $takaranResep = 8;
-                                } elseif (str_contains($namaBahan, 'full cream')) {
-                                    $takaranResep = 100;
-                                } elseif (str_contains($namaBahan, 'skm') || str_contains($namaBahan, 'kental manis')) {
-                                    $takaranResep = 30;
-                                } elseif (
-                                    str_contains($namaBahan, 'strawberry') ||
-                                    str_contains($namaBahan, 'caramel')
-                                ) {
-                                    $takaranResep = 15;
-                                } else {
-                                    $takaranResep = 0;
-                                }
-
-                                $estimasiPenyusutan = $prediksiBesok * $takaranResep;
-                                $proyeksiSisa = $ing->stok_saat_ini - $estimasiPenyusutan;
-
+                                // Ambil nilai penyusutan yang sudah dihitung oleh Controller
+                                // berdasarkan rasio penjualan tiap varian produk
+                                $jumlahPenyusutan = isset($estimasiPenyusutan[$ing->id]) ? $estimasiPenyusutan[$ing->id] : 0;
+                                
+                                $proyeksiSisa = $ing->stok_saat_ini - $jumlahPenyusutan;
                                 $batasKritis = $ing->stok_minimum;
                                 $butuhRestock = $proyeksiSisa <= $batasKritis;
                             @endphp
@@ -240,11 +224,11 @@
                                 <td class="py-5 font-bold text-[#2D5A34]">{{ $ing->nama_bahan }}</td>
                                 <td class="py-5 font-bold text-gray-800">{{ $ing->stok_saat_ini }} <span
                                         class="text-xs font-normal text-gray-500">{{ $ing->satuan }}</span></td>
-                                <td class="py-5 text-gray-500 font-mono text-xs">{{ $takaranResep }} {{ $ing->satuan }}
+                                <td class="py-5 text-gray-500 font-mono text-xs">
+                                    Dinamis (Sesuai Resep)
                                 </td>
                                 <td class="py-5 font-bold text-red-600">
-                                    - {{ $estimasiPenyusutan }} <span
-                                        class="text-xs font-normal">{{ $ing->satuan }}</span>
+                                    - {{ $jumlahPenyusutan }} <span class="text-xs font-normal">{{ $ing->satuan }}</span>
                                 </td>
                                 <td class="py-5 font-bold {{ $proyeksiSisa < 0 ? 'text-red-600' : 'text-gray-800' }}">
                                     {{ $proyeksiSisa }} <span
