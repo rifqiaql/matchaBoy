@@ -87,7 +87,7 @@
                 <div class="flex items-center justify-between mb-4">
                     <div>
                         <p class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Total Bahan</p>
-                        <p class="text-3xl font-bold text-gray-900 mt-2">{{ $bahanBaku->count() }}</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-2">{{ $bahanBaku->total() }}</p>
                     </div>
                     <div class="w-12 h-12 bg-dark-matcha rounded-lg flex items-center justify-center">
                         <x-icons.box class="w-6 h-6 text-white" />
@@ -98,6 +98,8 @@
 
             <!-- Card 2: Low Stock -->
             @php
+                // Note: If paginated, calculating low stock this way only applies to the current page.
+                // It's better to calculate this in the controller across all records.
                 $lowStockCount = $bahanBaku
                     ->filter(function ($item) {
                         $persentase = $item->stok_awal > 0 ? round(($item->stok_saat_ini / $item->stok_awal) * 100) : 0;
@@ -109,7 +111,7 @@
             <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
                 <div class="flex items-center justify-between mb-4">
                     <div>
-                        <p class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Low Stock</p>
+                        <p class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Low Stock (This Page)</p>
                         <p class="text-3xl font-bold {{ $hasLowStock ? 'text-black' : 'text-gray-900' }} mt-2">
                             {{ $lowStockCount }}
                         </p>
@@ -253,21 +255,15 @@
                     </table>
                 </div>
 
-                <!-- Pagination Footer -->
-                <div class="px-6 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
-                    <p class="text-sm text-gray-600">Showing <span class="font-semibold">1</span> to <span
-                            class="font-semibold">10</span> of <span
-                            class="font-semibold">{{ $bahanBaku->count() }}</span> entries</p>
-                    <div class="flex items-center gap-2">
-                        <button
-                            class="px-3 py-2 rounded-lg border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-100 transition-colors">Previous</button>
-                        <button class="px-3 py-2 rounded-lg bg-[#365E3F] text-white text-sm font-medium">1</button>
-                        <button
-                            class="px-3 py-2 rounded-lg border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-100 transition-colors">2</button>
-                        <button
-                            class="px-3 py-2 rounded-lg border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-100 transition-colors">3</button>
-                        <button
-                            class="px-3 py-2 rounded-lg border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-100 transition-colors">Next</button>
+                <!-- REVISI: Pagination Footer Dinamis -->
+                <div class="px-6 py-4 border-t border-gray-100 bg-gray-50 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <p class="text-sm text-gray-600">
+                        Menampilkan <span class="font-semibold">{{ $bahanBaku->firstItem() }}</span> 
+                        sampai <span class="font-semibold">{{ $bahanBaku->lastItem() }}</span> 
+                        dari <span class="font-semibold">{{ $bahanBaku->total() }}</span> data bahan baku
+                    </p>
+                    <div class="flex items-center">
+                        {{ $bahanBaku->links('vendor.pagination.tailwind') }}
                     </div>
                 </div>
             @endif

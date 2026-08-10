@@ -27,7 +27,8 @@ class InventoryController extends Controller
             $query->where('kategori', $request->kategori);
         }
 
-        $bahanBaku = $query->get();
+        // REVISI: Gunakan paginate() dan pertahankan query string parameter (search/kategori)
+        $bahanBaku = $query->paginate(10)->withQueryString();
 
         return view('inventory.index', [
             'bahanBaku' => $bahanBaku,
@@ -49,6 +50,7 @@ class InventoryController extends Controller
             $query->where('kategori', $request->kategori);
         }
 
+        // Biarkan get() untuk export agar semua data yang di-filter ikut terekspor
         $bahanBaku = $query->get();
         $tanggalCetak = \Carbon\Carbon::now('Asia/Jakarta')->translatedFormat('d F Y - H:i') . ' WIB';
         $filename = 'Laporan_Stok_Gudang_MatchaBoy_' . date('Y-m-d_H-i') . '.xls';
@@ -169,8 +171,6 @@ class InventoryController extends Controller
                 $statusText  = 'AMAN';
             }
 
-            // KITA KIRIM ANGKA MURNI TERGABUNG DENGAN CLASS .num-fmt
-            // Biar Excel yang bikin titik/komanya secara otomatis tanpa menghapus angka NOL!
             echo '
                     <tr>
                         <td class="text-center">' . $no++ . '</td>
@@ -208,7 +208,6 @@ class InventoryController extends Controller
      */
     public function store(Request $request)
     {
-        // 1. Validasi input yang masuk dari form modal baru
         $request->validate([
             'nama_bahan'      => 'required|string|max:255',
             'kategori'        => 'required|string',
@@ -218,10 +217,8 @@ class InventoryController extends Controller
             'stok_minimum'    => 'required|numeric|min:0',
         ]);
 
-        // 2. Kalkulasi cerdas di belakang layar
         $totalStok = $request->jumlah_kemasan * $request->isi_per_kemasan;
 
-        // 3. Simpan ke database
         BahanBaku::create([
             'nama_bahan'    => $request->nama_bahan,
             'kategori'      => $request->kategori,
@@ -272,7 +269,6 @@ class InventoryController extends Controller
      */
     public function tambahStok(Request $request, $id): RedirectResponse
     {
-        // Validasi kedaluwarsa dicabut sesuai perubahan UI
         $request->validate([
             'jumlah_kemasan' => 'required|numeric|min:0.1',
             'isi_per_kemasan' => 'required|numeric|min:0.1',
@@ -283,10 +279,8 @@ class InventoryController extends Controller
             DB::transaction(function () use ($request, $id) {
                 $bahan = BahanBaku::findOrFail($id);
 
-                // Kalkulasi total yang masuk (Kemasan x Isi)
                 $total_masuk = $request->jumlah_kemasan * $request->isi_per_kemasan;
 
-                // Catat ke tabel riwayat (Audit Trail) tanpa tanggal_kedaluwarsa
                 StokMasuk::create([
                     'bahan_baku_id' => $bahan->id,
                     'user_id' => Auth::id(),
@@ -294,7 +288,6 @@ class InventoryController extends Controller
                     'catatan' => $request->catatan,
                 ]);
 
-                // Tambahkan stok utama
                 $bahan->stok_saat_ini += $total_masuk;
                 $bahan->save();
             });
