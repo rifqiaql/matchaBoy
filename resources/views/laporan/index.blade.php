@@ -12,22 +12,25 @@
             <div class="flex flex-col items-end gap-3">
                 <div class="flex items-center gap-3">
 
-                    <!-- FORM 1: FILTER TAMPILAN GRAFIK (SMA) -->
+                    <!-- FORM 1: FILTER TAMPILAN GRAFIK (SMA MINGGUAN) -->
                     <form action="{{ route('laporan.index') }}" method="GET" id="filterForm"
                         class="m-0 p-0 flex items-center gap-2">
-                        <input type="date" name="end_date"
-                            value="{{ request('end_date', \Carbon\Carbon::now()->format('Y-m-d')) }}"
-                            class="bg-white border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-[#2E4F4F] focus:border-[#2E4F4F] block px-3 py-1.5 cursor-pointer shadow-sm hover:border-gray-300 transition-colors"
-                            onchange="this.form.submit();" max="{{ \Carbon\Carbon::now()->format('Y-m-d') }}">
 
+                        <!-- REVISI PENGUJI: Input diubah ke type="week" untuk memilih periode minggu -->
+                        <input type="week" name="end_date"
+                            value="{{ request('end_date', \Carbon\Carbon::now()->format('Y-\WW')) }}"
+                            class="bg-white border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-[#2E4F4F] focus:border-[#2E4F4F] block px-3 py-1.5 cursor-pointer shadow-sm hover:border-gray-300 transition-colors"
+                            onchange="this.form.submit();" max="{{ \Carbon\Carbon::now()->format('Y-\WW') }}">
+
+                        <!-- REVISI: Opsi dropdown disesuaikan menjadi 2, 3, dan 4 Minggu -->
                         <select name="n" onchange="this.form.submit();"
                             class="bg-white border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-[#2E4F4F] focus:border-[#2E4F4F] block px-3 py-1.5 cursor-pointer shadow-sm hover:border-gray-300 transition-colors">
-                            <option value="3" {{ request('n', 3) == 3 ? 'selected' : '' }}>SMA: n = 3 Hari (Reaktif)
+                            <option value="2" {{ request('n', 3) == 2 ? 'selected' : '' }}>SMA: n = 2 Minggu (Reaktif)
                             </option>
-                            <option value="5" {{ request('n', 3) == 5 ? 'selected' : '' }}>SMA: n = 5 Hari (Moderat)
+                            <option value="3" {{ request('n', 3) == 3 ? 'selected' : '' }}>SMA: n = 3 Minggu (Moderat)
                             </option>
-                            <option value="7" {{ request('n', 3) == 7 ? 'selected' : '' }}>SMA: n = 7 Hari (Stabil)
-                            </option>
+                            <option value="4" {{ request('n', 3) == 4 ? 'selected' : '' }}>SMA: n = 4 Minggu (Stabil /
+                                1 Bulan)</option>
                         </select>
                     </form>
 
@@ -113,7 +116,7 @@
                         <p class="text-sm text-gray-200 mt-1">
                             Algoritma mendeteksi potensi <span
                                 class="font-bold {{ $trendColor }}">{{ $trendStatus }}</span> permintaan.
-                            Estimasi target produksi esok hari berada di angka <span
+                            Estimasi target produksi minggu depan berada di angka <span
                                 class="font-bold text-white underline text-lg">{{ $prediksiBesok }} Porsi</span>.
                             {{ $trendAdvice }}
                         </p>
@@ -193,7 +196,7 @@
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mt-6 w-full">
             <div class="mb-6">
                 <h3 class="text-xl font-bold text-[#2D5A34]">Rencana Produksi & Restock</h3>
-                <p class="text-sm text-gray-400 mt-1">Proyeksi penyusutan bahan baku untuk target produksi besok
+                <p class="text-sm text-gray-400 mt-1">Proyeksi penyusutan bahan baku untuk target produksi minggu depan
                     ({{ $prediksiBesok }} Porsi)</p>
             </div>
 
@@ -204,7 +207,7 @@
                             <th class="pb-3 font-bold">Nama Bahan Baku</th>
                             <th class="pb-3 font-bold">Sisa Stok Gudang</th>
                             <th class="pb-3 font-bold">Kebutuhan (Per Porsi)</th>
-                            <th class="pb-3 font-bold text-red-600">Estimasi Penyusutan Besok</th>
+                            <th class="pb-3 font-bold text-red-600">Estimasi Penyusutan Minggu Depan</th>
                             <th class="pb-3 font-bold">Sisa Akhir (Proyeksi)</th>
                             <th class="pb-3 font-bold text-center">Rekomendasi Sistem</th>
                         </tr>
@@ -212,10 +215,9 @@
                     <tbody class="text-sm align-top">
                         @forelse($ingredients as $ing)
                             @php
-                                // Ambil nilai penyusutan yang sudah dihitung oleh Controller
-                                // berdasarkan rasio penjualan tiap varian produk
-                                $jumlahPenyusutan = isset($estimasiPenyusutan[$ing->id]) ? $estimasiPenyusutan[$ing->id] : 0;
-                                
+                                $jumlahPenyusutan = isset($estimasiPenyusutan[$ing->id])
+                                    ? $estimasiPenyusutan[$ing->id]
+                                    : 0;
                                 $proyeksiSisa = $ing->stok_saat_ini - $jumlahPenyusutan;
                                 $batasKritis = $ing->stok_minimum;
                                 $butuhRestock = $proyeksiSisa <= $batasKritis;
@@ -228,7 +230,8 @@
                                     Dinamis (Sesuai Resep)
                                 </td>
                                 <td class="py-5 font-bold text-red-600">
-                                    - {{ $jumlahPenyusutan }} <span class="text-xs font-normal">{{ $ing->satuan }}</span>
+                                    - {{ $jumlahPenyusutan }} <span
+                                        class="text-xs font-normal">{{ $ing->satuan }}</span>
                                 </td>
                                 <td class="py-5 font-bold {{ $proyeksiSisa < 0 ? 'text-red-600' : 'text-gray-800' }}">
                                     {{ $proyeksiSisa }} <span
@@ -261,7 +264,7 @@
             </div>
         </div>
 
-        <!-- EVALUASI AKURASI MODEL PREDIKSI (MAPE) - REVISI TA DOSBING -->
+        <!-- EVALUASI AKURASI MODEL PREDIKSI (MAPE) -->
         @php
             $totalMape = 0;
             $dataValidMapeCount = 0;
@@ -286,7 +289,7 @@
                 $statusMape = 'Sangat Akurat (High Accuracy)';
                 $badgeMapeColor = 'bg-emerald-50 text-emerald-700 border-emerald-300';
                 $penjelasanMape =
-                    'Model peramalan ini memiliki tingkat error di bawah 10%, sehingga sangat layak dijadikan acuan utama pengadaan stok harian.';
+                    'Model peramalan ini memiliki tingkat error di bawah 10%, sehingga sangat layak dijadikan acuan utama pengadaan stok mingguan.';
             } elseif ($nilaiMape <= 20) {
                 $statusMape = 'Akurat (Good Forecasting)';
                 $badgeMapeColor = 'bg-blue-50 text-blue-700 border-blue-300';
@@ -310,7 +313,7 @@
                 <div>
                     <h3 class="text-xl font-bold text-[#2D5A34]">Evaluasi Model Prediksi (MAPE)</h3>
                     <p class="text-sm text-gray-400 mt-1">Pengujian ilmiah tingkat penyimpangan error peramalan SMA (n =
-                        {{ $n }} Hari)</p>
+                        {{ $n }} Minggu)</p>
                 </div>
                 <div class="flex items-center gap-3">
                     <span class="text-xs font-semibold text-gray-500">Tingkat Kesalahan (MAPE):</span>
@@ -329,7 +332,7 @@
                 <div class="text-xs text-gray-600 leading-relaxed">
                     <span class="font-bold text-gray-800">Catatan Evaluasi Sistem:</span>
                     {{ $penjelasanMape }}
-                    Perhitungan didasarkan pada <span class="font-bold text-gray-800">{{ $dataValidMapeCount }} hari
+                    Perhitungan didasarkan pada <span class="font-bold text-gray-800">{{ $dataValidMapeCount }} minggu
                         operasional</span> yang telah memiliki nilai aktual dan prediksi (menggunakan standar evaluasi
                     <em>Mean Absolute Percentage Error</em>).
                 </div>
@@ -342,7 +345,7 @@
                 <div>
                     <h3 class="text-xl font-bold text-[#2D5A34]">Tabel Pembuktian Algoritma SMA</h3>
                     <p class="text-sm text-gray-400 mt-1">Langkah matematis kalkulasi prediksi demand (n =
-                        {{ $n }} Hari)</p>
+                        {{ $n }} Minggu)</p>
                 </div>
             </div>
 
@@ -351,7 +354,7 @@
                     <thead>
                         <tr
                             class="text-[10px] uppercase tracking-wider text-gray-400 border-b border-gray-100 bg-gray-50/50">
-                            <th class="py-3 px-4 font-bold">Tanggal</th>
+                            <th class="py-3 px-4 font-bold">Periode (Minggu)</th>
                             <th class="py-3 px-4 font-bold text-center">Aktual Terjual (Porsi)</th>
                             <th class="py-3 px-4 font-bold text-center">Langkah Perhitungan (Rumus)</th>
                             <th class="py-3 px-4 font-bold text-center">Hasil Prediksi (SMA)</th>
@@ -369,16 +372,12 @@
                                         {{ $row->prediksi }}
                                     @else
                                         <span class="text-gray-300 italic text-xs font-normal">Membutuhkan
-                                            {{ $n }} hari historis</span>
+                                            {{ $n }} minggu historis</span>
                                     @endif
                                 </td>
                                 <td class="py-4 px-4 text-right">
                                     @if ($row->error !== null)
                                         @php
-                                            // LOGIKA KOREKSI WARNA INDIKATOR ERROR:
-                                            // Error > 0  -> Hijau/Emerald (Penjualan melampaui prediksi / Positif)
-                                            // Error < 0  -> Merah/Rose (Penjualan di bawah prediksi / Penurunan)
-                                            // Error == 0 -> Abu-abu/Netral (Akurat / Pas)
                                             if ($row->error > 0) {
                                                 $badgeErrorClass =
                                                     'bg-emerald-50 text-emerald-700 border border-emerald-200';
@@ -469,7 +468,7 @@
                         x: {
                             title: {
                                 display: true,
-                                text: 'Timeline (Tanggal)',
+                                text: 'Timeline (Periode Minggu)',
                                 font: {
                                     weight: 'bold'
                                 }

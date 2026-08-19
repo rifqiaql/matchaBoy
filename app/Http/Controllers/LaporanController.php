@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 use App\Models\Order;
 use App\Models\BahanBaku;
-use App\Models\Product; // Pastikan model Product di-import
+use App\Models\Product;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -14,13 +14,20 @@ class LaporanController extends Controller
 {
     public function index(Request $request): View
     {
-        // 1. TANGKAP PARAMETER DARI URL (REVISI LOGIKA TANGGAL)
-        $reqDate = $request->input('end_date');
-        $endDate = $reqDate ? Carbon::parse($reqDate) : Carbon::today();
-        
-        // Paksa mundur ke H-1 agar angka 0 hari ini tidak merusak prediksi.
-        if ($endDate->greaterThanOrEqualTo(Carbon::today())) {
-            $endDate = Carbon::yesterday();
+        // 1. TANGKAP PARAMETER DARI URL (FORMAT WEEK: YYYY-Www)
+        $reqWeek = $request->input('end_date');
+
+        if ($reqWeek && preg_match('/^\d{4}-W\d{2}$/', $reqWeek)) {
+            $year = (int) substr($reqWeek, 0, 4);
+            $week = (int) substr($reqWeek, 6, 2);
+            $endDate = Carbon::now()->setISODate($year, $week)->endOfWeek();
+        } else {
+            $endDate = Carbon::now()->endOfWeek();
+        }
+
+        // PENCEGAHAN BIAS
+        if ($endDate->greaterThanOrEqualTo(Carbon::now()->startOfWeek())) {
+            $endDate = Carbon::now()->subWeek()->endOfWeek();
         }
 
         $n = (int) $request->input('n', 3);
@@ -32,43 +39,62 @@ class LaporanController extends Controller
         $ingredients = BahanBaku::all();
         $totalOrders = Order::count();
 
-        // 3. LOGIKA SMA DENGAN ZERO-FILLING (MENAMBAL TANGGAL KOSONG)
-        $startDate = $endDate->copy()->subDays($n + 13)->startOfDay();
+        // 3. LOGIKA SMA DENGAN ZERO-FILLING PINTAR (MENCEGAH COLD START)
+        // Cari kapan toko pertama kali ada transaksi
+        $firstOrder = DB::table('orders')->oldest('created_at')->first();
 
+        if ($firstOrder) {
+            // Start perhitungan murni dari minggu pertama toko beroperasi
+            $startDate = Carbon::parse($firstOrder->created_at)->startOfWeek();
+            // Cegah jika datanya anomali (start > end)
+            if ($startDate->greaterThan($endDate)) {
+                $startDate = $endDate->copy()->subWeeks($n)->startOfWeek();
+            }
+        } else {
+            // Fallback jika database kosong
+            $startDate = $endDate->copy()->subWeeks($n)->startOfWeek();
+        }
+
+        // Agregasi Data per Minggu menggunakan fungsi YEARWEEK MySQL (Mode 1 = Senin s/d Minggu)
         $rawData = DB::table('order_items')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
             ->select(
-                DB::raw('DATE(orders.created_at) as tanggal'),
+                DB::raw('YEARWEEK(orders.created_at, 1) as year_week'),
                 DB::raw('SUM(order_items.quantity) as total_qty')
             )
             ->whereBetween('orders.created_at', [
                 $startDate,
-                $endDate->copy()->endOfDay()
+                $endDate
             ])
-            ->groupBy('tanggal')
-            ->pluck('total_qty', 'tanggal')
+            ->groupBy('year_week')
+            ->pluck('total_qty', 'year_week')
             ->toArray();
 
         $historisDemand = [];
         $currentIterDate = $startDate->copy();
-        $endIterDate = $endDate->copy()->startOfDay();
 
-        while ($currentIterDate->lessThanOrEqualTo($endIterDate)) {
-            $dateString = $currentIterDate->format('Y-m-d');
+        // Looping per Minggu (Zero-Filling yang valid)
+        while ($currentIterDate->lessThanOrEqualTo($endDate)) {
+            $yearWeekString = $currentIterDate->format('oW');
+            $labelMinggu = $currentIterDate->format('d M') . ' - ' . $currentIterDate->copy()->endOfWeek()->format('d M');
+
             $historisDemand[] = (object) [
-                'tanggal'   => $dateString,
-                'total_qty' => $rawData[$dateString] ?? 0,
+                'tanggal'   => $labelMinggu,
+                'year_week' => $yearWeekString,
+                'total_qty' => $rawData[$yearWeekString] ?? 0,
             ];
-            $currentIterDate->addDay();
+
+            $currentIterDate->addWeek();
         }
 
-        // 4. KALKULASI SMA
+        // 4. KALKULASI SMA MINGGUAN
         $analisisSma = [];
         foreach ($historisDemand as $index => $data) {
             $prediksi = null;
             $error = null;
             $rumus = '-';
 
+            // Jangan memaksakan prediksi jika umur data belum mencapai nilai N
             if ($index >= $n) {
                 $totalSebelumnya = 0;
                 $deretAngka = [];
@@ -82,18 +108,16 @@ class LaporanController extends Controller
                 $rumus = "(" . implode(" + ", array_reverse($deretAngka)) . ") / " . $n;
             }
 
-            if ($index >= $n) {
-                $analisisSma[] = (object) [
-                    'tanggal'  => Carbon::parse($data->tanggal)->isoFormat('D MMM YYYY'),
-                    'aktual'   => $data->total_qty,
-                    'prediksi' => $prediksi,
-                    'rumus'    => $rumus,
-                    'error'    => $error,
-                ];
-            }
+            $analisisSma[] = (object) [
+                'tanggal'  => $data->tanggal,
+                'aktual'   => $data->total_qty,
+                'prediksi' => $prediksi,
+                'rumus'    => $rumus,
+                'error'    => $error,
+            ];
         }
 
-        // 5. HITUNG PREDIKSI UNTUK H+1 (DARI TANGGAL FILTER)
+        // 5. HITUNG PREDIKSI UNTUK MINGGU DEPAN (W+1)
         $totalBesok = 0;
         $totalData = count($historisDemand);
 
@@ -112,7 +136,7 @@ class LaporanController extends Controller
         if ($prediksiBesok > $aktualTerakhir) {
             $trendStatus = 'Lonjakan';
             $trendColor = 'text-yellow-400';
-            $trendAdvice = 'Siapkan stok ekstra untuk mengantisipasi potensi kekurangan bahan baku.';
+            $trendAdvice = 'Siapkan stok ekstra untuk mengantisipasi potensi kekurangan bahan baku minggu depan.';
         } elseif ($prediksiBesok < $aktualTerakhir) {
             $trendStatus = 'Penurunan';
             $trendColor = 'text-blue-300';
@@ -120,49 +144,48 @@ class LaporanController extends Controller
         } else {
             $trendStatus = 'Stabil';
             $trendColor = 'text-green-300';
-            $trendAdvice = 'Pertahankan ritme operasional normal.';
+            $trendAdvice = 'Pertahankan ritme operasional mingguan secara normal.';
         }
 
-        // 7. SIAPKAN GRAFIK 8 HARI
+        // 7. SIAPKAN GRAFIK 7 MINGGU TERAKHIR
         $chartSmaLabels = [];
         $chartSmaAktual = [];
         $chartSmaPrediksi = [];
 
-        $grafik7Hari = array_slice($analisisSma, -7);
+        // Filter out those without predictions for the graph to look clean, or just show last 7
+        $grafik7Minggu = array_slice($analisisSma, -7);
 
-        foreach ($grafik7Hari as $row) {
-            $chartSmaLabels[] = Carbon::parse($row->tanggal)->isoFormat('D MMM');
+        foreach ($grafik7Minggu as $row) {
+            $chartSmaLabels[] = $row->tanggal;
             $chartSmaAktual[] = $row->aktual;
             $chartSmaPrediksi[] = $row->prediksi;
         }
 
-        $besokDate = $endDate->copy()->addDay();
-        $labelBesok = $besokDate->isoFormat('D MMM');
+        $besokDate = $endDate->copy()->addWeek()->startOfWeek();
+        $labelBesok = $besokDate->format('d M') . ' - ' . $besokDate->copy()->endOfWeek()->format('d M');
         $aktualBesok = null;
 
-        if ($besokDate->startOfDay()->lessThanOrEqualTo(Carbon::now()->startOfDay())) {
+        if ($besokDate->lessThanOrEqualTo(Carbon::now()->startOfWeek())) {
             $aktualBesokDb = DB::table('order_items')
                 ->join('orders', 'order_items.order_id', '=', 'orders.id')
-                ->whereDate('orders.created_at', $besokDate->format('Y-m-d'))
+                ->whereBetween('orders.created_at', [$besokDate, $besokDate->copy()->endOfWeek()])
                 ->sum('order_items.quantity');
-
             $aktualBesok = (int) $aktualBesokDb;
         } else {
-            $labelBesok .= ' (Prediksi H+1)';
+            $labelBesok .= ' (Prediksi)';
         }
 
         $chartSmaLabels[] = $labelBesok;
         $chartSmaAktual[] = $aktualBesok;
         $chartSmaPrediksi[] = $prediksiBesok;
 
-        // 8. LOGIKA PROPORSI VARIAN UNTUK RENCANA PRODUKSI & RESTOCK (BARU)
+        // 8. LOGIKA PROPORSI VARIAN UNTUK RENCANA RESTOCK
         $products = Product::with('ingredients')->get();
-        $thirtyDaysAgo = Carbon::now()->subDays(30)->startOfDay();
-        
-        // Ambil data historis 30 hari untuk mencari pangsa pasar tiap menu
+        $fourWeeksAgo = Carbon::now()->subWeeks(4)->startOfDay();
+
         $productSales = DB::table('order_items')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
-            ->where('orders.created_at', '>=', $thirtyDaysAgo)
+            ->where('orders.created_at', '>=', $fourWeeksAgo)
             ->select('product_id', DB::raw('SUM(quantity) as total_sold'))
             ->groupBy('product_id')
             ->pluck('total_sold', 'product_id');
@@ -170,20 +193,16 @@ class LaporanController extends Controller
         $totalSalesAllProducts = $productSales->sum();
         $estimasiPenyusutan = [];
 
-        // Hitung estimasi penyusutan resep jika ada prediksi demand
         if ($prediksiBesok > 0 && $totalSalesAllProducts > 0) {
             foreach ($products as $product) {
                 $sold = $productSales[$product->id] ?? 0;
                 $proportion = $sold / $totalSalesAllProducts;
-                
-                // Distribusikan target H+1 ke masing-masing produk
                 $estimasiPorsiProduk = round($proportion * $prediksiBesok);
 
-                // Kalikan kebutuhan resep dari pivot table
                 foreach ($product->ingredients as $ingredient) {
                     $bahanId = $ingredient->id;
-                    $kebutuhanResep = $ingredient->pivot->quantity_needed;
-                    
+                    $kebutuhanResep = $ingredient->pivot->quantity_needed ?? $ingredient->pivot->gramasi ?? 1;
+
                     if (!isset($estimasiPenyusutan[$bahanId])) {
                         $estimasiPenyusutan[$bahanId] = 0;
                     }
@@ -192,7 +211,6 @@ class LaporanController extends Controller
             }
         }
 
-        // Kirim variabel baru $estimasiPenyusutan ke View
         return view('laporan.index', compact(
             'ingredients',
             'totalOrders',
@@ -214,7 +232,6 @@ class LaporanController extends Controller
      */
     public function exportCSV(Request $request)
     {
-        // 1. Parameter Filter
         $month = $request->input('month');
         $year = $request->input('year');
         $n = (int) $request->input('n', 3);
@@ -225,47 +242,60 @@ class LaporanController extends Controller
         if ($month && $year) {
             $query->whereMonth('created_at', $month)->whereYear('created_at', $year);
             $namaBulan = Carbon::createFromDate($year, $month, 1)->locale('id')->translatedFormat('F Y');
-            
+
             $targetMonth = Carbon::createFromDate($year, $month, 1);
             if ($targetMonth->isCurrentMonth()) {
-                $filterEnd = Carbon::yesterday(); 
+                $filterEnd = Carbon::now()->subWeek()->endOfWeek();
             } else {
-                $filterEnd = $targetMonth->copy()->endOfMonth();
+                $filterEnd = $targetMonth->copy()->endOfMonth()->endOfWeek();
             }
         } else {
             $namaBulan = 'SEMUA PERIODE TRANSAKSI';
-            $lastOrderDate = Order::whereDate('created_at', '<', Carbon::today())->latest('created_at')->value('created_at');
-            $filterEnd = $lastOrderDate ? Carbon::parse($lastOrderDate) : Carbon::yesterday();
+            $lastOrderDate = Order::latest('created_at')->value('created_at');
+            $filterEnd = $lastOrderDate ? Carbon::parse($lastOrderDate)->endOfWeek() : Carbon::now()->subWeek()->endOfWeek();
         }
 
         $tanggalCetak = Carbon::now('Asia/Jakarta')->translatedFormat('d F Y - H:i') . ' WIB';
         $filename = "Laporan_Eksekutif_MatchaBoy_" . date('Ymd_His') . ".xls";
 
-        // 2. HITUNG LOGIKA SMA & ERROR (MAE & RMSE) KHUSUS UNTUK EXPORT
-        $startDateSma = $filterEnd->copy()->subDays($n + 13)->startOfDay();
+        // 2. HITUNG LOGIKA SMA & ERROR EXPORT MENCEGAH COLD START
+        $firstOrderExport = DB::table('orders')->oldest('created_at')->first();
+        if ($firstOrderExport) {
+            $startDateSma = Carbon::parse($firstOrderExport->created_at)->startOfWeek();
+            if ($startDateSma->greaterThan($filterEnd)) {
+                $startDateSma = $filterEnd->copy()->subWeeks($n)->startOfWeek();
+            }
+        } else {
+            $startDateSma = $filterEnd->copy()->subWeeks($n)->startOfWeek();
+        }
+
         $rawData = DB::table('order_items')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
             ->select(
-                DB::raw('DATE(orders.created_at) as tanggal'),
+                DB::raw('YEARWEEK(orders.created_at, 1) as year_week'),
                 DB::raw('SUM(order_items.quantity) as total_qty')
             )
             ->whereBetween('orders.created_at', [
                 $startDateSma,
-                $filterEnd->copy()->endOfDay()
+                $filterEnd
             ])
-            ->groupBy('tanggal')
-            ->pluck('total_qty', 'tanggal')
+            ->groupBy('year_week')
+            ->pluck('total_qty', 'year_week')
             ->toArray();
 
         $historisDemand = [];
         $currentIterDate = $startDateSma->copy();
-        while ($currentIterDate->lessThanOrEqualTo($filterEnd->copy()->startOfDay())) {
-            $dateString = $currentIterDate->format('Y-m-d');
+
+        while ($currentIterDate->lessThanOrEqualTo($filterEnd)) {
+            $yearWeekString = $currentIterDate->format('oW');
+            $labelMinggu = $currentIterDate->format('d M') . ' - ' . $currentIterDate->copy()->endOfWeek()->format('d M Y');
+
             $historisDemand[] = (object) [
-                'tanggal'   => $dateString,
-                'total_qty' => $rawData[$dateString] ?? 0,
+                'tanggal'   => $labelMinggu,
+                'year_week' => $yearWeekString,
+                'total_qty' => $rawData[$yearWeekString] ?? 0,
             ];
-            $currentIterDate->addDay();
+            $currentIterDate->addWeek();
         }
 
         $analisisSma = [];
@@ -287,7 +317,7 @@ class LaporanController extends Controller
                 $validSmaCount++;
 
                 $analisisSma[] = (object) [
-                    'tanggal'  => Carbon::parse($data->tanggal)->isoFormat('D MMM YYYY'),
+                    'tanggal'  => $data->tanggal,
                     'aktual'   => $data->total_qty,
                     'prediksi' => $prediksi,
                     'error'    => $error,
@@ -298,7 +328,6 @@ class LaporanController extends Controller
         $mae  = $validSmaCount > 0 ? round($sumAbsoluteError / $validSmaCount, 2) : 0;
         $rmse = $validSmaCount > 0 ? round(sqrt($sumSquaredError / $validSmaCount), 2) : 0;
 
-        // Prediksi Besok (H+1)
         $totalBesok = 0;
         $totalData = count($historisDemand);
         if ($totalData >= $n) {
@@ -309,6 +338,7 @@ class LaporanController extends Controller
         } else {
             $prediksiBesok = 0;
         }
+
         $aktualTerakhir = $totalData > 0 ? $historisDemand[$totalData - 1]->total_qty : 0;
 
         if ($prediksiBesok > $aktualTerakhir) {
@@ -328,7 +358,7 @@ class LaporanController extends Controller
         header("Pragma: no-cache");
         header("Expires: 0");
 
-        $orders = $query->latest()->get();
+        $orders = $query->latest('created_at')->get();
 
         echo '
         <html xmlns:o="urn:schemas-microsoft-com:office:office"
@@ -352,14 +382,14 @@ class LaporanController extends Controller
         </head>
         <body>
             <table>
-                <tr><td colspan="8" class="title">LAPORAN EKSEKUTIF OPERASIONAL & PREDIKSI - MATCHA BOY</td></tr>
+                <tr><td colspan="8" class="title">LAPORAN EKSEKUTIF OPERASIONAL & PREDIKSI MINGGUAN - MATCHA BOY</td></tr>
                 <tr><td colspan="8" class="subtitle">Periode: ' . strtoupper($namaBulan) . ' | Waktu Cetak: ' . $tanggalCetak . '</td></tr>
                 <tr><td colspan="8"></td></tr>
 
                 <!-- BAGIAN 1: ANALISIS KAJIAN ILMIAH SMA & PREDIKSI (NILAI TA) -->
-                <tr><td colspan="8" class="section-header">A. RINGKASAN PREDIKSI & EVALUASI AKURASI SMA (N = ' . $n . ' HARI)</td></tr>
+                <tr><td colspan="8" class="section-header">A. RINGKASAN PREDIKSI & EVALUASI AKURASI SMA (N = ' . $n . ' MINGGU)</td></tr>
                 <tr style="background-color: #f9f9f9; font-weight: bold;">
-                    <td colspan="2">Prediksi Demand Besok (H+1):</td>
+                    <td colspan="2">Prediksi Demand Minggu Depan:</td>
                     <td colspan="2" class="text-center" style="color: #2D5A34; font-size: 12pt;">' . $prediksiBesok . ' Cup</td>
                     <td colspan="2">Status Tren Permintaan:</td>
                     <td colspan="2" class="text-center">' . $trendStatus . '</td>
@@ -379,7 +409,7 @@ class LaporanController extends Controller
                 <!-- TABEL DERET HISTORIS SMA TERAKHIR -->
                 <thead>
                     <tr>
-                        <th colspan="2">Tanggal Operasional</th>
+                        <th colspan="2">Periode Operasional (Minggu)</th>
                         <th colspan="2">Aktual Terjual (Cup)</th>
                         <th colspan="2">Prediksi SMA (Cup)</th>
                         <th colspan="2">Selisih Error (Cup)</th>
