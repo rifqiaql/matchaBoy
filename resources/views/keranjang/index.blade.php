@@ -26,12 +26,41 @@
             <div class="grid grid-cols-3 gap-6">
                 @forelse ($products as $product)
                     @php
-                        // Cek apakah file gambar ada di storage, jika tidak tampilkan logo default
+                        // Cek file gambar
                         $productImage =
                             $product->image &&
                             \Illuminate\Support\Facades\Storage::disk('public')->exists('products/' . $product->image)
                                 ? asset('storage/products/' . $product->image)
                                 : asset('images/logo.png');
+
+                        $ingredientList = '';
+                        $maxCups = null; // Variabel untuk menyimpan kalkulasi pembatas (Bottleneck)
+
+                        if ($product->ingredients && $product->ingredients->count() > 0) {
+                            $names = [];
+                            foreach ($product->ingredients as $ing) {
+                                $names[] = $ing->name ?? ($ing->nama_bahan ?? 'Bahan');
+
+                                // KALKULASI LIMITING FACTOR (ESTIMASI CUP)
+                                $stock = $ing->stock ?? ($ing->stok_saat_ini ?? 0);
+                                // CATATAN: Pastikan nama kolom pivot takaran resep di DB lu sesuai (misal: quantity_needed atau gramasi)
+                                $qtyNeeded = $ing->pivot->quantity_needed ?? ($ing->pivot->gramasi ?? 1);
+
+                                if ($qtyNeeded > 0) {
+                                    $possibleCups = floor($stock / $qtyNeeded);
+
+                                    // Ambil nilai terkecil dari seluruh bahan baku
+                                    if ($maxCups === null || $possibleCups < $maxCups) {
+                                        $maxCups = $possibleCups;
+                                    }
+                                }
+                            }
+                            $ingredientList = implode(', ', $names);
+                        }
+
+                        // Jika tidak ada bahan, default ke 0
+                        $maxCups = $maxCups !== null ? $maxCups : 0;
+                        $isOutOfStock = $maxCups <= 0;
                     @endphp
 
                     <div
@@ -68,26 +97,86 @@
                         @endif
 
                         <div
-                            class="h-48 bg-gray-50/60 rounded-xl flex items-center justify-center mb-5 p-4 overflow-hidden relative">
+                            class="h-40 bg-gray-50/60 rounded-xl flex items-center justify-center mb-4 p-3 overflow-hidden relative">
                             <img src="{{ $productImage }}" alt="{{ $product->name }}"
-                                class="h-full w-full object-contain drop-shadow-md group-hover:scale-110 transition-transform duration-300 ease-in-out"
+                                class="h-full w-full object-contain drop-shadow-md group-hover:scale-110 transition-transform duration-300 ease-in-out {{ $isOutOfStock ? 'grayscale opacity-60' : '' }}"
                                 onerror="this.onerror=null;this.src='{{ asset('images/logo.png') }}';">
                         </div>
 
                         <div class="flex-1 flex flex-col justify-end">
-                            <h4 class="font-bold text-gray-800 mb-1 truncate" title="{{ $product->name }}">
+                            <h4 class="font-bold text-gray-800 mb-0.5 truncate" title="{{ $product->name }}">
                                 {{ $product->name }}</h4>
-                            <p class="text-[11px] text-gray-400 mb-3 uppercase tracking-wider font-semibold">
-                                {{ $product->category ?? 'Produk' }}</p>
 
-                            <div class="flex items-center justify-between gap-3 mt-auto border-t border-gray-50 pt-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <p class="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">
+                                    {{ $product->category ?? 'Produk' }}</p>
+
+                                <!-- BADGE ESTIMASI CUP BERDASARKAN BAHAN TERKECIL -->
+                                <span
+                                    class="px-2 py-0.5 rounded text-[10px] font-bold border shadow-sm {{ $isOutOfStock ? 'bg-red-50 text-red-600 border-red-100' : 'bg-[#2D5A34]/10 text-[#2D5A34] border-[#2D5A34]/20' }}">
+                                    {{ $isOutOfStock ? 'Stok Habis' : 'Est: ' . $maxCups . ' Cup' }}
+                                </span>
+                            </div>
+
+                            <div class="mb-4 space-y-2 border-t border-gray-50 pt-3">
+                                @if ($product->ingredients && $product->ingredients->count() > 0)
+                                    @foreach ($product->ingredients as $ing)
+                                        @php
+                                            $stock = $ing->stock ?? ($ing->stok_saat_ini ?? 0);
+                                            $minStock = $ing->minimum_stock ?? ($ing->batas_limit ?? 500);
+                                            $unit = $ing->unit ?? ($ing->satuan ?? '');
+
+                                            $visualMax = $minStock > 0 ? $minStock * 3 : 1000;
+                                            if ($stock > $visualMax) {
+                                                $visualMax = $stock;
+                                            }
+                                            $percent = $visualMax > 0 ? ($stock / $visualMax) * 100 : 0;
+
+                                            $isCritical = $stock <= $minStock;
+                                            $isWarning = $stock > $minStock && $stock <= $minStock * 2;
+
+                                            $barColor = 'bg-green-500';
+                                            $textColor = 'text-gray-600';
+
+                                            if ($isCritical) {
+                                                $barColor = 'bg-red-500';
+                                                $textColor = 'text-red-600';
+                                            } elseif ($isWarning) {
+                                                $barColor = 'bg-[#EAB308]';
+                                                $textColor = 'text-[#EAB308]';
+                                            }
+                                        @endphp
+                                        <div class="flex items-center justify-between gap-2"
+                                            title="Sisa di gudang: {{ number_format($stock, 0, ',', '.') }} {{ $unit }}">
+                                            <span
+                                                class="text-[10px] text-gray-500 truncate w-4/12">{{ $ing->name ?? ($ing->nama_bahan ?? 'Bahan') }}</span>
+
+                                            <div class="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                                <div class="h-full rounded-full transition-all duration-500 {{ $barColor }}"
+                                                    style="width: {{ $percent }}%;"></div>
+                                            </div>
+
+                                            <span class="text-[9px] font-bold {{ $textColor }} w-3/12 text-right">
+                                                {{ number_format($stock, 0, '', '.') }}
+                                            </span>
+                                        </div>
+                                    @endforeach
+                                @else
+                                    <p class="text-[10px] text-gray-400 italic">Resep bahan belum diatur</p>
+                                @endif
+                            </div>
+
+                            <div class="flex items-center justify-between gap-3 mt-auto border-t border-gray-100 pt-3">
                                 <p class="text-sm font-extrabold text-[#2D5A34]">Rp
                                     {{ number_format($product->price, 0, ',', '.') }}</p>
+
+                                <!-- TOMBOL ADD DI-DISABLE JIKA IS OUT OF STOCK -->
                                 <button
-                                    class="flex items-center gap-1 bg-gray-100 hover:bg-[#2D5A34] text-gray-700 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors add-to-cart"
+                                    class="flex items-center gap-1 bg-gray-100 hover:bg-[#2D5A34] text-gray-700 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors add-to-cart disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-100 disabled:hover:text-gray-700"
                                     data-id="{{ $product->id }}" data-name="{{ $product->name }}"
                                     data-price="{{ $product->price }}" data-image="{{ $productImage }}"
-                                    title="Tambah ke keranjang">
+                                    data-ingredients-list="{{ $ingredientList }}" {{ $isOutOfStock ? 'disabled' : '' }}
+                                    title="{{ $isOutOfStock ? 'Bahan baku tidak mencukupi untuk membuat menu ini' : 'Tambah ke keranjang' }}">
                                     <x-icon name="shopping-cart" size="sm" class="w-3.5 h-3.5 stroke-current" />
                                     <span>Add</span>
                                 </button>
@@ -144,7 +233,6 @@
                     <div class="relative">
                         <span
                             class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500 font-semibold">Rp</span>
-                        <!-- TIPE INPUT DIUBAH JADI TEXT AGAR BISA DITAMBAHKAN TITIK RIBUAN -->
                         <input type="text" id="cash-input"
                             class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#2D5A34] focus:border-transparent outline-none transition-all font-semibold text-gray-800"
                             placeholder="0">
@@ -310,7 +398,7 @@
             // =========================================================================
             document.addEventListener('DOMContentLoaded', function() {
                 let cart = [];
-                let currentTotal = 0; // Menyimpan total tagihan
+                let currentTotal = 0;
 
                 const cartContainer = document.getElementById('cart-items-container');
                 const subtotalEl = document.getElementById('subtotal');
@@ -319,12 +407,10 @@
                 const cashInput = document.getElementById('cash-input');
                 const changeDisplay = document.getElementById('change-display');
 
-                // Helper Format Rupiah Text
                 function formatRupiah(number) {
                     return 'Rp ' + number.toLocaleString('id-ID');
                 }
 
-                // Helper Format Ribuan untuk Input Kasir (Hanya Titik)
                 function formatRibuan(angka) {
                     let number_string = angka.replace(/[^,\d]/g, '').toString(),
                         split = number_string.split(','),
@@ -340,9 +426,7 @@
                     return rupiah;
                 }
 
-                // Kalkulasi Kembalian & Validasi Tombol Checkout
                 function calculatePayment() {
-                    // Hapus titik untuk mengambil nilai aslinya (integer)
                     const rawCash = cashInput.value.replace(/\./g, '');
                     const cash = parseInt(rawCash) || 0;
 
@@ -355,23 +439,20 @@
 
                     const change = cash - currentTotal;
 
-                    // Uang cukup dan ada barang di keranjang
                     if (cash >= currentTotal && currentTotal > 0) {
                         changeDisplay.innerText = formatRupiah(change);
                         changeDisplay.className = 'text-lg font-bold text-green-600';
                         checkoutBtn.disabled = false;
                     } else {
-                        // Uang kurang
                         changeDisplay.innerText = 'Uang Kurang!';
                         changeDisplay.className = 'text-lg font-bold text-red-600';
                         checkoutBtn.disabled = true;
                     }
                 }
 
-                // Trigger kalkulasi dan format setiap kali kasir mengetik uang
                 cashInput.addEventListener('input', function() {
-                    this.value = formatRibuan(this.value); // Format angka saat diketik
-                    calculatePayment(); // Jalankan validasi kalkulasi
+                    this.value = formatRibuan(this.value);
+                    calculatePayment();
                 });
 
                 function updateCartDOM() {
@@ -388,7 +469,7 @@
                         subtotalEl.innerText = 'Rp 0';
                         totalEl.innerText = 'Rp 0';
                         currentTotal = 0;
-                        calculatePayment(); // update state kembalian & matikan tombol
+                        calculatePayment();
                         return;
                     }
 
@@ -400,6 +481,7 @@
                         const itemEl = document.createElement('div');
                         itemEl.className =
                             'flex items-center justify-between border-b border-gray-50 py-3 gap-2 w-full';
+
                         itemEl.innerHTML = `
                     <div class="flex items-center gap-3 w-3/5 min-w-0">
                         <div class="w-12 h-12 bg-gray-50 border border-gray-100 rounded-lg flex items-center justify-center p-1.5 shrink-0">
@@ -407,7 +489,8 @@
                         </div>
                         <div class="min-w-0 flex-1">
                             <p class="text-sm font-bold text-gray-800 truncate" title="${item.name}">${item.name}</p>
-                            <p class="text-xs font-semibold text-[#2D5A34] mt-0.5">${formatRupiah(item.price)}</p>
+                            <p class="text-[10px] text-gray-400 truncate mt-0.5" title="${item.ingredientsList}">Bahan: ${item.ingredientsList || '-'}</p>
+                            <p class="text-xs font-semibold text-[#2D5A34] mt-1">${formatRupiah(item.price)}</p>
                         </div>
                     </div>
                     <div class="flex items-center justify-end gap-2 w-2/5 shrink-0">
@@ -426,22 +509,23 @@
                         cartContainer.appendChild(itemEl);
                     });
 
-                    currentTotal = subtotal; // Simpan ke variabel global scope
+                    currentTotal = subtotal;
                     subtotalEl.innerText = formatRupiah(subtotal);
                     totalEl.innerText = formatRupiah(currentTotal);
 
-                    // Eksekusi ulang kalkulasi pembayaran tiap kali cart (keranjang) berubah
                     calculatePayment();
                 }
 
                 // Event Add to Cart
                 document.addEventListener('click', function(e) {
                     const button = e.target.closest('.add-to-cart');
-                    if (button) {
+                    // Jika tombol didisable (karena stok habis), batalkan event
+                    if (button && !button.disabled) {
                         const id = button.getAttribute('data-id');
                         const name = button.getAttribute('data-name');
                         const price = parseInt(button.getAttribute('data-price'));
                         const image = button.getAttribute('data-image');
+                        const ingredientsList = button.getAttribute('data-ingredients-list');
 
                         const existingItem = cart.find(item => String(item.id) === String(id));
                         if (existingItem) {
@@ -452,7 +536,8 @@
                                 name,
                                 price,
                                 image,
-                                quantity: 1
+                                quantity: 1,
+                                ingredientsList
                             });
                         }
                         updateCartDOM();
@@ -497,7 +582,6 @@
                     checkoutBtn.addEventListener('click', function() {
                         if (cart.length === 0) return;
 
-                        // Validasi Keamanan Lapis Kedua (Mencegah Bypass HTML)
                         const rawCash = cashInput.value.replace(/\./g, '');
                         const cash = parseInt(rawCash) || 0;
 
@@ -520,7 +604,6 @@
                                 },
                                 body: JSON.stringify({
                                     cart: cart,
-                                    // Mengirimkan data cash raw ke backend jika diperlukan untuk struk
                                     cash_received: cash,
                                     change_returned: cash - currentTotal
                                 })
@@ -535,7 +618,7 @@
                                 if (data.success) {
                                     alert(data.message);
                                     cart = [];
-                                    cashInput.value = ''; // Reset input uang
+                                    cashInput.value = '';
                                     location.reload();
                                 }
                             })
