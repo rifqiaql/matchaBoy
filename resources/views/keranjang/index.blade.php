@@ -10,9 +10,7 @@
         <!-- KIRI: KATALOG PRODUK -->
         <div class="col-span-9">
             <div class="flex items-center justify-between mb-6">
-                <!-- TOMBOL KATEGORI SUDAH DIMUSNAHKAN DARI SINI -->
                 <div class="flex items-center gap-3"></div>
-
                 <div>
                     @if (auth()->user() && auth()->user()->role === 'admin')
                         <button
@@ -69,7 +67,6 @@
                             </div>
                         @endif
 
-                        <!-- GAMBAR PRODUK DIPERBESAR & EFEK HOVER -->
                         <div
                             class="h-48 bg-gray-50/60 rounded-xl flex items-center justify-center mb-5 p-4 overflow-hidden relative">
                             <img src="{{ $productImage }}" alt="{{ $product->name }}"
@@ -115,7 +112,7 @@
         <div class="col-span-3">
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 sticky top-6">
                 <h3 class="text-lg font-bold text-gray-800 mb-4">Ringkasan Keranjang</h3>
-                <div id="cart-items-container" class="space-y-3 max-h-[400px] overflow-y-auto mb-4 pr-2">
+                <div id="cart-items-container" class="space-y-3 max-h-[300px] overflow-y-auto mb-4 pr-2">
                     <div class="py-12 text-center flex flex-col items-center justify-center" id="empty-cart-msg">
                         <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-3">
                             <svg class="w-8 h-8 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -132,14 +129,31 @@
                         <span class="text-sm font-medium text-gray-500">Subtotal</span>
                         <span class="text-sm font-bold text-gray-800" id="subtotal">Rp 0</span>
                     </div>
-                    <!-- BARIS PAJAK SUDAH DIMUSNAHKAN DARI SINI -->
                 </div>
 
-                <div class="border-t border-gray-100 pt-4 mb-5">
+                <div class="border-t border-gray-100 pt-4 mb-4">
                     <div class="flex items-center justify-between">
                         <span class="text-sm font-bold text-gray-800">Total Pembelian</span>
                         <span class="text-xl font-extrabold text-[#2D5A34]" id="total">Rp 0</span>
                     </div>
+                </div>
+
+                <!-- FORM PEMBAYARAN KASIR -->
+                <div class="border-t border-gray-100 pt-4 mb-3">
+                    <label class="block text-sm font-bold text-gray-800 mb-2">Uang Pembeli (Tunai)</label>
+                    <div class="relative">
+                        <span
+                            class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500 font-semibold">Rp</span>
+                        <!-- TIPE INPUT DIUBAH JADI TEXT AGAR BISA DITAMBAHKAN TITIK RIBUAN -->
+                        <input type="text" id="cash-input"
+                            class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#2D5A34] focus:border-transparent outline-none transition-all font-semibold text-gray-800"
+                            placeholder="0">
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between mb-5">
+                    <span class="text-sm font-bold text-gray-800">Kembalian</span>
+                    <span class="text-lg font-bold text-gray-400" id="change-display">Rp 0</span>
                 </div>
 
                 <button
@@ -292,18 +306,73 @@
             }
 
             // =========================================================================
-            // 3. LOGIKA FRONTEND KERANJANG BELANJA (KASIR)
+            // 3. LOGIKA FRONTEND KERANJANG BELANJA & PEMBAYARAN KASIR
             // =========================================================================
             document.addEventListener('DOMContentLoaded', function() {
                 let cart = [];
+                let currentTotal = 0; // Menyimpan total tagihan
+
                 const cartContainer = document.getElementById('cart-items-container');
                 const subtotalEl = document.getElementById('subtotal');
                 const totalEl = document.getElementById('total');
                 const checkoutBtn = document.getElementById('checkout-btn');
+                const cashInput = document.getElementById('cash-input');
+                const changeDisplay = document.getElementById('change-display');
 
+                // Helper Format Rupiah Text
                 function formatRupiah(number) {
                     return 'Rp ' + number.toLocaleString('id-ID');
                 }
+
+                // Helper Format Ribuan untuk Input Kasir (Hanya Titik)
+                function formatRibuan(angka) {
+                    let number_string = angka.replace(/[^,\d]/g, '').toString(),
+                        split = number_string.split(','),
+                        sisa = split[0].length % 3,
+                        rupiah = split[0].substr(0, sisa),
+                        ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+
+                    if (ribuan) {
+                        let separator = sisa ? '.' : '';
+                        rupiah += separator + ribuan.join('.');
+                    }
+
+                    return rupiah;
+                }
+
+                // Kalkulasi Kembalian & Validasi Tombol Checkout
+                function calculatePayment() {
+                    // Hapus titik untuk mengambil nilai aslinya (integer)
+                    const rawCash = cashInput.value.replace(/\./g, '');
+                    const cash = parseInt(rawCash) || 0;
+
+                    if (cart.length === 0) {
+                        changeDisplay.innerText = 'Rp 0';
+                        changeDisplay.className = 'text-lg font-bold text-gray-400';
+                        checkoutBtn.disabled = true;
+                        return;
+                    }
+
+                    const change = cash - currentTotal;
+
+                    // Uang cukup dan ada barang di keranjang
+                    if (cash >= currentTotal && currentTotal > 0) {
+                        changeDisplay.innerText = formatRupiah(change);
+                        changeDisplay.className = 'text-lg font-bold text-green-600';
+                        checkoutBtn.disabled = false;
+                    } else {
+                        // Uang kurang
+                        changeDisplay.innerText = 'Uang Kurang!';
+                        changeDisplay.className = 'text-lg font-bold text-red-600';
+                        checkoutBtn.disabled = true;
+                    }
+                }
+
+                // Trigger kalkulasi dan format setiap kali kasir mengetik uang
+                cashInput.addEventListener('input', function() {
+                    this.value = formatRibuan(this.value); // Format angka saat diketik
+                    calculatePayment(); // Jalankan validasi kalkulasi
+                });
 
                 function updateCartDOM() {
                     if (cart.length === 0) {
@@ -318,7 +387,8 @@
                             </div>`;
                         subtotalEl.innerText = 'Rp 0';
                         totalEl.innerText = 'Rp 0';
-                        checkoutBtn.disabled = true;
+                        currentTotal = 0;
+                        calculatePayment(); // update state kembalian & matikan tombol
                         return;
                     }
 
@@ -356,12 +426,12 @@
                         cartContainer.appendChild(itemEl);
                     });
 
-                    // PAJAK SUDAH DIMUSNAHKAN DARI PERHITUNGAN JAVASCRIPT
-                    const total = subtotal;
-
+                    currentTotal = subtotal; // Simpan ke variabel global scope
                     subtotalEl.innerText = formatRupiah(subtotal);
-                    totalEl.innerText = formatRupiah(total);
-                    checkoutBtn.disabled = false;
+                    totalEl.innerText = formatRupiah(currentTotal);
+
+                    // Eksekusi ulang kalkulasi pembayaran tiap kali cart (keranjang) berubah
+                    calculatePayment();
                 }
 
                 // Event Add to Cart
@@ -427,6 +497,15 @@
                     checkoutBtn.addEventListener('click', function() {
                         if (cart.length === 0) return;
 
+                        // Validasi Keamanan Lapis Kedua (Mencegah Bypass HTML)
+                        const rawCash = cashInput.value.replace(/\./g, '');
+                        const cash = parseInt(rawCash) || 0;
+
+                        if (cash < currentTotal) {
+                            alert("Uang pembayaran tidak cukup!");
+                            return;
+                        }
+
                         const originalText = this.innerHTML;
                         this.disabled = true;
                         this.innerHTML = '<span class="font-medium">Memproses Transaksi...</span>';
@@ -440,7 +519,10 @@
                                         .getAttribute('content')
                                 },
                                 body: JSON.stringify({
-                                    cart: cart
+                                    cart: cart,
+                                    // Mengirimkan data cash raw ke backend jika diperlukan untuk struk
+                                    cash_received: cash,
+                                    change_returned: cash - currentTotal
                                 })
                             })
                             .then(async response => {
@@ -453,6 +535,7 @@
                                 if (data.success) {
                                     alert(data.message);
                                     cart = [];
+                                    cashInput.value = ''; // Reset input uang
                                     location.reload();
                                 }
                             })
